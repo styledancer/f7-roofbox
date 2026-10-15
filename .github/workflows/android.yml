@@ -1,0 +1,47 @@
+name: Build APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - name: Install web dependencies
+        run: npm install --no-audit --no-fund
+      - name: Copy three.js into the app
+        run: |
+          mkdir -p www/vendor
+          cp node_modules/three/build/three.min.js www/vendor/
+          cp node_modules/three/examples/js/controls/OrbitControls.js www/vendor/
+          cp node_modules/three/examples/js/loaders/GLTFLoader.js www/vendor/
+      - name: Create Android project
+        run: |
+          npx cap add android
+          npx cap sync android
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk f7-roofbox-${{ github.run_number }}.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: f7-roofbox-apk
+          path: f7-roofbox-*.apk
+      - name: Publish as a release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Тестовая сборка ${{ github.run_number }}
+          files: f7-roofbox-*.apk

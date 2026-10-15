@@ -1,0 +1,1343 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Бокс на Haval F7</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky 3D stage on top (phone) or left (desktop); tool panel of selectors, verdicts and a comparison table */
+:root{
+  --bg:#EDF0F3; --panel:#FFFFFF; --ink:#16202B; --muted:#5E6B78; --line:#D6DCE3;
+  --accent:#2B59E0; --accent-soft:#E3EAFD; --stage:#E2E7ED; --grid:#C3CCD6; --soil:#C7B08A; --grass:#9AA874; --rock:#8C8478; --asphalt:#5B5F66; --lane:#F2F2EE; --glass:rgba(250,251,253,.66); --glass-line:rgba(22,32,43,.12); --glass-shadow:rgba(22,32,43,.10);
+  --good:#1D8A57; --warn:#A86C12; --bad:#C2362B;
+  --a:#2B59E0; --b:#C96A12;
+  --good-bg:#E2F3EA; --warn-bg:#FBF0DC; --bad-bg:#FBE4E1;
+  --display:'Unbounded', 'Onest', system-ui, sans-serif;
+  --body:'Onest', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono:'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F1318; --panel:#171C23; --ink:#E6EBF1; --muted:#95A2B0; --line:#29313B;
+  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#4B4335; --grass:#36422E; --rock:#5A554D; --asphalt:#2B2E33; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
+  --good:#4CC38A; --warn:#E3A642; --bad:#F27367;
+  --a:#86A2FF; --b:#F0A04B; --good-bg:#13291F; --warn-bg:#2E2412; --bad-bg:#331816; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0F1318; --panel:#171C23; --ink:#E6EBF1; --muted:#95A2B0; --line:#29313B;
+  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#4B4335; --grass:#36422E; --rock:#5A554D; --asphalt:#2B2E33; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
+  --good:#4CC38A; --warn:#E3A642; --bad:#F27367;
+  --a:#86A2FF; --b:#F0A04B; --good-bg:#13291F; --warn-bg:#2E2412; --bad-bg:#331816; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:12px 32px}
+.app{display:grid;gap:16px;max-width:1280px;margin:0 auto}
+@media (min-width:900px){.app{grid-template-columns:minmax(0,1fr) 400px;align-items:start}}
+
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px}
+h1{font-family:var(--display);font-weight:700;font-size:1.25rem;letter-spacing:-.01em;margin:0;text-wrap:balance}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);font-size:.85rem;font-family:var(--mono)}
+
+/* 3D stage: full-bleed on phones, overlays are translucent glass controls on top of the scene */
+.stage{--it:0px;--ir:0px;--ib:0px;--il:0px;position:sticky;top:12px;z-index:3;height:calc(100vh - 120px);min-height:480px;border-radius:14px;overflow:hidden;background:var(--stage);border:1px solid var(--line)}
+@media (max-width:899px){
+  body{padding-top:0}
+  .app>div:first-child>header{display:none}
+  .stage{--il:env(safe-area-inset-left,0px);--ir:env(safe-area-inset-right,0px);position:relative;top:auto;height:calc(100svh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:420px;border-radius:0;border:0;
+    margin-left:calc(-1 * max(16px, env(safe-area-inset-left,0px)));margin-right:calc(-1 * max(16px, env(safe-area-inset-right,0px)))}
+}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.stage:fullscreen{height:100%;border-radius:0;border:0;margin:0}
+.stage.full{position:fixed;inset:0;z-index:50;height:auto;min-height:0;border-radius:0;border:0;margin:0;
+  --it:env(safe-area-inset-top,0px);--ir:env(safe-area-inset-right,0px);--ib:env(safe-area-inset-bottom,0px);--il:env(safe-area-inset-left,0px)}
+body.lock{overflow:hidden}
+.glass{background:var(--glass);border:1px solid var(--glass-line);color:var(--ink);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);box-shadow:0 2px 12px var(--glass-shadow)}
+.ov{position:absolute;z-index:4;display:flex;gap:6px;pointer-events:none}
+.ov>*{pointer-events:auto}
+.tl{left:calc(10px + var(--il));top:calc(10px + var(--it));align-items:center}
+.tools{right:calc(10px + var(--ir));top:calc(10px + var(--it));flex-direction:column}
+.bl{left:calc(10px + var(--il));right:calc(10px + var(--ir));bottom:calc(10px + var(--ib));align-items:flex-end;flex-wrap:wrap}
+.ib{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;cursor:pointer;padding:0;transition:background .15s,color .15s}
+.ib svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ib:hover{border-color:var(--accent)}
+.ib[aria-pressed="true"],.ib[aria-expanded="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.more{display:none}
+@media (max-width:899px){.more{display:grid}}
+.views{display:flex;gap:2px;padding:3px;border-radius:12px;transform-origin:left center;opacity:0;visibility:hidden;transform:translateX(-10px) scaleX(.92);pointer-events:none;transition:opacity .18s ease,transform .22s ease,visibility 0s linear .22s}
+.views.open{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition:opacity .18s ease,transform .22s ease}
+.views button{font:500 .78rem var(--body);border:0;background:transparent;color:var(--ink);border-radius:9px;padding:8px 10px;cursor:pointer;white-space:nowrap}
+.views button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.pick{min-width:0;flex:0 1 auto;max-width:min(240px,46%)}
+.chip{display:flex;align-items:center;gap:8px;border-radius:12px;padding:6px 10px 6px 8px;cursor:pointer;font:inherit;text-align:left;min-width:0;max-width:100%;width:100%}
+.chip .tx{display:flex;flex-direction:column;min-width:0;flex:1}
+.chip .nm{font-weight:600;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .sb{font:400 .7rem var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip svg{width:14px;height:14px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.chip[aria-expanded="true"]{border-color:var(--accent)}
+.chip[aria-expanded="true"] svg{transform:rotate(180deg)}
+.chip .badge{margin:0;flex:none}
+.hpill{border-radius:12px;padding:6px 10px;font:500 .78rem var(--mono);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px;white-space:nowrap;margin-left:auto;pointer-events:none}
+.pop{position:absolute;bottom:calc(100% + 8px);left:0;width:min(320px,100%);max-height:min(58vh,440px);overflow:auto;border-radius:14px;padding:6px;display:grid;gap:2px}
+.pop[hidden]{display:none!important}
+.opt{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1px 10px;text-align:left;border:0;background:transparent;color:var(--ink);border-radius:10px;padding:8px 10px;cursor:pointer;font:inherit;align-items:baseline}
+.opt:hover{background:var(--accent-soft)}
+.opt[aria-selected="true"]{background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.opt .br{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;grid-column:1/-1}
+.opt .md{font-weight:600;font-size:.88rem;min-width:0}
+.opt .dm{font:400 .72rem var(--mono);color:var(--muted);text-align:right;white-space:nowrap}
+.pop .seg{margin:6px 4px 4px;padding-top:6px;border-top:1px solid var(--glass-line)}
+.pop .poph{font:600 .68rem var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:6px 10px 2px}
+.hud{position:absolute;z-index:4;top:calc(58px + var(--it));left:50%;transform:translateX(-50%);width:min(340px,calc(100% - 116px));border-radius:14px;padding:10px 12px;display:grid;gap:6px;font-size:.82rem}
+.hud[hidden]{display:none!important}
+.hud .hh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hud .hh b{font:600 .72rem var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.hud .spd{display:flex;align-items:center;gap:2px;font:400 .72rem var(--mono);color:var(--muted)}
+.hud .spd button{font:500 .75rem var(--mono);border:0;background:transparent;color:var(--ink);border-radius:7px;padding:4px 7px;cursor:pointer}
+.hud .spd button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.hud .r{display:grid;grid-template-columns:minmax(0,1fr) auto 3.2em;gap:8px;align-items:baseline}
+.hud .r .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
+.hud .r .n .badge{margin:0}
+.hud .r .v{font:600 .9rem var(--mono);font-variant-numeric:tabular-nums}
+.hud .r .p{font:400 .72rem var(--mono);color:var(--muted);text-align:right}
+.hud .base{font:400 .7rem var(--mono);color:var(--muted)}
+.hud .lgw{display:flex;align-items:center;gap:6px;font:400 .66rem var(--body);color:var(--muted)}
+.hud .lg{flex:1;height:5px;border-radius:3px;background:linear-gradient(90deg,#3E7BE6,#BFC7D1,#E8553D)}
+.readout{display:none}
+
+.panel{display:flex;flex-direction:column;gap:14px;min-width:0}
+section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+h2{font:600 .72rem var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px}
+button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.boxes{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.bx{display:flex;flex-direction:column;gap:2px;text-align:left;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:8px 10px;cursor:pointer;font:inherit;min-width:0}
+.bx:hover{border-color:var(--accent)}
+.bx[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.bx .br{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.bx .md{font-weight:600;font-size:.9rem;line-height:1.2}
+.bx .dm{font:400 .72rem var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+label{font-size:.85rem;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent);margin:8px 0 4px}
+.mini{font:500 .78rem var(--body);border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;padding:5px 10px;cursor:pointer}
+.mini:hover{border-color:var(--accent);color:var(--accent)}
+select,input[type=number]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-width:0}
+input[type=number]{width:96px;font-family:var(--mono);text-align:right}
+
+.metrics{display:grid;gap:8px}
+.m{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.m:first-child{border-top:0;padding-top:0}
+.m .k{font-size:.88rem}
+.m .v{font:500 1rem var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.m .note{grid-column:1/-1;font-size:.78rem;color:var(--muted)}
+.m .cmp{font:400 .78rem var(--mono);color:var(--muted);text-align:right;grid-column:2}
+.chip{display:inline-block;font:600 .68rem var(--body);letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:middle}
+.chip.good{color:var(--good);background:var(--good-bg)} .chip.warn{color:var(--warn);background:var(--warn-bg)} .chip.bad{color:var(--bad);background:var(--bad-bg)}
+
+details summary{cursor:pointer;font:600 .72rem var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.settings{display:grid;gap:8px;margin-top:10px}
+.colors{display:flex;gap:6px}
+.colors button{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0}
+.colors button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--panel) inset}
+
+.tablewrap{overflow-x:auto;margin:0 -4px}
+table{border-collapse:collapse;width:100%;font-size:.82rem;min-width:420px}
+th{font:600 .68rem var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}
+td{padding:7px 4px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+td.n{font-family:var(--mono);text-align:right} th.n{text-align:right}
+tbody tr{cursor:pointer} tbody tr:hover td{background:var(--accent-soft)}
+tbody tr.sel td{background:var(--accent-soft);font-weight:600}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+.dot.good{background:var(--good)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
+.fine{font-size:.78rem;color:var(--muted);margin:8px 0 0}
+.badge{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:5px;font:700 .68rem var(--body);color:#fff;margin-left:6px;vertical-align:1px;letter-spacing:0}
+.badge.a{background:var(--a)} .badge.b{background:var(--b)}
+h2 .badge{margin-left:4px}
+.seg{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+.seg button{font:500 .78rem var(--body);border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;padding:6px 10px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.items{display:flex;flex-wrap:wrap;gap:6px}
+.ic{display:inline-flex;align-items:center;gap:6px;font:500 .8rem var(--body);border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:5px 10px;cursor:pointer;max-width:100%}
+.ic .dm{font:400 .72rem var(--mono);color:var(--muted)}
+.ic .dot{margin:0}
+.ic[aria-pressed="true"]{border-color:var(--ink);background:var(--accent-soft)}
+.ic .rm{margin-left:2px;color:var(--muted);font-size:1rem;line-height:1;padding:0 2px}
+.custom{margin-top:10px;display:grid;gap:6px}
+.custom input[type=text]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;width:100%}
+.cdims{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:6px}
+.cdims input[type=number]{width:100%}
+.err{margin:0;font-size:.78rem;color:var(--bad)} .err:empty{display:none}
+.fit{display:grid;grid-template-columns:minmax(0,1fr) 92px 92px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.fit.one{grid-template-columns:minmax(0,1fr) 92px}
+.fit.head{border-top:0;padding:0 0 2px}
+.fit.head span:not(:first-child){text-align:center}
+.fit .chip{margin:0;text-align:center}
+.fit .nm{font-size:.86rem;min-width:0}
+.fit .nm .dot{margin-right:6px}
+.fit small{display:block;font:400 .72rem var(--mono);color:var(--muted);margin-top:2px}
+.cmpT{min-width:340px}
+.cmpT th[scope=row]{font:400 .82rem var(--body);text-transform:none;letter-spacing:0;color:var(--muted);border-bottom:1px solid var(--line)}
+.cmpT tbody tr{cursor:default} .cmpT tbody tr:hover td{background:none}
+.cmpT .chip{margin:0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="app">
+  <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+    <header>
+      <h1>Бокс на <span>Haval F7</span></h1>
+      <div class="sub">4691 × 1866 × 1690 мм · 2022</div>
+    </header>
+    <div class="stage" id="stage">
+      <div class="ov tl">
+        <button class="ib glass" id="camBtn" aria-expanded="false" aria-controls="views" aria-label="Ракурс камеры" title="Ракурс камеры"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+        <div class="views glass" id="views" role="group" aria-label="Ракурс">
+          <button data-view="q" aria-pressed="true">3/4</button>
+          <button data-view="side" aria-pressed="false">Сбоку</button>
+          <button data-view="rear" aria-pressed="false">Сзади</button>
+          <button data-view="top" aria-pressed="false">Сверху</button>
+        </div>
+      </div>
+      <div class="ov tools">
+        <button class="ib glass" id="fsBtn" aria-pressed="false" aria-label="На весь экран" title="На весь экран"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        <button class="ib glass" id="tgBtn" aria-pressed="false" aria-label="Открыть багажник" title="Открыть багажник"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17v-4l2.5-4H14l3 4h4v4"/><path d="M14 9l4.5-4.5"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/></svg></button>
+        <button class="ib glass" id="offBtn" aria-pressed="false" aria-label="Бездорожье" title="Бездорожье"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19l6-10 4 6 2.5-3.5L21 19z"/></svg></button>
+        <button class="ib glass" id="hwBtn" aria-pressed="false" aria-label="Трасса: обтекание и расход" title="Трасса: обтекание и расход"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3L5 21M15 3l4 18M12 4v2M12 10v3M12 17v3"/></svg></button>
+        <button class="ib glass more" id="moreBtn" aria-label="К настройкам и проверкам ниже" title="Подробнее"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+      </div>
+      <div class="hud glass" id="hud" hidden>
+        <div class="hh"><b>Трасса · расход</b><div class="spd" id="hudSpd" role="group" aria-label="Скорость"><button data-v="90">90</button><button data-v="110">110</button><button data-v="130">130</button><span>км/ч</span></div></div>
+        <div id="hudRows"></div>
+        <div class="lgw"><span>поток медленнее</span><i class="lg"></i><span>быстрее</span></div>
+      </div>
+      <div class="ov bl" id="picks">
+        <div class="pick"><button class="chip glass" id="chipA" aria-expanded="false" aria-controls="popA"></button></div>
+        <div class="pick"><button class="chip glass" id="chipB" aria-expanded="false" aria-controls="popB"></button></div>
+        <div class="hpill glass" id="hpill"></div>
+        <div class="pop glass" id="popA" role="listbox" aria-label="Бокс A" hidden></div>
+        <div class="pop glass" id="popB" hidden>
+          <div id="popBList" role="listbox" aria-label="Бокс B для сравнения" style="display:grid;gap:2px"></div>
+          <div class="seg" id="alignWrap" role="group" aria-label="Как поставить бокс B" hidden>
+            <button data-align="own">Каждый в лучшем месте</button>
+            <button data-align="rear">По заднему краю</button>
+            <button data-align="center">По центру</button>
+            <button data-align="front">По переднему краю</button>
+          </div>
+        </div>
+      </div>
+      <div class="readout" id="readout" hidden></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <section>
+      <div class="row"><label for="pos">Положение бокса A на дугах</label><button class="mini" id="autoBtn">Подобрать автоматически</button></div>
+      <input type="range" id="pos" min="1200" max="2800" step="10" value="2000">
+      <div class="row"><span class="fine" style="margin:0">← к лобовому</span><span class="fine" style="margin:0" id="posVal"></span><span class="fine" style="margin:0">к багажнику →</span></div>
+    </section>
+
+    <section id="cmpSec" hidden>
+      <h2>A и B</h2>
+      <div class="tablewrap"><table class="cmpT"><thead id="cmpHead"></thead><tbody id="cmpBody"></tbody></table></div>
+      <p class="fine" id="cmpNote"></p>
+    </section>
+
+    <section>
+      <h2>Что влезет</h2>
+      <div class="items" id="items"></div>
+      <div class="custom">
+        <input type="text" id="cName" placeholder="Своя вещь, например «Моя коляска»" aria-label="Название вещи">
+        <div class="cdims">
+          <input type="number" id="cL" placeholder="Д, см" aria-label="Длина, см" min="1">
+          <input type="number" id="cW" placeholder="Ш, см" aria-label="Ширина, см" min="1">
+          <input type="number" id="cH" placeholder="В, см" aria-label="Высота, см" min="1">
+          <button class="mini" id="cAdd">Добавить</button>
+        </div>
+        <p class="err" id="cErr" role="alert"></p>
+      </div>
+      <div class="seg" id="showIn" role="group" aria-label="Где показать вещи" hidden>
+        <button data-in="A">Показать вещи в A</button>
+        <button data-in="B">Показать вещи в B</button>
+      </div>
+      <div id="fitList" style="margin-top:10px"></div>
+    </section>
+
+    <section>
+      <h2 id="metricsTitle">Посадка бокса</h2>
+      <div class="metrics" id="metrics"></div>
+    </section>
+
+    <section>
+      <h2>Расход на трассе</h2>
+      <div class="seg" id="spdSeg" role="group" aria-label="Скорость" style="margin-top:0">
+        <button data-v="90">90 км/ч</button><button data-v="110">110 км/ч</button><button data-v="130">130 км/ч</button>
+      </div>
+      <div class="settings">
+        <div class="row"><label for="baseFuel">Расход без бокса при 110 км/ч, л/100 км</label><input type="number" id="baseFuel" step="0.1" min="3" max="20"></div>
+        <div class="row"><label for="fuelPrice">Цена топлива, ₽/л</label><input type="number" id="fuelPrice" step="1" min="1"></div>
+      </div>
+      <div class="tablewrap" style="margin-top:10px"><table class="cmpT"><thead><tr><th></th><th class="n">+л/100 км</th><th class="n">+%</th><th class="n">₽ на 1000 км</th></tr></thead><tbody id="fuelBody"></tbody></table></div>
+      <p class="fine" id="fuelNote"></p>
+    </section>
+
+    <section>
+      <h2>Все боксы на этой машине</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Модель</th><th class="n">Заявлено</th><th class="n">По форме</th><th class="n">Внутри, см</th><th class="n">Высота авто</th><th>Багажник</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table></div>
+      <p class="fine">Каждый бокс поставлен в лучшее положение: максимально назад, но так, чтобы дверь багажника со спойлером открывалась с запасом 4 см. Знак ≈ означает, что производитель не публикует внутренние размеры и они оценены по толщине стенок.</p>
+    </section>
+
+    <section>
+      <details>
+        <summary>Настройки</summary>
+        <div class="settings">
+          <div class="row"><label for="garage">Ограничение по высоте (гараж, паркинг), мм</label><input type="number" id="garage" value="2200" step="10"></div>
+          <div class="row"><label for="barTop">Верх поперечин от земли, мм</label><input type="number" id="barTop" value="1760" step="5"></div>
+          <div class="row"><label for="barFront">Передняя поперечина от бампера, мм</label><input type="number" id="barFront" value="2500" step="10"></div>
+          <div class="row"><label for="spacing">Расстояние между дугами, мм</label><input type="number" id="spacing" value="800" step="10"></div>
+          <div class="row"><label>Цвет машины</label><div class="colors" id="colors"></div></div>
+        </div>
+      </details>
+      <p class="fine">Наружные и внутренние размеры Thule Motion 3 взяты с thule.com, остальных боксов из карточек магазинов. Форма Thule Motion 3 L, XL, XL Low, XXL Low обведена по видам сбоку и сверху с thule.com, LUX Tavr 175 и 197 по фото сбоку с lux-systems.ru (вид сверху у LUX взят как у Motion 3 L). У остальных боксов форма обобщённая, габариты точные. «По форме» означает объём полезной полости модели: корпус минус 22 мм на стенки, замки и крепления; при таком запасе модель воспроизводит заявленные литры всех четырёх Thule с точностью до 4%. Расчёты зазоров идут по паспортным размерам кузова, линия крыши и петли двери багажника в них приблизительные. Вещи показаны прямоугольными габаритами.</p>
+      <p class="fine">3D-модель кузова: <a href="https://sketchfab.com/3d-models/haval-f7-76f4d871898d4355b2b9d35d0ad430b9" target="_blank" rel="noopener">Haval F7</a> от MattDoesBlender (Sketchfab, CC BY 4.0), масштаб подогнан под колёсную базу 2725 мм. Это дорестайлинговый кузов, бамперы рестайлинга 2022 года на нём не показаны. Модель Thule Touring 100 взята из архива модели производителя.</p>
+    </section>
+  </div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="vendor/GLTFLoader.js"></script>
+<script>
+(function(){
+const CAR = {L:4691, W:1866, WB:2725, FO:950, track:1585, wheelR:365, roofFront:2150, hinge:[3980,1635], railFrom:2250, railTo:3950};
+const OPEN_ANG = 92*Math.PI/180;
+const BOXES = [
+  {id:'m3-m',   brand:'Thule', model:'Motion 3 M',       L:1750, W:840, H:440, V:400, Li:1640, Wi:690, Hi:390},
+  {id:'m3-l',   brand:'Thule', model:'Motion 3 L',       L:1940, W:870, H:420, V:440, prof:'l'},
+  {id:'m3-xl',  brand:'Thule', model:'Motion 3 XL',      L:2150, W:890, H:430, V:490, prof:'xl'},
+  {id:'m3-xll', brand:'Thule', model:'Motion 3 XL Low',  L:2160, W:890, H:360, V:400, prof:'xl_low'},
+  {id:'m3-xxl', brand:'Thule', model:'Motion 3 XXL',     L:2320, W:920, H:450, V:600, Li:2200, Wi:770, Hi:400},
+  {id:'m3-xxll',brand:'Thule', model:'Motion 3 XXL Low', L:2320, W:920, H:370, V:480, prof:'xxl_low'},
+  {id:'lx-175', brand:'LUX', model:'Tavr 175', L:1730, W:830, H:405, V:450, prof:'lux175'},
+  {id:'lx-197', brand:'LUX', model:'Tavr 197', L:1970, W:890, H:400, V:520, prof:'lux197'},
+  {id:'ed-390', brand:'Евродеталь', model:'Магнум 390', L:1850, W:840, H:420, V:390},
+  {id:'ed-420', brand:'Евродеталь', model:'Магнум 420', L:1990, W:740, H:420, V:420},
+  {id:'ed-580', brand:'Евродеталь', model:'Магнум 580', L:2200, W:840, H:420, V:580},
+  {id:'ed-w425',brand:'Евродеталь', model:'Winner 425', L:1860, W:850, H:400, V:425},
+  {id:'t-100',  brand:'Thule', model:'Touring 100 (S)',  L:1397, W:898, H:415, V:330, mesh:'touring100.json'},
+];
+// boxes without published inner size: estimate from typical Thule wall thickness
+// traced boxes: inner cavity = outer shape minus a 22 mm effective wall (shell, lid flange, mounts);
+// 22 mm reproduces Thule's published litres for all four traced Motion 3 sizes within a few percent
+const WALL=22;
+BOXES.forEach(b=>{ if(b.prof){ b.Li=b.L-2*WALL; b.Wi=b.W-2*WALL; b.Hi=b.H-2*WALL; b.est=true; } else if(!b.Li){ b.Li=b.L-110; b.Wi=b.W-150; b.Hi=b.H-50; b.est=true; } });
+const ITEM_COLORS=['#E07A2E','#2F9E6B','#8B5CF6','#D6457A','#2B8FD6','#B59A1E','#5B8C2A','#C0504D','#3AA6A6','#7D6BD1','#D98E04'];
+const ITEMS = [
+  {id:'yoyo',   name:'Коляска Babyzen YOYO², сложена', d:[520,440,180]},
+  {id:'airz',   name:'Коляска Anex Air Z, сложена',    d:[580,460,250]},
+  {id:'bike16', name:'Детский велосипед 16″',          d:[1150,540,690]},
+  {id:'bike16t',name:'Велосипед 16″, руль повёрнут',   d:[1150,300,690], est:true},
+  {id:'suitL',  name:'Чемодан большой',                d:[750,500,300]},
+  {id:'suitM',  name:'Чемодан средний',                d:[650,450,270]},
+  {id:'cabin',  name:'Ручная кладь',                   d:[550,400,200]},
+  {id:'duffel', name:'Спортивная сумка 70 л',          d:[700,350,350], est:true},
+  {id:'tent',   name:'Палатка 2-местная в чехле',      d:[600,180,180], est:true},
+  {id:'ski',    name:'Лыжи 170 см, пара',              d:[1700,200,120], est:true},
+  {id:'snow',   name:'Сноуборд 155 см',                d:[1550,300,100], est:true},
+];
+ITEMS.forEach((it,i)=>it.color=ITEM_COLORS[i%ITEM_COLORS.length]);
+const COLORS = [['Белый','#E9ECEF'],['Чёрный','#1C1F24'],['Серый','#8A9199'],['Синий','#2D4E7E'],['Красный','#9E2A2A']];
+
+const store = {get(k,d){try{const v=localStorage.getItem('f7box.'+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+               set(k,v){try{localStorage.setItem('f7box.'+k,JSON.stringify(v))}catch(e){}}};
+const S = {
+  sel: store.get('sel','m3-l'), cmp: store.get('cmp','m3-xll'), align: store.get('align','own'), itemsIn:'A',
+  items: store.get('items',['yoyo','bike16']), custom: store.get('custom',[]),
+  garage: store.get('garage',2200), barTop: store.get('barTop',1760),
+  barFront: store.get('barFront',2500), spacing: store.get('spacing',800),
+  color: store.get('color','#E9ECEF'), front: null, open:false,
+  hwSpeed: store.get('hwSpeed',110), baseFuel: store.get('baseFuel',7.5), fuelPrice: store.get('fuelPrice',62)
+};
+const byId = id => BOXES.find(b=>b.id===id);
+if(!byId(S.sel)) S.sel='m3-l';
+if(S.cmp && !byId(S.cmp)) S.cmp='';
+
+/* ---------- geometry checks (all in mm, side view: x from front bumper, y from ground) ---------- */
+const TG_POLY = [[3975,1665],[4150,1662],[4160,1625],[4545,1095],[4691,1050],[4691,500],[4545,500],[4545,1040],[3990,1570]];
+function sampledTailgate(){
+  const pts=[];
+  for(let i=0;i<TG_POLY.length;i++){
+    const a=TG_POLY[i], b=TG_POLY[(i+1)%TG_POLY.length];
+    const n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/20));
+    for(let k=0;k<n;k++){pts.push([a[0]+(b[0]-a[0])*k/n, a[1]+(b[1]-a[1])*k/n]);}
+  }
+  return pts;
+}
+const TG_PTS = sampledTailgate();
+function tailgateClearance(front, box){
+  const x0=front, x1=front+box.L, y0=S.barTop, y1=S.barTop+box.H;
+  const [hx,hy]=CAR.hinge; let min=Infinity;
+  for(let s=0;s<=12;s++){
+    const a=OPEN_ANG*s/12, c=Math.cos(a), sn=Math.sin(a);
+    for(const p of TG_PTS){
+      const rx=p[0]-hx, ry=p[1]-hy;
+      const x=hx+rx*c-ry*sn, y=hy+rx*sn+ry*c;
+      const dx=Math.max(x0-x,0,x-x1), dy=Math.max(y0-y,0,y-y1);
+      if(dx===0&&dy===0) return -1;
+      const d=Math.hypot(dx,dy); if(d<min) min=d;
+    }
+  }
+  return min;
+}
+function bars(){ const f=Math.max(CAR.railFrom+50, Math.min(S.barFront, CAR.railTo-100)); const r=Math.min(CAR.railTo-50, f+S.spacing); return [f,r]; }
+function mountOk(front, box){ const [b1,b2]=bars(); return front<=b1-100 && front+box.L>=b2+100; }
+function frontLimits(box){ return [1200, Math.min(4300-box.L, bars()[0]-100)]; }
+function autoFront(box){
+  const [lo,hi]=frontLimits(box);
+  for(let f=Math.round(hi/10)*10; f>=lo; f-=10){
+    if(tailgateClearance(f,box)>=40 && mountOk(f,box)) return f;
+  }
+  return Math.max(lo, Math.min(hi, 3100-box.L/2));
+}
+function evaluate(box, front){
+  const total=S.barTop+box.H;
+  const over=CAR.roofFront-front;
+  const tg=tailgateClearance(front,box);
+  return {total, over, tg, mount:mountOk(front,box)};
+}
+function heightState(t){ return t>S.garage?'bad':(t>S.garage-50?'warn':'good'); }
+function tgState(c){ return c<0?'bad':(c<30?'warn':'good'); }
+function tgText(c){ return c<0?'задевает':(c<30?'впритык':'открывается'); }
+function overState(o){ return o>550?'warn':'good'; }
+
+/* ---------- three.js scene ---------- */
+const stage=document.getElementById('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputEncoding=THREE.sRGBEncoding;
+stage.prepend(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(35,1,0.05,100);
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=0.08; controls.maxPolarAngle=Math.PI*0.495; controls.minDistance=2.5; controls.maxDistance=16;
+
+scene.add(new THREE.HemisphereLight(0xffffff,0x8a8f99,0.75));
+const sun=new THREE.DirectionalLight(0xffffff,0.9); sun.position.set(-4,8,5); sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048); Object.assign(sun.shadow.camera,{left:-5,right:5,top:5,bottom:-5,near:1,far:25}); sun.shadow.bias=-0.0005;
+scene.add(sun);
+const fill=new THREE.DirectionalLight(0xffffff,0.35); fill.position.set(5,3,-4); scene.add(fill);
+
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(40,40), new THREE.ShadowMaterial({opacity:0.18}));
+ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+let grid=null;
+
+const X = mm => (mm - CAR.L/2)/1000;
+const M = mm => mm/1000;
+
+const bodyMat=new THREE.MeshStandardMaterial({color:S.color, metalness:0.35, roughness:0.38});
+const glassMat=new THREE.MeshStandardMaterial({color:0x1a222c, metalness:0.6, roughness:0.15});
+const blackMat=new THREE.MeshStandardMaterial({color:0x22262b, metalness:0.2, roughness:0.7});
+const railMat=new THREE.MeshStandardMaterial({color:0x2a2e33, metalness:0.6, roughness:0.4});
+const rimMat=new THREE.MeshStandardMaterial({color:0xb8bec6, metalness:0.8, roughness:0.3});
+
+function extrude(pts, widthMm, mat, bevel, ox, oy){
+  bevel = bevel===undefined?0.035:bevel; ox=ox||0; oy=oy||0;
+  const s=new THREE.Shape();
+  pts.forEach((p,i)=>{const x=M(p[0]-ox), y=M(p[1]-oy); i?s.lineTo(x,y):s.moveTo(x,y);});
+  const depth=M(widthMm)-2*bevel;
+  const g=new THREE.ExtrudeGeometry(s,{depth, bevelEnabled:true, bevelThickness:bevel, bevelSize:bevel, bevelSegments:4, curveSegments:6});
+  g.translate(0,0,-depth/2);
+  const m=new THREE.Mesh(g,mat); m.castShadow=true; m.receiveShadow=true; return m;
+}
+const car=new THREE.Group(); scene.add(car);
+function addAt(mesh){ mesh.position.x+=X(0); car.add(mesh); return mesh; }
+
+/* body is lofted from cross-sections every 20 mm along the car */
+const Wh=CAR.W/2;
+function hwPlan(x){ if(x<350) return Wh*(0.80+0.20*Math.sin(x/350*Math.PI/2)); if(x>4450) return Wh*(1-0.09*Math.pow((x-4450)/241,2)); return Wh; }
+function belt(x){ if(x<120) return 700+(x/120)*85; if(x<1500){const t=(x-120)/1380; return 785+(980-785)*(1-Math.pow(1-t,1.6));} return 980+(x-1500)/3060*65; }
+function archLift(x){ let y=0; for(const wx of [CAR.FO, CAR.FO+CAR.WB]){const dx=Math.abs(x-wx); if(dx<430) y=Math.max(y,365+Math.sqrt(430*430-dx*dx));} return y; }
+function bottomY(x){ let b=330; if(x<150) b=420-(x/150)*90; if(x>4450) b=330+((x-4450)/241)*80; return Math.max(b,archLift(x)); }
+function roofLine(x){ if(x<2150){const t=Math.max(0,(x-1480)/670); return belt(x)+(1605-belt(x))*Math.pow(t,0.85);} return 1605+10*Math.sin((x-2150)/1840*Math.PI)-(x-2150)/1840*5; }
+function range(a,b,step,extra){ const r=[]; for(let x=a;x<b;x+=step) r.push(x); r.push(b); (extra||[]).forEach(e=>r.push(e)); return [...new Set(r)].sort((p,q)=>p-q); }
+function loft(stations, csFn, mat, ox, oy){
+  ox = ox===undefined?CAR.L/2:ox; oy=oy||0;
+  const pos=[], idx=[], rings=[];
+  stations.forEach(x=>{
+    const half=csFn(x); const ring=half.slice();
+    for(let k=half.length-2;k>=1;k--) ring.push([-half[k][0],half[k][1]]);
+    rings.push(ring.map(p=>[M(x-ox),M(p[1]-oy),M(p[0])]));
+  });
+  const R=rings[0].length;
+  rings.forEach(r=>r.forEach(p=>pos.push(p[0],p[1],p[2])));
+  for(let i=0;i<rings.length-1;i++) for(let j=0;j<R;j++){
+    const a=i*R+j, b=i*R+(j+1)%R, c=(i+1)*R+j, d=(i+1)*R+(j+1)%R; idx.push(a,c,b, b,c,d);
+  }
+  [[0,1],[rings.length-1,-1]].forEach(([ri,dir])=>{
+    const ring=rings[ri], base=pos.length/3; let cy=0; ring.forEach(p=>cy+=p[1]); cy/=R;
+    pos.push(ring[0][0],cy,0); ring.forEach(p=>pos.push(p[0],p[1],p[2]));
+    for(let j=0;j<R;j++){const a=base+1+j, b=base+1+(j+1)%R; if(dir>0) idx.push(base,a,b); else idx.push(base,b,a);}
+  });
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals();
+  const m=new THREE.Mesh(g,mat); m.castShadow=true; m.receiveShadow=true; return m;
+}
+// lower body with hood and wheel arches
+car.add(loft(range(0,4691,20,[4561,4563]), x=>{
+  const top=x>4562?500:belt(x), b=bottomY(x), hw=hwPlan(x), h=top-b, crown=x<1500?30:12;
+  return [[0,b],[hw*0.9,b],[hw,b+Math.min(70,h*0.25)],[hw,b+h*0.55],[hw*0.99,top-Math.min(80,h*0.3)],[hw*0.95,top-15],[hw*0.78,top+crown*0.5],[hw*0.4,top+crown*0.9],[0,top+crown]];
+}, bodyMat));
+// glasshouse with tumblehome
+car.add(loft(range(1480,3990,20), x=>{
+  const b=belt(x)-5, t=roofLine(x), hw=hwPlan(x)*0.965, hwT=hwPlan(x)*0.80, h=t-b;
+  return [[0,b],[hw,b],[hw*0.995,b+h*0.25],[hwT+(hw-hwT)*0.45,b+h*0.65],[hwT,t-10],[hwT*0.6,t+4],[0,t+8]];
+}, glassMat));
+// roof panel
+car.add(loft(range(2140,3995,20), x=>{
+  const t=x<2150?1605:roofLine(x), b=t-12, top=t+22, hw=hwPlan(x)*0.80+12;
+  return [[0,b],[hw,b],[hw+6,b+18],[hw*0.97,top-4],[hw*0.6,top],[0,top+3]];
+}, bodyMat));
+// D-pillars beside the tailgate
+[-1,1].forEach(side=>{
+  const p=extrude([[3990,1612],[4545,1092],[4545,1030],[3990,1030]], 270, glassMat, 0.012);
+  p.position.x+=X(0); p.position.z=side*0.745; car.add(p);
+});
+// side cladding, grille, headlights, mirrors
+[-1,1].forEach(side=>{
+  const cl=new THREE.Mesh(new THREE.BoxGeometry(M(3245-1380),0.10,0.02), blackMat); cl.position.set(X((1380+3245)/2),0.385,side*(Wh+0.004)); car.add(cl);
+  const hl=new THREE.Mesh(new THREE.BoxGeometry(0.10,0.035,0.30), new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xdfe8ff,emissiveIntensity:0.7}));
+  hl.position.set(X(45),0.765,side*0.56); car.add(hl);
+  const mr=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.11,0.18), blackMat); mr.position.set(X(1640),1.06,side*(Wh+0.07)); mr.castShadow=true; car.add(mr);
+});
+const grille=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.27,0.98), new THREE.MeshStandardMaterial({color:0x111418,metalness:0.7,roughness:0.35}));
+grille.position.set(X(8),0.59,0); car.add(grille);
+
+// tailgate on a hinge
+const tgPivot=new THREE.Group(); tgPivot.position.set(X(CAR.hinge[0]), M(CAR.hinge[1]), 0); car.add(tgPivot);
+const HX=CAR.hinge[0], HY=CAR.hinge[1];
+tgPivot.add(loft(range(3995,4545,20), x=>{
+  const top=1625-(x-3995)*(530/550), b=top-55, hw=600+(x-3995)/550*40;
+  return [[0,b],[hw,b],[hw+10,top-15],[hw*0.6,top+5],[0,top+8]];
+}, glassMat, HX, HY));
+tgPivot.add(loft(range(4540,4691,10), x=>{
+  const t=(x-4540)/151, top=1095-45*t*t, hw=hwPlan(x)*0.985;
+  return [[0,500],[hw*0.95,500],[hw,560],[hw,top-60],[hw*0.9,top],[0,top+10]];
+}, bodyMat, HX, HY));
+const spoiler=new THREE.Mesh(new THREE.BoxGeometry(0.195,0.034,1.24), bodyMat); spoiler.castShadow=true;
+spoiler.position.set(M(4062-HX), M(1645-HY), 0); tgPivot.add(spoiler);
+const tl=new THREE.Mesh(new THREE.BoxGeometry(0.02,0.05,1.55), new THREE.MeshStandardMaterial({color:0x7a1010,emissive:0xb01818,emissiveIntensity:0.5}));
+tl.position.set(M(4692-HX), M(1010-HY), 0); tgPivot.add(tl);
+
+// wheels + arches
+[CAR.FO, CAR.FO+CAR.WB].forEach(wx=>{
+  [-1,1].forEach(side=>{
+    const r=M(CAR.wheelR);
+    const tire=new THREE.Mesh(new THREE.CylinderGeometry(r,r,0.225,40), new THREE.MeshStandardMaterial({color:0x15171a,roughness:0.9}));
+    tire.rotation.x=Math.PI/2; tire.position.set(X(wx), r, side*M(CAR.track)/2); tire.castShadow=true; car.add(tire);
+    const rim=new THREE.Mesh(new THREE.CylinderGeometry(0.24,0.24,0.232,30), rimMat);
+    rim.rotation.x=Math.PI/2; rim.position.copy(tire.position); car.add(rim);
+    const arch=new THREE.Mesh(new THREE.TorusGeometry(0.43,0.035,8,40,Math.PI), blackMat);
+    arch.position.set(X(wx), r, side*(Wh+0.004)); car.add(arch);
+  });
+});
+// everything above is the simplified body; it is hidden once the detailed model has loaded
+const procParts=car.children.slice();
+const RAIL_Z=0.54;
+// roof rails
+[-1,1].forEach(side=>{
+  const rail=new THREE.Mesh(new THREE.BoxGeometry(M(CAR.railTo-CAR.railFrom),0.035,0.035), railMat);
+  rail.position.set(X((CAR.railFrom+CAR.railTo)/2), M(1672), side*RAIL_Z); rail.castShadow=true; car.add(rail);
+  [CAR.railFrom+40, CAR.railTo-40].forEach(px=>{
+    const leg=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.06,0.04), railMat); leg.position.set(X(px), M(1640), side*RAIL_Z); car.add(leg);
+  });
+});
+
+/* detailed body: Haval F7 by MattDoesBlender (Sketchfab, CC BY 4.0).
+   The source is a game asset: about 12% oversize, front towards -Z, one loose wheel.
+   It is scaled so the wheelbase is exactly 2725 mm, turned nose-first along -X,
+   given four wheels on the hub positions, and its tailgate is hung on its own hinge. */
+// axle positions are the centres of the wheel-arch openings; the source hub parts sit 155 mm too far back
+const SRC = {frontAxle:-1.47, rearAxle:1.59, hubY:-0.5145, wheelR:0.4035};
+const glbPivot=new THREE.Group();
+const spinWheels=[];
+const paintMats=[];
+let carModelReady=false;
+// models ship as base64-wrapped GLB inside JSON, since the page host serves .json but not .glb
+function loadModel(url, onLoad){
+  if(!THREE.GLTFLoader) return;
+  fetch(url).then(r=>{ if(!r.ok) throw new Error(url+' '+r.status); return r.json(); }).then(d=>{
+    const bin=atob(d.glb), buf=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
+    new THREE.GLTFLoader().parse(buf.buffer, '', onLoad, err=>console.warn('model parse failed', url, err));
+  }).catch(err=>console.warn('model did not load', url, err));
+}
+function loadCarModel(){
+  loadModel('haval_f7.json', g=>{
+    const root=g.scene; root.updateMatrixWorld(true);
+    const GS=M(CAR.WB)/(SRC.rearAxle-SRC.frontAxle);
+    let wheel=null; root.traverse(o=>{ if(!wheel && /^wheel_lf/i.test(o.name)) wheel=o; });
+    if(wheel){
+      const par=wheel.parent, inv=new THREE.Matrix4().copy(par.matrixWorld).invert();
+      const place=(w,x,z,flip)=>{ const m=new THREE.Matrix4().makeRotationY(flip?Math.PI:0); m.setPosition(x,SRC.hubY,z); m.premultiply(inv); m.decompose(w.position,w.quaternion,w.scale); };
+      const tx=M(CAR.track)/2/GS;
+      place(wheel,-tx,SRC.frontAxle,false);
+      const keep=(w,f)=>spinWheels.push({obj:w, base:w.quaternion.clone(), sign:f?1:-1});
+      keep(wheel,false);
+      [[tx,SRC.frontAxle,true],[-tx,SRC.rearAxle,false],[tx,SRC.rearAxle,true]].forEach(([x,z,f])=>{ const c=wheel.clone(); par.add(c); place(c,x,z,f); keep(c,f); });
+    }
+    const wrap=new THREE.Group(); wrap.add(root);
+    wrap.scale.setScalar(GS); wrap.rotation.y=Math.PI/2;
+    wrap.position.set(X(CAR.FO)-SRC.frontAxle*GS, (SRC.wheelR-SRC.hubY)*GS, 0);
+    car.add(wrap);
+    root.traverse(o=>{
+      if(!o.isMesh) return; o.castShadow=true; o.receiveShadow=true;
+      (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{ if(/PRIMARY/i.test(m.name) && !paintMats.includes(m)) paintMats.push(m); });
+    });
+    paintMats.forEach(m=>{ m.color.set(S.color); m.metalness=0.35; m.roughness=0.38; });
+    // tailgate parts swing together around the top front edge of the tailgate
+    car.updateMatrixWorld(true);
+    let tg=[]; root.traverse(o=>{ if(/^(boot|windscreen_r|brakelight_m)/i.test(o.name)) tg.push(o); });
+    const inside=(o,p)=>{ for(let q=o.parent;q;q=q.parent) if(q===p) return true; return false; };
+    tg=tg.filter(o=>!tg.some(p=>p!==o&&inside(o,p)));
+    if(tg.length){
+      const bb=new THREE.Box3(); tg.forEach(o=>bb.expandByObject(o));
+      const inv=new THREE.Matrix4().copy(car.matrixWorld).invert();
+      const hinge=new THREE.Vector3(bb.min.x,bb.max.y,0).applyMatrix4(inv);
+      glbPivot.position.copy(hinge); car.add(glbPivot); glbPivot.updateMatrixWorld(true);
+      tg.forEach(o=>glbPivot.attach(o));
+    }
+    procParts.forEach(p=>p.visible=false);
+    carModelReady=true; kick(); setTimeout(startIntro,300);
+  });
+}
+// crossbars
+const barMeshes=[0,1].map(()=>{const b=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.028,1.32), railMat); b.castShadow=true; car.add(b); return b;});
+const footMeshes=[];
+for(let i=0;i<4;i++){const f=new THREE.Mesh(new THREE.BoxGeometry(0.07,1,0.05), railMat); car.add(f); footMeshes.push(f);}
+function placeBars(){
+  const [b1,b2]=bars(); const top=M(S.barTop);
+  [b1,b2].forEach((bx,i)=>{
+    barMeshes[i].position.set(X(bx), top-0.014, 0);
+    [-1,1].forEach((side,j)=>{
+      const f=footMeshes[i*2+j]; const h=Math.max(0.01, top-0.028-M(1690));
+      f.scale.y=h; f.position.set(X(bx), M(1690)+h/2, side*RAIL_Z);
+    });
+  });
+}
+
+// cargo box hull: one shape function shared by the 3D mesh and the "does it fit" check
+// side profile traced from a Thule Motion 3 XL Low product render: t=0 nose, t=1 tail, values are fractions of H
+const HULL_TOP=[[0,.45],[.02,.56],[.05,.64],[.09,.71],[.135,.78],[.18,.84],[.22,.89],[.26,.92],[.32,.96],[.41,.99],[.51,1],[.6,.99],[.68,.97],[.77,.945],[.85,.91],[.92,.87],[.96,.83],[.985,.76],[1,.66]];
+const HULL_BOT=[[0,.34],[.01,.2],[.03,.1],[.06,.04],[.12,0],[.96,0],[.985,.08],[1,.4]];
+function tab(T,t){ if(t<=T[0][0]) return T[0][1]; for(let i=1;i<T.length;i++){ if(t<=T[i][0]){ const [a,va]=T[i-1],[b,vb]=T[i]; return va+(vb-va)*(t-a)/(b-a); } } return T[T.length-1][1]; }
+// per-model shapes traced from manufacturer side and top views (t=0 nose): Thule product renders on thule.com,
+// LUX side photo from lux-systems.ru (LUX plan view not published, the Motion 3 L plan is used)
+const PROF={
+  l:{top:[[0.004,0.41],[0.029,0.508],[0.054,0.59],[0.079,0.639],[0.104,0.689],[0.129,0.754],[0.154,0.787],[0.179,0.82],[0.204,0.852],[0.229,0.869],[0.254,0.902],[0.279,0.918],[0.304,0.934],[0.329,0.951],[0.354,0.984],[0.379,0.967],[0.404,1.0],[0.429,1.0],[0.454,1.0],[0.479,1.0],[0.504,1.0],[0.529,1.0],[0.554,1.0],[0.579,1.0],[0.604,1.0],[0.629,0.984],[0.654,0.984],[0.679,0.967],[0.704,0.967],[0.729,0.951],[0.754,0.934],[0.779,0.934],[0.804,0.918],[0.829,0.902],[0.854,0.885],[0.879,0.885],[0.904,0.869],[0.929,0.852],[0.954,0.836],[0.979,0.754]],bot:[[0.004,0.295],[0.029,0.033],[0.054,0.0],[0.079,0.0],[0.104,0.0],[0.129,0.0],[0.154,0.0],[0.179,0.0],[0.204,0.0],[0.229,0.0],[0.254,0.0],[0.279,0.0],[0.304,0.0],[0.329,0.0],[0.354,0.0],[0.379,0.0],[0.404,0.0],[0.429,0.0],[0.454,0.0],[0.479,0.0],[0.504,0.0],[0.529,0.0],[0.554,0.0],[0.579,0.0],[0.604,0.0],[0.629,0.0],[0.654,0.0],[0.679,0.0],[0.704,0.0],[0.729,0.0],[0.754,0.0],[0.779,0.0],[0.804,0.0],[0.829,0.0],[0.854,0.0],[0.879,0.0],[0.904,0.033],[0.929,0.066],[0.954,0.213],[0.979,0.475]],w:[[0.004,0.464],[0.029,0.649],[0.054,0.75],[0.079,0.847],[0.104,0.914],[0.129,0.922],[0.154,0.922],[0.179,0.932],[0.204,0.944],[0.229,0.952],[0.254,0.957],[0.279,0.958],[0.304,0.964],[0.329,0.997],[0.354,1.0],[0.379,1.0],[0.404,1.0],[0.429,1.0],[0.454,0.996],[0.479,0.994],[0.504,0.994],[0.529,0.988],[0.554,0.989],[0.579,1.0],[0.604,1.0],[0.629,0.928],[0.654,0.921],[0.679,0.916],[0.704,0.91],[0.729,0.902],[0.754,0.896],[0.779,0.89],[0.804,0.883],[0.829,0.873],[0.854,0.863],[0.879,0.854],[0.904,0.843],[0.929,0.819],[0.954,0.728],[0.979,0.603]]},
+  xl:{top:[[0.004,0.456],[0.029,0.559],[0.054,0.632],[0.079,0.676],[0.104,0.721],[0.129,0.779],[0.154,0.824],[0.179,0.853],[0.204,0.882],[0.229,0.912],[0.254,0.941],[0.279,0.956],[0.304,0.971],[0.329,0.985],[0.354,0.985],[0.379,0.985],[0.404,1.0],[0.429,1.0],[0.454,1.0],[0.479,1.0],[0.504,1.0],[0.529,0.985],[0.554,0.985],[0.579,0.985],[0.604,0.971],[0.629,0.971],[0.654,0.956],[0.679,0.941],[0.704,0.941],[0.729,0.926],[0.754,0.912],[0.779,0.897],[0.804,0.882],[0.829,0.882],[0.854,0.868],[0.879,0.853],[0.904,0.838],[0.929,0.824],[0.954,0.794],[0.979,0.706]],bot:[[0.004,0.353],[0.029,0.103],[0.054,0.059],[0.079,0.044],[0.104,0.044],[0.129,0.0],[0.154,0.0],[0.179,0.0],[0.204,0.0],[0.229,0.0],[0.254,0.0],[0.279,0.0],[0.304,0.0],[0.329,0.0],[0.354,0.0],[0.379,0.0],[0.404,0.0],[0.429,0.0],[0.454,0.0],[0.479,0.0],[0.504,0.0],[0.529,0.0],[0.554,0.0],[0.579,0.0],[0.604,0.0],[0.629,0.0],[0.654,0.0],[0.679,0.0],[0.704,0.0],[0.729,0.0],[0.754,0.0],[0.779,0.0],[0.804,0.0],[0.829,0.0],[0.854,0.0],[0.879,0.0],[0.904,0.103],[0.929,0.147],[0.954,0.25],[0.979,0.485]],w:[[0.004,0.437],[0.029,0.621],[0.054,0.723],[0.079,0.815],[0.104,0.884],[0.129,0.894],[0.154,0.895],[0.179,0.912],[0.204,0.93],[0.229,0.941],[0.254,0.947],[0.279,0.947],[0.304,0.951],[0.329,0.953],[0.354,0.967],[0.379,1.0],[0.404,1.0],[0.429,1.0],[0.454,1.0],[0.479,0.995],[0.504,0.994],[0.529,0.994],[0.554,0.994],[0.579,1.0],[0.604,1.0],[0.629,0.995],[0.654,0.928],[0.679,0.92],[0.704,0.914],[0.729,0.91],[0.754,0.899],[0.779,0.889],[0.804,0.889],[0.829,0.881],[0.854,0.871],[0.879,0.86],[0.904,0.852],[0.929,0.833],[0.954,0.748],[0.979,0.596]]},
+  xl_low:{top:[[0.004,0.388],[0.029,0.51],[0.054,0.612],[0.079,0.673],[0.104,0.714],[0.129,0.755],[0.154,0.796],[0.179,0.837],[0.204,0.878],[0.229,0.898],[0.254,0.918],[0.279,0.939],[0.304,0.959],[0.329,0.959],[0.354,0.98],[0.379,0.98],[0.404,1.0],[0.429,1.0],[0.454,1.0],[0.479,1.0],[0.504,1.0],[0.529,1.0],[0.554,1.0],[0.579,1.0],[0.604,1.0],[0.629,0.98],[0.654,0.98],[0.679,0.98],[0.704,0.959],[0.729,0.959],[0.754,0.939],[0.779,0.939],[0.804,0.918],[0.829,0.918],[0.854,0.898],[0.879,0.898],[0.904,0.878],[0.929,0.857],[0.954,0.857],[0.979,0.796]],bot:[[0.004,0.306],[0.029,0.02],[0.054,0.0],[0.079,0.0],[0.104,0.0],[0.129,0.0],[0.154,0.0],[0.179,0.0],[0.204,0.0],[0.229,0.0],[0.254,0.0],[0.279,0.0],[0.304,0.0],[0.329,0.0],[0.354,0.0],[0.379,0.0],[0.404,0.0],[0.429,0.0],[0.454,0.0],[0.479,0.0],[0.504,0.0],[0.529,0.0],[0.554,0.0],[0.579,0.0],[0.604,0.0],[0.629,0.0],[0.654,0.0],[0.679,0.0],[0.704,0.0],[0.729,0.0],[0.754,0.0],[0.779,0.0],[0.804,0.0],[0.829,0.0],[0.854,0.0],[0.879,0.0],[0.904,0.02],[0.929,0.061],[0.954,0.204],[0.979,0.531]],w:[[0.004,0.424],[0.029,0.632],[0.054,0.731],[0.079,0.823],[0.104,0.894],[0.129,0.907],[0.154,0.911],[0.179,0.922],[0.204,0.935],[0.229,0.942],[0.254,0.946],[0.279,0.948],[0.304,0.953],[0.329,0.954],[0.354,0.956],[0.379,0.997],[0.404,1.0],[0.429,1.0],[0.454,1.0],[0.479,0.996],[0.504,0.994],[0.529,0.99],[0.554,0.988],[0.579,0.991],[0.604,1.0],[0.629,1.0],[0.654,0.938],[0.679,0.919],[0.704,0.914],[0.729,0.907],[0.754,0.897],[0.779,0.89],[0.804,0.888],[0.829,0.879],[0.854,0.87],[0.879,0.859],[0.904,0.85],[0.929,0.834],[0.954,0.746],[0.979,0.593]]},
+  xxl_low:{top:[[0.004,0.396],[0.029,0.509],[0.054,0.623],[0.079,0.642],[0.104,0.698],[0.129,0.774],[0.154,0.811],[0.179,0.849],[0.204,0.887],[0.229,0.906],[0.254,0.925],[0.279,0.943],[0.304,0.962],[0.329,0.962],[0.354,0.981],[0.379,0.981],[0.404,1.0],[0.429,1.0],[0.454,1.0],[0.479,1.0],[0.504,1.0],[0.529,1.0],[0.554,1.0],[0.579,1.0],[0.604,0.981],[0.629,0.981],[0.654,0.981],[0.679,0.962],[0.704,0.962],[0.729,0.943],[0.754,0.925],[0.779,0.925],[0.804,0.906],[0.829,0.887],[0.854,0.868],[0.879,0.868],[0.904,0.849],[0.929,0.83],[0.954,0.811],[0.979,0.736]],bot:[[0.004,0.302],[0.029,0.019],[0.054,0.0],[0.079,0.0],[0.104,0.0],[0.129,0.0],[0.154,0.0],[0.179,0.0],[0.204,0.0],[0.229,0.0],[0.254,0.0],[0.279,0.0],[0.304,0.0],[0.329,0.0],[0.354,0.0],[0.379,0.0],[0.404,0.0],[0.429,0.0],[0.454,0.0],[0.479,0.0],[0.504,0.0],[0.529,0.0],[0.554,0.0],[0.579,0.0],[0.604,0.0],[0.629,0.0],[0.654,0.0],[0.679,0.0],[0.704,0.0],[0.729,0.0],[0.754,0.0],[0.779,0.0],[0.804,0.0],[0.829,0.0],[0.854,0.0],[0.879,0.0],[0.904,0.0],[0.929,0.057],[0.954,0.17],[0.979,0.434]],w:[[0.004,0.402],[0.029,0.623],[0.054,0.731],[0.079,0.835],[0.104,0.888],[0.129,0.898],[0.154,0.906],[0.179,0.921],[0.204,0.934],[0.229,0.943],[0.254,0.949],[0.279,0.955],[0.304,0.955],[0.329,0.96],[0.354,0.961],[0.379,0.988],[0.404,1.0],[0.429,1.0],[0.454,1.0],[0.479,1.0],[0.504,1.0],[0.529,0.996],[0.554,0.99],[0.579,0.989],[0.604,0.989],[0.629,0.982],[0.654,0.942],[0.679,0.923],[0.704,0.921],[0.729,0.914],[0.754,0.906],[0.779,0.897],[0.804,0.891],[0.829,0.884],[0.854,0.875],[0.879,0.862],[0.904,0.851],[0.929,0.838],[0.954,0.771],[0.979,0.598]]},
+  lux197:{top:[[0.004,0.334],[0.029,0.542],[0.054,0.619],[0.079,0.655],[0.104,0.693],[0.129,0.726],[0.154,0.759],[0.179,0.789],[0.204,0.822],[0.229,0.852],[0.254,0.874],[0.279,0.893],[0.304,0.915],[0.329,0.934],[0.354,0.948],[0.379,0.962],[0.404,0.97],[0.429,0.978],[0.454,0.986],[0.479,0.989],[0.504,0.995],[0.529,0.997],[0.554,0.997],[0.579,1.0],[0.604,1.0],[0.629,0.997],[0.654,0.995],[0.679,0.992],[0.704,0.986],[0.729,0.981],[0.754,0.97],[0.779,0.956],[0.804,0.937],[0.829,0.912],[0.854,0.888],[0.879,0.86],[0.904,0.827],[0.929,0.795],[0.954,0.756],[0.979,0.704]],bot:[[0.004,0.203],[0.029,0.09],[0.054,0.044],[0.079,0.022],[0.104,0.0],[0.129,0.0],[0.154,0.0],[0.179,0.0],[0.204,0.0],[0.229,0.0],[0.254,0.0],[0.279,0.0],[0.304,0.0],[0.329,0.0],[0.354,0.0],[0.379,0.0],[0.404,0.0],[0.429,0.0],[0.454,0.0],[0.479,0.0],[0.504,0.0],[0.529,0.0],[0.554,0.0],[0.579,0.0],[0.604,0.0],[0.629,0.0],[0.654,0.0],[0.679,0.0],[0.704,0.0],[0.729,0.0],[0.754,0.0],[0.779,0.0],[0.804,0.0],[0.829,0.0],[0.854,0.0],[0.879,0.0],[0.904,0.0],[0.929,0.016],[0.954,0.047],[0.979,0.2]],w:[[0.004,0.464],[0.029,0.649],[0.054,0.75],[0.079,0.847],[0.104,0.914],[0.129,0.922],[0.154,0.922],[0.179,0.932],[0.204,0.944],[0.229,0.952],[0.254,0.957],[0.279,0.958],[0.304,0.964],[0.329,0.997],[0.354,1.0],[0.379,1.0],[0.404,1.0],[0.429,1.0],[0.454,0.996],[0.479,0.994],[0.504,0.994],[0.529,0.988],[0.554,0.989],[0.579,1.0],[0.604,1.0],[0.629,0.928],[0.654,0.921],[0.679,0.916],[0.704,0.91],[0.729,0.902],[0.754,0.896],[0.779,0.89],[0.804,0.883],[0.829,0.873],[0.854,0.863],[0.879,0.854],[0.904,0.843],[0.929,0.819],[0.954,0.728],[0.979,0.603]]},
+  lux175:{top:[[0.004,0.334],[0.029,0.542],[0.054,0.619],[0.079,0.655],[0.104,0.693],[0.129,0.726],[0.154,0.759],[0.179,0.789],[0.204,0.822],[0.229,0.852],[0.254,0.874],[0.279,0.893],[0.304,0.915],[0.329,0.934],[0.354,0.948],[0.379,0.962],[0.404,0.97],[0.429,0.978],[0.454,0.986],[0.479,0.989],[0.504,0.995],[0.529,0.997],[0.554,0.997],[0.579,1.0],[0.604,1.0],[0.629,0.997],[0.654,0.995],[0.679,0.992],[0.704,0.986],[0.729,0.981],[0.754,0.97],[0.779,0.956],[0.804,0.937],[0.829,0.912],[0.854,0.888],[0.879,0.86],[0.904,0.827],[0.929,0.795],[0.954,0.756],[0.979,0.704]],bot:[[0.004,0.203],[0.029,0.09],[0.054,0.044],[0.079,0.022],[0.104,0.0],[0.129,0.0],[0.154,0.0],[0.179,0.0],[0.204,0.0],[0.229,0.0],[0.254,0.0],[0.279,0.0],[0.304,0.0],[0.329,0.0],[0.354,0.0],[0.379,0.0],[0.404,0.0],[0.429,0.0],[0.454,0.0],[0.479,0.0],[0.504,0.0],[0.529,0.0],[0.554,0.0],[0.579,0.0],[0.604,0.0],[0.629,0.0],[0.654,0.0],[0.679,0.0],[0.704,0.0],[0.729,0.0],[0.754,0.0],[0.779,0.0],[0.804,0.0],[0.829,0.0],[0.854,0.0],[0.879,0.0],[0.904,0.0],[0.929,0.016],[0.954,0.047],[0.979,0.2]],w:[[0.004,0.464],[0.029,0.649],[0.054,0.75],[0.079,0.847],[0.104,0.914],[0.129,0.922],[0.154,0.922],[0.179,0.932],[0.204,0.944],[0.229,0.952],[0.254,0.957],[0.279,0.958],[0.304,0.964],[0.329,0.997],[0.354,1.0],[0.379,1.0],[0.404,1.0],[0.429,1.0],[0.454,0.996],[0.479,0.994],[0.504,0.994],[0.529,0.988],[0.554,0.989],[0.579,1.0],[0.604,1.0],[0.629,0.928],[0.654,0.921],[0.679,0.916],[0.704,0.91],[0.729,0.902],[0.754,0.896],[0.779,0.89],[0.804,0.883],[0.829,0.873],[0.854,0.863],[0.879,0.854],[0.904,0.843],[0.929,0.819],[0.954,0.728],[0.979,0.603]]}
+};
+function hullAt(t,L,W,H,p){
+  const pr=p&&PROF[p];
+  const fh = pr?tab(pr.top,t):tab(HULL_TOP,t);
+  const fw = pr?tab(pr.w,t):(t<0.30 ? 0.70+0.30*Math.sin(t/0.30*Math.PI/2) : (t>0.90 ? 1-0.14*Math.pow((t-0.90)/0.10,2) : 1));
+  const b = H*(pr?tab(pr.bot,t):tab(HULL_BOT,t));
+  const h=H*fh, w=W*fw; return {h,w,b,yc:b+(h-b)*0.3};
+}
+// usable litres of the modelled cavity, integrated over the same cross-sections the 3D shell and the fit check use
+function cavityLitres(box){
+  if(box._vc) return box._vc;
+  const N=80,R=48; let V=0;
+  for(let i=0;i<N;i++){ const t=(i+0.5)/N, {h,w,b,yc}=hullAt(t,box.Li,box.Wi,box.Hi,box.prof); let A=0, pz0, py0, fz, fy;
+    for(let j=0;j<=R;j++){ const th=(j%R)/R*Math.PI*2, c=Math.cos(th), s=Math.sin(th);
+      const pz=w/2*Math.sign(c)*Math.pow(Math.abs(c),0.5), py=s>=0?yc+(h-yc)*Math.pow(Math.abs(s),0.62):yc-(yc-b)*Math.pow(Math.abs(s),0.2);
+      if(j>0) A+=pz0*py-pz*py0; pz0=pz; py0=py; }
+    V+=Math.abs(A)/2*box.Li/N; }
+  return box._vc=V/1e6;
+}
+function boxGeometry(Lmm,Wmm,Hmm,p){
+  const L=M(Lmm), W=M(Wmm), H=M(Hmm), N=60, R=40;
+  const pos=[], idx=[], rings=[];
+  for(let i=0;i<=N;i++){
+    const t=i/N, x=t*L, {h,w,b,yc}=hullAt(t,L,W,H,p);
+    const ring=[];
+    for(let j=0;j<R;j++){
+      const th=j/R*Math.PI*2, c=Math.cos(th), s=Math.sin(th);
+      const pz=w/2*Math.sign(c)*Math.pow(Math.abs(c),0.5);
+      const py= s>=0 ? yc+(h-yc)*Math.pow(Math.abs(s),0.62) : yc-(yc-b)*Math.pow(Math.abs(s),0.2);
+      ring.push([x,py,pz]);
+    }
+    rings.push(ring); ring.forEach(p=>pos.push(p[0],p[1],p[2]));
+  }
+  for(let i=0;i<N;i++) for(let j=0;j<R;j++){
+    const a=i*R+j, b2=i*R+(j+1)%R, c=(i+1)*R+j, d=(i+1)*R+(j+1)%R; idx.push(a,c,b2, b2,c,d);
+  }
+  [[0,1],[N,-1]].forEach(([ri,dir])=>{
+    const ring=rings[ri], base=pos.length/3; let cy=0; ring.forEach(p=>cy+=p[1]); cy/=R;
+    pos.push(ring[0][0],cy,0); ring.forEach(p=>pos.push(p[0],p[1],p[2]));
+    for(let j=0;j<R;j++){const a=base+1+j, b2=base+1+(j+1)%R; if(dir>0) idx.push(base,a,b2); else idx.push(base,b2,a);}
+  });
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  g.setIndex(idx); g.computeVertexNormals(); g.userData.rings=rings;
+  return g;
+}
+function contour(g, mat){
+  const rings=g.userData.rings, N=rings.length-1, R=rings[0].length, pts=[];
+  const seg=(a,b)=>pts.push(a[0],a[1],a[2],b[0],b[1],b[2]);
+  [0,R/8,R/4,3*R/8,R/2,3*R/4].forEach(j=>{for(let i=0;i<N;i++) seg(rings[i][j],rings[i+1][j]);});
+  [0,Math.round(N*0.32),Math.round(N*0.6),N].forEach(i=>{for(let j=0;j<R;j++) seg(rings[i][j],rings[i][(j+1)%R]);});
+  const lg=new THREE.BufferGeometry(); lg.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
+  return new THREE.LineSegments(lg,mat);
+}
+const matA=new THREE.MeshStandardMaterial({color:0x1d2127, metalness:0.45, roughness:0.28});
+const matB=new THREE.MeshStandardMaterial({color:0xD9822B, transparent:true, opacity:0.2, depthWrite:false, roughness:0.6, side:THREE.DoubleSide});
+const edgeA=new THREE.LineBasicMaterial({color:0x2B59E0}), edgeB=new THREE.LineBasicMaterial({color:0xD9822B});
+const boxGroup=new THREE.Group(), cmpGroup=new THREE.Group(), itemsGroup=new THREE.Group();
+car.add(boxGroup); car.add(cmpGroup);
+let ghost=false;
+function setGhost(on){
+  ghost=on;
+  if(matA.transparent!==on){ matA.transparent=on; matA.depthWrite=!on; matA.side=on?THREE.DoubleSide:THREE.FrontSide; matA.needsUpdate=true; }
+  matA.opacity=on?0.2:1; matA.metalness=on?0:0.45; matA.color.set(on?css('--a'):'#1d2127');
+  boxGroup.children.forEach(c=>{ if(c.isLineSegments) c.visible=on; if(c.isMesh&&c!==itemsGroup) c.castShadow=!on; });
+}
+
+// height limit plane + measuring post
+const limitMat=new THREE.MeshBasicMaterial({color:0xC2362B, transparent:true, opacity:0.10, side:THREE.DoubleSide, depthWrite:false});
+const limitPlane=new THREE.Mesh(new THREE.PlaneGeometry(6.2,2.6), limitMat); limitPlane.rotation.x=-Math.PI/2; scene.add(limitPlane);
+const limitEdgeMat=new THREE.LineBasicMaterial({color:0xC2362B, transparent:true, opacity:0.6});
+const limitEdge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(6.2,2.6)), limitEdgeMat); limitEdge.rotation.x=-Math.PI/2; scene.add(limitEdge);
+
+let targetFront=0, curFront=0, tgAngle=0;
+
+/* ---------- terrain and the off-road drive ----------
+   The car stays at the origin; the ground, rocks and grass slide past it.
+   Body pitch and roll come from the terrain height under the four wheels, so the box on the roof tilts with the car. */
+const TER={W:44, D:20, nx:176, nz:80};
+const terGeo=new THREE.PlaneGeometry(TER.W,TER.D,TER.nx,TER.nz); terGeo.rotateX(-Math.PI/2);
+const terPos=terGeo.attributes.position, terN=terPos.count;
+const terBX=new Float32Array(terN), terBZ=new Float32Array(terN);
+for(let i=0;i<terN;i++){ terBX[i]=terPos.getX(i); terBZ[i]=terPos.getZ(i); }
+const terCol=new Float32Array(terN*3); terGeo.setAttribute('color',new THREE.BufferAttribute(terCol,3));
+const terMat=new THREE.MeshStandardMaterial({vertexColors:true, roughness:1, metalness:0, flatShading:true});
+const terrain=new THREE.Mesh(terGeo,terMat); terrain.receiveShadow=true; scene.add(terrain);
+ground.visible=false;
+const sstep=(a,b,x)=>{ const t=Math.min(1,Math.max(0,(x-a)/(b-a))); return t*t*(3-2*t); };
+function hgt(u,z,amp){
+  const side=sstep(3.4,9.5,Math.abs(z));
+  const far=side*Math.max(0,(0.9*Math.sin(u*0.17+z*0.21)+0.6*Math.sin(u*0.09-z*0.33+1.3)+0.8))*1.3;
+  const near=amp*(0.17*Math.sin(u*0.61+z*0.37)+0.10*Math.sin(u*1.37-z*0.9+1.7)+0.045*Math.sin(u*3.1+z*2.3));
+  return far+near*(1-0.6*side);
+}
+const cSoil=new THREE.Color(), cGrass=new THREE.Color(), cTmp=new THREE.Color();
+let dist=0, speed=0, amp=0, wheelAng=0, terDirty=true;
+function updateTerrain(){
+  for(let i=0;i<terN;i++){
+    const u=terBX[i]-dist, z=terBZ[i], az=Math.abs(z), h=hgt(u,z,amp);
+    terPos.setY(i,h);
+    const n=0.5+0.5*Math.sin(u*1.7+z*2.3)*Math.sin(u*0.63-z*1.1);
+    const track=Math.max(0,1-Math.abs(az-0.79)/0.16)*0.35;
+    const g=Math.min(1,Math.max(0,sstep(1.1,3.2,az)*0.85+n*0.35-track));
+    cTmp.copy(cSoil).lerp(cGrass,g).multiplyScalar(0.92+0.16*n+Math.min(0.12,h*0.06));
+    terCol[i*3]=cTmp.r; terCol[i*3+1]=cTmp.g; terCol[i*3+2]=cTmp.b;
+  }
+  terPos.needsUpdate=true; terGeo.attributes.color.needsUpdate=true; terGeo.computeVertexNormals();
+  placeScatter(); terDirty=false;
+}
+// roadside rocks and grass tufts, kept off the wheel tracks
+const rockMat=new THREE.MeshStandardMaterial({roughness:0.95,flatShading:true});
+const tuftMat=new THREE.MeshStandardMaterial({roughness:1,flatShading:true});
+const rocks=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),rockMat,70);
+const tufts=new THREE.InstancedMesh(new THREE.ConeGeometry(0.05,0.26,5),tuftMat,220);
+rocks.castShadow=true; rocks.receiveShadow=true; scene.add(rocks); scene.add(tufts);
+let seed=7; const rnd=()=>{ seed=(seed*16807)%2147483647; return seed/2147483647; };
+const scat=(n,minZ,maxZ)=>Array.from({length:n},()=>({u:rnd()*TER.W, z:(rnd()<0.5?-1:1)*(minZ+rnd()*(maxZ-minZ)), s:rnd(), r:rnd()*6.28}));
+const rockData=scat(70,1.7,9), tuftData=scat(220,1.3,9);
+const dummy=new THREE.Object3D();
+function placeScatter(){
+  const put=(mesh,data,size)=>{ data.forEach((d,i)=>{
+    const x=((d.u+dist)%TER.W+TER.W)%TER.W-TER.W/2;
+    const sc=size(d), off=1-roadMix*(1-sstep(3.9,4.6,Math.abs(d.z))); dummy.position.set(x,hgt(x-dist,d.z,amp)+sc.y,d.z);
+    dummy.rotation.set(d.r*0.3,d.r,0); dummy.scale.set(sc.x*off+1e-4,sc.h*off+1e-4,sc.z*off+1e-4); dummy.updateMatrix(); mesh.setMatrixAt(i,dummy.matrix); });
+    mesh.instanceMatrix.needsUpdate=true; };
+  put(rocks,rockData,d=>{ const s=0.06+0.22*d.s*d.s; return {x:s*1.3,h:s*0.7,z:s,y:s*0.15}; });
+  put(tufts,tuftData,d=>{ const s=0.6+0.8*d.s; return {x:s,h:s,z:s,y:0.12*s}; });
+}
+// wheel contact points in car space (front axle at -x); the car drives towards -x, so the ground slides towards +x
+const CONTACT=[[X(CAR.FO),M(CAR.track)/2],[X(CAR.FO),-M(CAR.track)/2],[X(CAR.FO+CAR.WB),M(CAR.track)/2],[X(CAR.FO+CAR.WB),-M(CAR.track)/2]];
+function carPose(){
+  const h=CONTACT.map(([x,z])=>hgt(x-dist,z,amp));
+  const hf=(h[0]+h[1])/2, hr=(h[2]+h[3])/2, hp=(h[0]+h[2])/2, hn=(h[1]+h[3])/2;
+  return {pitch:Math.atan((hr-hf)/M(CAR.WB)), roll:-Math.atan((hp-hn)/M(CAR.track)), y:(hf+hr)/2};
+}
+const drive={mode:'idle', t:0, userCam:false};
+const DRV_SPEED=6;
+function stepDrive(dt){
+  let ts=0, ta=0;
+  if(drive.mode==='intro'){ drive.t+=dt; const t=drive.t;
+    ts=t<0.8?0:(t<10.5?DRV_SPEED:0); ta=t<3.2?0:(t<9?1:0);
+    if(t>11&&speed<0.05&&amp<0.02) drive.mode='idle';
+    if(!drive.userCam&&!camAnim){ const a=dt*0.07, p=camera.position, tg=controls.target, dx=p.x-tg.x, dz=p.z-tg.z;
+      p.x=tg.x+dx*Math.cos(a)-dz*Math.sin(a); p.z=tg.z+dx*Math.sin(a)+dz*Math.cos(a); camera.lookAt(tg); } }
+  else if(drive.mode==='free'){ ts=DRV_SPEED; ta=1; }
+  else if(drive.mode==='hw'){ ts=HW_SPEED; ta=0; }
+  const rT=drive.mode==='hw'?1:0, rOld=roadMix; roadMix+=(rT-roadMix)*Math.min(1,dt*1.5); if(Math.abs(roadMix-rT)<0.002) roadMix=rT;
+  flowMix+=(rT-flowMix)*Math.min(1,dt*(rT?0.7:2.5)); if(Math.abs(flowMix-rT)<0.002) flowMix=rT;
+  if(roadMix!==rOld) terDirty=true;
+  roadMat.opacity=roadMix; laneMat.opacity=roadMix*0.9; road.visible=dashes.visible=roadMix>0.001; edges.forEach(e=>e.visible=roadMix>0.001);
+  flowMat.opacity=flowMix*0.95; flowLines.visible=flowMix>0.001; if(flowLines.visible) stepFlow(dt); if(road.visible) placeDashes();
+  speed+=(ts-speed)*Math.min(1,dt*(ts>speed?0.8:1.2)); amp+=(ta-amp)*Math.min(1,dt*0.55);
+  if(drive.mode==='idle'&&speed<0.02) speed=0;
+  if(drive.mode==='idle'&&amp<0.002) amp=0;
+  dist+=speed*dt; wheelAng+=speed*dt/M(CAR.wheelR);
+  if(speed>0||amp>0||terDirty) updateTerrain();
+  const p=carPose(), k=Math.min(1,dt*7);
+  car.rotation.z+=(p.pitch-car.rotation.z)*k; car.rotation.x+=(p.roll-car.rotation.x)*k; car.position.y+=(p.y-car.position.y)*k;
+  const q=new THREE.Quaternion(), AX=new THREE.Vector3(1,0,0);
+  spinWheels.forEach(w=>{ w.obj.quaternion.copy(w.base).multiply(q.setFromAxisAngle(AX,w.sign*wheelAng)); });
+  const settling=Math.abs(car.rotation.z-p.pitch)+Math.abs(car.rotation.x-p.roll)+Math.abs(car.position.y-p.y)>1e-4;
+  return drive.mode!=='idle'||speed>0||amp>0||settling||(roadMix>0&&roadMix<1)||flowMix>0;
+}
+
+/* ---------- highway mode: road, airflow over the roof, fuel estimate ---------- */
+const HW_SPEED=24;            // visual ground speed in m/s; the fuel estimate uses the speed picked in the panel
+let roadMix=0, flowMix=0;
+const roadMat=new THREE.MeshStandardMaterial({roughness:0.9,metalness:0,transparent:true,opacity:0});
+const road=new THREE.Mesh(new THREE.PlaneGeometry(TER.W,7.4),roadMat); road.rotation.x=-Math.PI/2; road.position.y=0.006; road.receiveShadow=true; scene.add(road);
+const laneMat=new THREE.MeshBasicMaterial({transparent:true,opacity:0});
+const edges=[-3.5,3.5].map(z=>{ const m=new THREE.Mesh(new THREE.PlaneGeometry(TER.W,0.14),laneMat); m.rotation.x=-Math.PI/2; m.position.set(0,0.008,z); scene.add(m); return m; });
+const DASH=9, dashes=new THREE.InstancedMesh(new THREE.PlaneGeometry(3,0.12),laneMat,2*Math.ceil(TER.W/DASH)); scene.add(dashes);
+function placeDashes(){ let i=0; const n=Math.ceil(TER.W/DASH);
+  [-1.8,1.8].forEach(z=>{ for(let k=0;k<n;k++){ const x=((k*DASH+dist)%TER.W+TER.W)%TER.W-TER.W/2;
+    dummy.position.set(x,0.009,z); dummy.rotation.set(-Math.PI/2,0,0); dummy.scale.set(1,1,1); dummy.updateMatrix(); dashes.setMatrixAt(i++,dummy.matrix); } });
+  dashes.instanceMatrix.needsUpdate=true; }
+
+// roof-line profile of car + box A in car space (x mm from the front bumper, y mm), used to bend the streamlines
+const FX0=-1800, FX1=9200, FSTEP=25, FN=Math.round((FX1-FX0)/FSTEP)+1;
+const flowG=new Float32Array(FN), flowW=new Float32Array(FN);
+function carTop(x){
+  if(x<0||x>CAR.L) return 0;
+  if(x<1480) return belt(x)+30;
+  if(x<3990) return Math.max(roofLine(x)+22, x>CAR.railFrom&&x<CAR.railTo?1690:0);
+  if(x<4545) return 1625-(x-3995)*(530/550);
+  const t=(x-4545)/146; return 1095-45*t*t;
+}
+function buildFlow(){
+  const a=A(), f=curFront, raw=new Float32Array(FN);
+  for(let i=0;i<FN;i++){ const x=FX0+i*FSTEP; let y=carTop(x);
+    if(a&&x>=f&&x<=f+a.L){ const {h}=hullAt((x-f)/a.L,a.L,a.W,a.H,a.prof); y=Math.max(y,S.barTop+h); }
+    raw[i]=y; }
+  const sig=6, g1=new Float32Array(FN);   // smooth upstream curvature over ~150 mm
+  for(let i=0;i<FN;i++){ let s=0,w=0; for(let k=-3*sig;k<=3*sig;k++){ const j=i+k; if(j<0||j>=FN) continue; const ww=Math.exp(-k*k/(2*sig*sig)); s+=raw[j]*ww; w+=ww; } g1[i]=s/w; }
+  let prev=0; const drop=FSTEP*0.16;     // the flow cannot follow a steep tail: it separates and leaves a wake
+  for(let i=0;i<FN;i++){ const g=Math.max(g1[i],prev-drop); flowG[i]=g/1000; flowW[i]=(g-g1[i])/1000; prev=g; }
+}
+const flowAt=(arr,xm)=>{ const x=xm*1000+CAR.L/2, u=(x-FX0)/FSTEP; if(u<=0) return arr[0]; if(u>=FN-1) return arr[FN-1]; const i=Math.floor(u), t=u-i; return arr[i]*(1-t)+arr[i+1]*t; };
+const FLOW_Y=[1.0,1.15,1.3,1.45,1.6,1.75,1.9,2.05,2.25,2.5,2.8], FLOW_Z=[-0.32,0,0.32], PER=20;
+const XS=M(FX0)-CAR.L/2000, XE=M(FX1)-CAR.L/2000;
+const parts=[]; FLOW_Y.forEach((y0,li)=>FLOW_Z.forEach((z,zi)=>{ for(let k=0;k<PER;k++) parts.push({y0,z,ph:li*1.7+zi*0.9, x:XS+(XE-XS)*((k+((li*7+zi*3)%10)/10)/PER)}); }));
+const flowGeo=new THREE.BufferGeometry();
+const fPos=new Float32Array(parts.length*6), fCol=new Float32Array(parts.length*6);
+flowGeo.setAttribute('position',new THREE.BufferAttribute(fPos,3)); flowGeo.setAttribute('color',new THREE.BufferAttribute(fCol,3));
+const flowMat=new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0,depthWrite:false});
+const flowLines=new THREE.LineSegments(flowGeo,flowMat); flowLines.frustumCulled=false; flowLines.renderOrder=5; car.add(flowLines);
+const cSlow=new THREE.Color('#3E7BE6'), cMid=new THREE.Color('#BFC7D1'), cFast=new THREE.Color('#E8553D'), cF=new THREE.Color();
+let flowT=0;
+function lineY(p,x){ const g=flowAt(flowG,x), w=flowAt(flowW,x); let y=Math.sqrt(p.y0*p.y0+g*g)+0.02;
+  return {y:y+w*0.35*Math.sin(flowT*9+x*7+p.ph)*Math.exp(-(y-g)/0.35), g, w}; }
+function stepFlow(dt){
+  flowT+=dt;
+  parts.forEach((p,i)=>{
+    const s0=lineY(p,p.x), sp=Math.max(0.35, 1+0.9*Math.pow(s0.g/Math.max(0.3,s0.y),3)-2.2*s0.w);
+    p.x+=dt*2.6*sp; if(p.x>XE){ p.x=XS; }
+    const tail=0.16*sp, a=lineY(p,p.x-tail), b=lineY(p,p.x);
+    fPos.set([p.x-tail,a.y,p.z, p.x,b.y,p.z], i*6);
+    const k=Math.min(1,Math.max(0,(sp-0.35)/1.5));
+    if(k<0.43) cF.copy(cSlow).lerp(cMid,k/0.43); else cF.copy(cMid).lerp(cFast,(k-0.43)/0.57);
+    fCol.set([cF.r*0.4,cF.g*0.4,cF.b*0.4, cF.r,cF.g,cF.b], i*6);
+  });
+  flowGeo.attributes.position.needsUpdate=true; flowGeo.attributes.color.needsUpdate=true;
+}
+
+/* fuel estimate: road load F = ½ρ·CdA·v² + rolling + drivetrain/aux; the box adds its own CdA.
+   Box Cd is estimated from its traced shape: a long, gently rising nose and a tapered tail lower it. */
+// air over the roof runs ~1.25x faster than the car, so the box sees ~1.6x the dynamic pressure (Q_ROOF)
+const RHO=1.2, CDA_CAR=0.36*2.62, MASS=1750, CRR=0.011, F_AUX=120, Q_ROOF=1.6, BARS_CDA=0.04*1.6, BARS_UNDER_BOX=0.02*1.6;
+function boxAero(box){
+  let n90=0.5, t90=0.5;
+  for(let t=0;t<=1;t+=0.005){ if(hullAt(t,box.L,box.W,box.H,box.prof).h/box.H>=0.9){ n90=t; break; } }
+  for(let t=1;t>=0;t-=0.005){ if(hullAt(t,box.L,box.W,box.H,box.prof).h/box.H>=0.9){ t90=1-t; break; } }
+  const nose=n90*box.L, tail=t90*box.L;
+  const cd=0.18+0.20*Math.exp(-nose/400)+0.08*Math.exp(-tail/350);
+  const area=M(box.W)*M(box.H)*0.8;
+  return {cd, area, cda:cd*area*Q_ROOF+BARS_UNDER_BOX, nose, tail};
+}
+function roadLoad(v,extra){ return 0.5*RHO*(CDA_CAR+extra)*v*v + CRR*MASS*9.81 + F_AUX; }
+function fuelDelta(extraCdA){
+  const v=S.hwSpeed/3.6, base=S.baseFuel*roadLoad(v,0)/roadLoad(110/3.6,0);
+  const pct=(roadLoad(v,extraCdA)-roadLoad(v,0))/roadLoad(v,0);
+  return {base, pct, dl:base*pct, rub:base*pct*10*S.fuelPrice};
+}
+
+/* ---------- theme ---------- */
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function applyTheme(){
+  scene.background=new THREE.Color(css('--stage'));
+  if(grid){scene.remove(grid); grid.geometry.dispose();}
+  grid=new THREE.GridHelper(14,14,new THREE.Color(css('--grid')),new THREE.Color(css('--grid')));
+  grid.position.y=0.001; grid.visible=false; scene.add(grid);
+  scene.fog=new THREE.Fog(new THREE.Color(css('--stage')),13,27);
+  cSoil.set(css('--soil')); cGrass.set(css('--grass')); rockMat.color.set(css('--rock')); roadMat.color.set(css('--asphalt')); laneMat.color.set(css('--lane')); tuftMat.color.set(css('--grass')).multiplyScalar(0.85); terDirty=true;
+  matB.color.set(css('--b')); edgeA.color.set(css('--a')); edgeB.color.set(css('--b')); if(ghost) matA.color.set(css('--a'));
+  limitMat.color.set(css('--bad')); limitEdgeMat.color.set(css('--bad'));
+}
+applyTheme();
+try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{applyTheme();kick();}); }catch(e){}
+new MutationObserver(()=>{applyTheme();kick();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+/* ---------- camera views ---------- */
+const VIEWS={ q:[[-5.8,3.4,5.6],[0,1.1,0]], side:[[0,1.3,8.2],[0,1.1,0]], rear:[[7.4,2.6,2.2],[0.6,1.4,0]], top:[[0.01,9.5,0.4],[0,1,0]] };
+let camAnim=null;
+function setView(k){
+  document.querySelectorAll('.views button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.view===k)));
+  const [p,t]=VIEWS[k];
+  camAnim={from:camera.position.clone(), to:new THREE.Vector3(...p), tf:controls.target.clone(), tt:new THREE.Vector3(...t), t:0};
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) camAnim.t=1;
+  kick();
+}
+camera.position.set(...VIEWS.q[0]); controls.target.set(...VIEWS.q[1]);
+document.querySelectorAll('.views button').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+
+function resize(){
+  const r=stage.getBoundingClientRect();
+  renderer.setSize(r.width,r.height,false); camera.aspect=r.width/Math.max(1,r.height); camera.updateProjectionMatrix(); render();
+}
+new ResizeObserver(resize).observe(stage);
+
+let running=false;
+function kick(){ if(!running){running=true; requestAnimationFrame(loop);} }
+function render(){ renderer.render(scene,camera); }
+let lastT=0;
+function loop(now){
+  let busy=false;
+  const dt=Math.min(0.05,Math.max(0.001,((now||performance.now())-(lastT||now||performance.now()))/1000)); lastT=now||performance.now();
+  if(stepDrive(dt)) busy=true;
+  const ease=0.18;
+  if(Math.abs(curFront-targetFront)>0.5){curFront+= (targetFront-curFront)*ease; busy=true;} else curFront=targetFront;
+  boxGroup.position.set(X(curFront), M(S.barTop), 0);
+  const tgTarget=S.open?OPEN_ANG:0;
+  if(Math.abs(tgAngle-tgTarget)>0.002){tgAngle+=(tgTarget-tgAngle)*0.12; busy=true;} else tgAngle=tgTarget;
+  tgPivot.rotation.z=tgAngle; glbPivot.rotation.z=tgAngle;
+  if(camAnim){
+    camAnim.t=Math.min(1,camAnim.t+0.06); const e=1-Math.pow(1-camAnim.t,3);
+    camera.position.lerpVectors(camAnim.from,camAnim.to,e); controls.target.lerpVectors(camAnim.tf,camAnim.tt,e);
+    if(camAnim.t>=1) camAnim=null; busy=true;
+  }
+  if(controls.update()) busy=true;
+  render();
+  if(busy) requestAnimationFrame(loop); else { running=false; lastT=0; }
+}
+controls.addEventListener('change',kick);
+controls.addEventListener('start',()=>{ drive.userCam=true; kick(); });
+
+/* ---------- UI ---------- */
+const $=id=>document.getElementById(id);
+const fmt=n=>Math.round(n).toLocaleString('ru-RU');
+const cm=mm=>Math.round(mm/10);
+const dimsTxt=(l,w,h,est)=>`${est?'≈':''}${cm(l)}×${cm(w)}×${cm(h)}`;
+const A=()=>byId(S.sel), B=()=>S.cmp?byId(S.cmp):null;
+function bFront(){ const a=A(), b=B(); if(!b) return 0;
+  switch(S.align){case 'rear':return S.front+a.L-b.L; case 'center':return S.front+(a.L-b.L)/2; case 'front':return S.front; default:return autoFront(b);} }
+
+/* items */
+const allItems=()=>ITEMS.concat(S.custom);
+const itemById=id=>allItems().find(i=>i.id===id);
+const selItems=()=>S.items.map(itemById).filter(Boolean);
+function insideHull(box,x,y,z){
+  const t=x/box.Li; if(t<0||t>1) return false;
+  const {h,w,b,yc}=hullAt(t,box.Li,box.Wi,box.Hi,box.prof); const az=Math.abs(z);
+  if(az>w/2) return false;
+  const c=Math.pow(2*az/w,2), s=Math.sqrt(Math.max(0,1-c*c));
+  const ytop=yc+(h-yc)*Math.pow(s,0.62), ybot=yc-(yc-b)*Math.pow(s,0.2);
+  return (y<=1 ? ybot<=15 : y>=ybot) && y<=ytop; // floor is flat apart from a small edge radius
+}
+function fitsAt(box,x0,o){
+  const [l,w,h]=o;
+  for(const x of [x0+1,x0+l/2,x0+l-1]) for(const y of [1,h]) if(!insideHull(box,x,y,w/2)) return false;
+  return true;
+}
+function orients(d){ const [a,b,c]=d; const all=[[a,b,c],[a,c,b],[b,a,c],[b,c,a],[c,a,b],[c,b,a]];
+  const seen=new Set(); return all.filter(o=>{const k=o.join(); if(seen.has(k)) return false; seen.add(k); return true;}); }
+function bestFit(box,d,from){
+  let best=null;
+  for(const o of orients(d)){
+    if(o[0]>box.Li||o[1]>box.Wi||o[2]>box.Hi) continue;
+    for(let x0=from; x0+o[0]<=box.Li; x0+=10){
+      if(fitsAt(box,x0,o)){ const end=x0+o[0];
+        if(!best||end<best.end-1||(Math.abs(end-best.end)<=1&&o[2]<best.o[2])) best={x0,o,end};
+        break; }
+    }
+  }
+  return best;
+}
+function fitState(box,item){
+  const f=bestFit(box,item.d,0); if(!f) return {st:'bad',txt:'не влезает'};
+  const roomy=bestFit(box,item.d.map(v=>v+30),0);
+  return {st:roomy?'good':'warn', txt:roomy?'влезает':'впритык', f};
+}
+function pack(box,items){
+  let cur=0; return items.map(it=>{ const f=bestFit(box,it.d,cur); if(!f) return {it,fail:true}; cur=f.end+10; return Object.assign({it},f); });
+}
+/* item models: simple shapes built inside each item's real outer size (x = length, z = width, y = height),
+   so what you see fills exactly the space the fit check uses */
+const itemMats={
+  tire:new THREE.MeshStandardMaterial({color:0x1b1d20,roughness:0.9}),
+  metal:new THREE.MeshStandardMaterial({color:0xa9b0b8,metalness:0.7,roughness:0.35}),
+  dark:new THREE.MeshStandardMaterial({color:0x2c3036,roughness:0.6}),
+  card:new THREE.MeshStandardMaterial({color:0xC69C6D,roughness:0.85}),
+  tape:new THREE.MeshStandardMaterial({color:0xE9DCC3,roughness:0.6}),
+};
+const colorMats={};
+function cMat(c){ return colorMats[c]||(colorMats[c]=new THREE.MeshStandardMaterial({color:c,roughness:0.55,metalness:0.05})); }
+function kindOf(it){
+  if(it.custom) return 'carton';
+  return ({yoyo:'stroller',airz:'stroller',bike16:'bike',bike16t:'bike',suitL:'suitcase',suitM:'suitcase',cabin:'suitcase',
+           duffel:'duffel',tent:'tent',ski:'ski',snow:'snow'})[it.id]||'carton';
+}
+function itemModel(it){
+  const L=M(it.d[0]), W=M(it.d[1]), H=M(it.d[2]), g=new THREE.Group(), main=cMat(it.color);
+  const add=(geo,mat,x,y,z,rx,ry,rz)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(x||0,y||0,z||0); m.rotation.set(rx||0,ry||0,rz||0); m.castShadow=true; g.add(m); return m; };
+  const box=(l,h,w,mat,x,y,z)=>add(new THREE.BoxGeometry(l,h,w),mat,x,y,z);
+  const tube=(a,b,r,mat)=>{ const A=new THREE.Vector3(...a), B=new THREE.Vector3(...b), d=B.clone().sub(A);
+    const m=add(new THREE.CylinderGeometry(r,r,d.length(),10),mat); m.position.copy(A).add(B).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize()); return m; };
+  const wheelZ=(r,t,mat,x,y,z)=>add(new THREE.TorusGeometry(r-t,t,8,28),mat,x,y,z);
+  const disc=(r,t,mat,x,y,z)=>add(new THREE.CylinderGeometry(r,r,t,24),mat,x,y,z,Math.PI/2,0,0);
+  const x0=-L/2, y0=-H/2, z0=-W/2;
+  switch(kindOf(it)){
+    case 'suitcase': { // lying on its back: length = suitcase height, height = thickness
+      const wr=Math.min(0.03,H*0.12);
+      box(L-wr*2,H,W,main,-wr,0,0);
+      [-1,1].forEach(s=>{ disc(wr,0.02,itemMats.tire,L/2-wr,y0+wr,s*(W/2-0.04)); });
+      tube([-L/2+0.01,0,-0.07],[-L/2+0.01,0,0.07],0.012,itemMats.dark);
+      tube([L/2-wr*2-0.01,H*0.15,-W*0.3],[L/2-wr*2-0.01,H*0.15,W*0.3],0.008,itemMats.metal);
+      box(L-wr*2+0.004,0.008,W+0.004,itemMats.dark,-wr,0,0); // zip line
+      break; }
+    case 'duffel': {
+      const r=Math.min(W,H)/2;
+      add(new THREE.CylinderGeometry(r,r,L-2*r*0.6,20),main,0,0,0,0,0,Math.PI/2);
+      [-1,1].forEach(s=>add(new THREE.SphereGeometry(r,20,12),main,s*(L/2-r),0,0).scale.set(0.6,1,1));
+      [-1,1].forEach(s=>add(new THREE.TorusGeometry(0.06,0.008,6,16,Math.PI),itemMats.dark,s*0.1,r*0.98,0));
+      break; }
+    case 'tent': {
+      const r=Math.min(W,H)/2;
+      add(new THREE.CylinderGeometry(r,r,L-0.02,20),main,0,0,0,0,0,Math.PI/2);
+      [-1,1].forEach(s=>add(new THREE.CylinderGeometry(r*0.9,r*0.9,0.01,20),itemMats.dark,s*(L/2-0.005),0,0,0,0,Math.PI/2));
+      [-0.25,0.25].forEach(f=>add(new THREE.TorusGeometry(r*1.01,0.006,6,24),itemMats.dark,f*L,0,0,0,Math.PI/2,0));
+      break; }
+    case 'ski': { // pair side by side, bindings up
+      const sw=W/2-0.01, th=0.022;
+      [-1,1].forEach(s=>{
+        const z=s*(W/4);
+        box(L*0.9,th,sw,main,-L*0.05+0.0,y0+th/2,z);
+        add(new THREE.BoxGeometry(L*0.1,th,sw),main,L*0.45-0.02,y0+0.035,z,0,0,0.45);
+        box(0.3,H-th-0.01,sw*0.7,itemMats.dark,-0.05,y0+th+(H-th)/2-0.005,z);
+      });
+      break; }
+    case 'snow': {
+      const th=0.018, r=W/2;
+      box(L-W,th,W,main,0,y0+th/2,0);
+      [-1,1].forEach(s=>add(new THREE.CylinderGeometry(r,r,th,24,1,false,0,Math.PI),main,s*(L/2-r),y0+th/2,0,0,s>0?0:Math.PI,0));
+      [-0.2,0.2].forEach(f=>box(0.26,H-th-0.005,W*0.75,itemMats.dark,f*L,y0+th+(H-th)/2,0));
+      break; }
+    case 'stroller': { // folded: seat pack, frame rails, wheels at one end, handle at the other
+      const wr=Math.min(H/2,0.08), wt=0.03;
+      box(L*0.78,H*0.7,W*0.86,main,-L*0.04,y0+H*0.42,0);
+      [-1,1].forEach(s=>{ tube([x0+0.02,y0+H*0.5,s*(W/2-0.02)],[L/2-wr,y0+wr,s*(W/2-0.02)],0.011,itemMats.metal);
+        wheelZ(wr,wt,itemMats.tire,L/2-wr,y0+wr,s*(W/2-wt));
+        wheelZ(wr*0.8,wt,itemMats.tire,L/2-wr*2.4,y0+wr*0.8,s*(W/2-wt*2.5)); });
+      tube([x0+0.012,y0+H*0.6,-W/2+0.02],[x0+0.012,y0+H*0.6,W/2-0.02],0.014,itemMats.dark);
+      break; }
+    case 'bike': { // upright 16" kids bike: length × handlebar width × height
+      const R=Math.min(0.205,H*0.32), t=0.026;
+      const rx=x0+R, fx=L/2-R, hy=y0+R;
+      [rx,fx].forEach(x=>{ wheelZ(R,t,itemMats.tire,x,hy,0); disc(0.03,0.06,itemMats.dark,x,hy,0);
+        for(let k=0;k<8;k++){ const a=k/8*Math.PI*2; tube([x,hy,0],[x+Math.cos(a)*(R-t*2),hy+Math.sin(a)*(R-t*2),0],0.003,itemMats.metal); } });
+      const bb=[rx+(fx-rx)*0.42,hy-0.02,0], seat=[rx+(fx-rx)*0.30,y0+H*0.80,0], head=[fx-0.12,y0+H*0.78,0], headLow=[fx-0.08,y0+H*0.55,0];
+      tube([rx,hy,0],bb,0.014,main); tube(bb,seat,0.018,main); tube([rx,hy,0],[seat[0]+0.02,seat[1]-0.12,0],0.012,main);
+      tube(bb,headLow,0.02,main); tube([seat[0]+0.02,seat[1]-0.1,0],head,0.018,main); tube(headLow,head,0.02,main);
+      tube(headLow,[fx,hy,0],0.014,itemMats.metal);
+      box(0.2,0.05,0.12,itemMats.dark,seat[0],seat[1]+0.025,0);
+      const stem=[head[0]-0.03,y0+H-0.02,0]; tube(head,stem,0.014,itemMats.metal);
+      add(new THREE.CylinderGeometry(0.012,0.012,W-0.04,10),itemMats.dark,stem[0],stem[1],0,Math.PI/2,0,0);
+      tube([bb[0],bb[1],-0.09],[bb[0],bb[1],0.09],0.008,itemMats.dark);
+      [-1,1].forEach(s=>box(0.09,0.02,0.04,itemMats.dark,bb[0]+s*0.06,bb[1]+s*0.06,s*0.1));
+      break; }
+    default: { // carton for user items
+      box(L,H,W,itemMats.card,0,0,0);
+      box(L+0.002,0.004,0.05,itemMats.tape,0,H/2,0);
+      [-1,1].forEach(s=>box(0.004,H*0.3,0.05,itemMats.tape,s*L/2,H*0.35,0));
+    }
+  }
+  return g;
+}
+// turn a model built in its native size so it matches the orientation the packer chose
+function orientModel(grp, d, o){
+  const src=[d[0],d[2],d[1]], dst=[o[0],o[2],o[1]], used=[false,false,false], R=[[0,0,0],[0,0,0],[0,0,0]];
+  for(let t=0;t<3;t++){ for(let s=0;s<3;s++){ if(!used[s]&&Math.abs(src[s]-dst[t])<0.5){ used[s]=true; R[t][s]=1; break; } } }
+  const det=R[0][0]*(R[1][1]*R[2][2]-R[1][2]*R[2][1])-R[0][1]*(R[1][0]*R[2][2]-R[1][2]*R[2][0])+R[0][2]*(R[1][0]*R[2][1]-R[1][1]*R[2][0]);
+  if(det<0){ for(let t=0;t<3;t++) R[t][0]*=-1; }
+  const m=new THREE.Matrix4().set(R[0][0],R[0][1],R[0][2],0, R[1][0],R[1][1],R[1][2],0, R[2][0],R[2][1],R[2][2],0, 0,0,0,1);
+  grp.quaternion.setFromRotationMatrix(m);
+}
+function disposeTree(o){ o.traverse(c=>{ if(c.geometry) c.geometry.dispose(); }); }
+function renderItems(){
+  if(itemsGroup.parent) itemsGroup.parent.remove(itemsGroup);
+  itemsGroup.children.slice().forEach(c=>{itemsGroup.remove(c); disposeTree(c);});
+  const inB=S.itemsIn==='B'&&B(); const box=inB?B():A();
+  (inB?cmpGroup:boxGroup).add(itemsGroup);
+  const res=pack(box,selItems());
+  res.forEach(r=>{
+    if(r.fail) return; const [l,w,h]=r.o;
+    const pos=new THREE.Vector3(M((box.L-box.Li)/2+r.x0+l/2), M((box.H-box.Hi)/2+h/2), 0);
+    const model=itemModel(r.it); orientModel(model, r.it.d, r.o); model.position.copy(pos); itemsGroup.add(model);
+    const g=new THREE.BoxGeometry(M(l)-0.004,M(h)-0.004,M(w)-0.004);
+    const e=new THREE.LineSegments(new THREE.EdgesGeometry(g), new THREE.LineBasicMaterial({color:r.it.color,transparent:true,opacity:0.55}));
+    g.dispose(); e.position.copy(pos); itemsGroup.add(e);
+  });
+  return {res,box};
+}
+
+/* boxes: most are drawn from the generic hull; a box with its own 3D model uses that mesh */
+const meshCache={};
+function boxMesh(box){
+  const c=meshCache[box.mesh]; if(c) return c.geo?c:null;
+  meshCache[box.mesh]={};
+  loadModel(box.mesh, g=>{
+    let geo=null; g.scene.traverse(o=>{ if(o.isMesh&&!geo) geo=o.geometry; });
+    if(!geo) return;
+    geo.computeVertexNormals();
+    meshCache[box.mesh]={geo, edges:new THREE.EdgesGeometry(geo,40)};
+    rebuild('A'); rebuild('B'); update();
+  });
+  return null;
+}
+function rebuild(which){
+  const g=which==='A'?boxGroup:cmpGroup, box=which==='A'?A():B();
+  g.children.filter(c=>c!==itemsGroup).forEach(c=>{g.remove(c); if(!c.userData.shared) c.geometry.dispose();});
+  if(!box) return;
+  const mat=which==='A'?matA:matB, edge=which==='A'?edgeA:edgeB;
+  const own=box.mesh?boxMesh(box):null;
+  let m, line;
+  if(own){
+    m=new THREE.Mesh(own.geo, mat); line=new THREE.LineSegments(own.edges, edge);
+    m.userData.shared=line.userData.shared=true;
+  } else {
+    const geo=boxGeometry(box.L,box.W,box.H,box.prof);
+    m=new THREE.Mesh(geo, mat); line=contour(geo, edge);
+  }
+  m.castShadow=which==='A'; m.receiveShadow=which==='A'; g.add(m); g.add(line);
+  line.visible=ghost||which==='B';
+}
+/* box pickers over the 3D view */
+const CHEV='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>';
+const optHtml=(b,sel)=>`<button class="opt" role="option" data-id="${b.id}" aria-selected="${sel}"><span class="br">${b.brand}</span><span class="md">${b.model}</span><span class="dm">${b.V} л · ${dimsTxt(b.L,b.W,b.H)}</span></button>`;
+function closePops(except){ [['popA','chipA'],['popB','chipB']].forEach(([p,c])=>{ if(p!==except){ $(p).hidden=true; $(c).setAttribute('aria-expanded','false'); } }); }
+function renderBoxButtons(){
+  const a=A();
+  $('chipA').innerHTML=`<span class="badge a">A</span><span class="tx"><span class="nm">${a.brand} ${a.model}</span><span class="sb">${a.V} л · ${dimsTxt(a.L,a.W,a.H)}</span></span>${CHEV}`;
+  $('popA').innerHTML='<div class="poph">Бокс A</div>'+BOXES.map(b=>optHtml(b,b.id===S.sel)).join('');
+  $('popA').querySelectorAll('.opt').forEach(el=>el.addEventListener('click',()=>{ closePops(); selectBox(el.dataset.id); }));
+}
+function renderCmpSelect(){
+  const b=B();
+  $('chipB').innerHTML=b?`<span class="badge b">B</span><span class="tx"><span class="nm">${b.brand} ${b.model}</span><span class="sb">${b.V} л · ${dimsTxt(b.L,b.W,b.H)}</span></span>${CHEV}`
+    :`<span class="badge b">B</span><span class="tx"><span class="nm">Сравнить</span><span class="sb">второй бокс</span></span>${CHEV}`;
+  $('popBList').innerHTML='<div class="poph">Бокс B для сравнения</div><button class="opt" role="option" data-id="" aria-selected="'+(!b)+'"><span class="md">Не сравнивать</span></button>'
+    +BOXES.filter(x=>x.id!==S.sel).map(x=>optHtml(x,x.id===S.cmp)).join('');
+  $('popBList').querySelectorAll('.opt').forEach(el=>el.addEventListener('click',()=>{ S.cmp=el.dataset.id; store.set('cmp',S.cmp); rebuild('B'); renderBoxButtons(); renderCmpSelect(); update(); if(!S.cmp) closePops(); }));
+}
+['A','B'].forEach(k=>$('chip'+k).addEventListener('click',()=>{ const p=$('pop'+k), open=p.hidden; closePops(); p.hidden=!open; $('chip'+k).setAttribute('aria-expanded',String(open)); if(open){ const sl=p.querySelector('[aria-selected="true"]'); if(sl) sl.scrollIntoView({block:'nearest'}); } }));
+const camBtn=$('camBtn'), viewsEl=$('views');
+function setViews(open){ viewsEl.classList.toggle('open',open); camBtn.setAttribute('aria-expanded',String(open)); }
+camBtn.addEventListener('click',()=>setViews(!viewsEl.classList.contains('open')));
+viewsEl.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>setTimeout(()=>setViews(false),250)));
+document.addEventListener('pointerdown',e=>{ if(!e.target.closest('#picks')) closePops(); if(!e.target.closest('.tl')) setViews(false); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closePops(); setViews(false); } });
+$('moreBtn').addEventListener('click',()=>document.querySelector('.panel').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}));
+function selectBox(id){
+  S.sel=id; if(S.cmp===id) S.cmp=''; store.set('sel',id); store.set('cmp',S.cmp);
+  rebuild('A'); rebuild('B'); S.front=autoFront(A()); targetFront=S.front;
+  renderBoxButtons(); renderCmpSelect(); update();
+}
+function chip(state,text){return `<span class="chip ${state}">${text}</span>`;}
+const overTxt=o=>o>0?`${cm(o)} см`:'нет';
+
+function renderItemChips(){
+  $('items').innerHTML=allItems().map(it=>`<button class="ic" data-id="${it.id}" aria-pressed="${S.items.includes(it.id)}">
+    <span class="dot" style="background:${it.color}"></span>${it.name}<span class="dm">${dimsTxt(it.d[0],it.d[1],it.d[2],it.est)}</span>${it.custom?`<span class="rm" data-rm="${it.id}" role="button" aria-label="Удалить">×</span>`:''}</button>`).join('');
+  $('items').querySelectorAll('.ic').forEach(el=>el.addEventListener('click',e=>{
+    const rm=e.target.closest('[data-rm]');
+    if(rm){ S.custom=S.custom.filter(c=>c.id!==rm.dataset.rm); S.items=S.items.filter(i=>i!==rm.dataset.rm); }
+    else { const id=el.dataset.id; S.items=S.items.includes(id)?S.items.filter(i=>i!==id):S.items.concat(id); }
+    store.set('items',S.items); store.set('custom',S.custom); renderItemChips(); update();
+  }));
+}
+
+function update(){
+  const a=A(), b=B(); const [lo,hi]=frontLimits(a);
+  const pos=$('pos'); pos.min=lo; pos.max=Math.max(lo,hi); S.front=Math.max(lo,Math.min(Math.max(lo,hi),S.front)); pos.value=S.front;
+  targetFront=S.front;
+  $('posVal').textContent=`нос бокса A: ${fmt(S.front)} мм от бампера`;
+  const eA=evaluate(a,S.front);
+  const bf=b?bFront():0, eB=b?evaluate(b,bf):null;
+  if(b) cmpGroup.position.set(X(bf), M(S.barTop)+0.002, 0);
+  cmpGroup.visible=!!b;
+  setGhost(!!b || S.items.length>0);
+
+  $('alignWrap').hidden=!b; $('cmpSec').hidden=!b; $('showIn').hidden=!b;
+  document.querySelectorAll('#alignWrap button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.align===S.align)));
+  document.querySelectorAll('#showIn button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.in===(b?S.itemsIn:'A'))));
+
+  if(b){
+    const tgT=e=>`${chip(tgState(e.tg),tgText(e.tg))}`;
+    const rows=[
+      ['Снаружи, см', dimsTxt(a.L,a.W,a.H), dimsTxt(b.L,b.W,b.H)],
+      ['Внутри, см', dimsTxt(a.Li,a.Wi,a.Hi,a.est), dimsTxt(b.Li,b.Wi,b.Hi,b.est)],
+      ['Объём заявлен', a.V+' л', b.V+' л'],
+      ['Объём по форме', `${a.prof?'':'≈'}${Math.round(cavityLitres(a))} л`, `${b.prof?'':'≈'}${Math.round(cavityLitres(b))} л`],
+      ['Высота машины', fmt(eA.total)+' мм', fmt(eB.total)+' мм'],
+      ['Дверь багажника', tgT(eA), tgT(eB)],
+      ['Свес над лобовым', overTxt(eA.over), overTxt(eB.over)],
+    ];
+    $('cmpBody').innerHTML=rows.map(r=>`<tr><th scope="row">${r[0]}</th><td class="n">${r[1]}</td><td class="n">${r[2]}</td></tr>`).join('');
+    $('cmpHead').innerHTML=`<tr><th></th><th class="n"><span class="badge a">A</span> ${a.model}</th><th class="n"><span class="badge b">B</span> ${b.model}</th></tr>`;
+    const d=(v,more,less)=>v===0?null:`${v>0?more:less} на ${Math.abs(cm(v))} см`;
+    const parts=[d(b.L-a.L,'длиннее','короче'),d(b.W-a.W,'шире','уже'),d(b.H-a.H,'выше','ниже')].filter(Boolean);
+    const inner=d(b.Hi-a.Hi,'выше','ниже');
+    $('cmpNote').textContent=`Снаружи B ${parts.length?parts.join(', '):'такого же размера'}${inner?`, внутри по высоте ${inner}`:''}.`;
+  }
+
+  // items
+  const {res,box}=renderItems();
+  const its=selItems();
+  if(!its.length){ $('fitList').innerHTML='<p class="fine" style="margin:0">Выберите вещи выше, они появятся внутри бокса.</p>'; }
+  else {
+    $('fitList').innerHTML=`<div class="fit head"><span></span><span><span class="badge a">A</span></span>${b?'<span><span class="badge b">B</span></span>':''}</div>`+
+      its.map(it=>{ const fa=fitState(a,it), fb=b?fitState(b,it):null;
+        const how=fa.f?`в A ляжет как ${dimsTxt(fa.f.o[0],fa.f.o[1],fa.f.o[2])} (Д×Ш×В)`:'';
+        return `<div class="fit${b?'':' one'}"><span class="nm"><span class="dot" style="background:${it.color}"></span>${it.name}<small>${how}</small></span>${chip(fa.st,fa.txt)}${fb?chip(fb.st,fb.txt):''}</div>`;}).join('');
+    const failed=res.filter(r=>r.fail).map(r=>r.it.name);
+    $('fitList').innerHTML+=`<p class="fine">${failed.length?`Все вместе в ${box.model} в один ряд не помещаются: не встали ${failed.join(', ')}.`:`Все выбранные вещи встают в ${box.model} друг за другом по длине.`} Раскладка упрощённая: вещи не ставятся рядом и друг на друга.</p>`;
+  }
+
+  // A fit metrics
+  $('metrics').innerHTML=`
+    <div class="m"><div class="k">Высота машины с боксом ${chip(heightState(eA.total), eA.total>S.garage?'выше лимита':(eA.total>S.garage-50?'впритык':'проходит'))}</div><div class="v">${fmt(eA.total)} мм</div>
+      <div class="note">Лимит в настройках: ${fmt(S.garage)} мм. Полоса над машиной в 3D показывает этот потолок.</div></div>
+    <div class="m"><div class="k">Дверь багажника ${chip(tgState(eA.tg), tgText(eA.tg))}</div><div class="v">${eA.tg<0?'—':fmt(eA.tg)+' мм'}</div>
+      <div class="note">Минимальный зазор между открытой дверью со спойлером и боксом.</div></div>
+    <div class="m"><div class="k">Свес над лобовым ${chip(overState(eA.over), eA.over>550?'большой':'нормально')}</div><div class="v">${overTxt(eA.over)}</div></div>
+    <div class="m"><div class="k">Крепление на дуги ${chip(eA.mount?'good':'bad', eA.mount?'достаёт':'не достаёт')}</div><div class="v">${fmt(bars()[1]-bars()[0])} мм</div>
+      <div class="note">Бокс должен накрывать обе поперечины с запасом 10 см для креплений.</div></div>`;
+  $('metricsTitle').innerHTML=`Посадка бокса <span class="badge a">A</span>`;
+  $('hpill').innerHTML=`<span class="dot ${heightState(eA.total)}" style="margin:0"></span>${fmt(eA.total)} мм`; $('hpill').title='Высота машины с боксом A';
+  limitPlane.position.y=M(S.garage); limitEdge.position.y=M(S.garage);
+  limitMat.opacity = Math.max(eA.total, eB?eB.total:0)>S.garage?0.22:0.08;
+  placeBars();
+  renderTable();
+  renderFuel(); if(flowLines.visible||drive.mode==='hw') buildFlow();
+  kick();
+}
+function renderTable(){
+  $('tbody').innerHTML=BOXES.slice().sort((x,y)=>y.V-x.V).map(b=>{
+    const f=autoFront(b), e=evaluate(b,f);
+    return `<tr data-id="${b.id}" class="${b.id===S.sel?'sel':''}"><td>${b.brand} ${b.model}</td><td class="n">${b.V} л</td><td class="n">${b.prof?'':'≈'}${Math.round(cavityLitres(b))} л</td>
+      <td class="n">${dimsTxt(b.Li,b.Wi,b.Hi,b.est)}</td>
+      <td class="n"><span class="dot ${heightState(e.total)}"></span>${fmt(e.total)}</td>
+      <td><span class="dot ${e.mount?tgState(e.tg):'bad'}"></span>${e.mount?tgText(e.tg):'нет места'}</td></tr>`;
+  }).join('');
+  $('tbody').querySelectorAll('tr').forEach(tr=>tr.addEventListener('click',()=>selectBox(tr.dataset.id)));
+}
+$('pos').addEventListener('input',e=>{S.front=+e.target.value; update();});
+$('autoBtn').addEventListener('click',()=>{S.front=autoFront(A()); update();});
+document.querySelectorAll('#alignWrap button').forEach(x=>x.addEventListener('click',()=>{S.align=x.dataset.align; store.set('align',S.align); update();}));
+document.querySelectorAll('#showIn button').forEach(x=>x.addEventListener('click',()=>{S.itemsIn=x.dataset.in; update();}));
+$('cAdd').addEventListener('click',()=>{
+  const name=$('cName').value.trim()||'Моя вещь', d=['cL','cW','cH'].map(k=>parseFloat($(k).value));
+  if(d.some(v=>!(v>0&&v<400))){ $('cErr').textContent='Укажите длину, ширину и высоту в сантиметрах, от 1 до 400.'; return; }
+  $('cErr').textContent='';
+  const it={id:'c'+Date.now(), name, d:d.map(v=>Math.round(v*10)), color:ITEM_COLORS[(S.custom.length+3)%ITEM_COLORS.length], custom:true};
+  S.custom.push(it); S.items.push(it.id); store.set('custom',S.custom); store.set('items',S.items);
+  ['cName','cL','cW','cH'].forEach(k=>$(k).value=''); renderItemChips(); update();
+});
+$('tgBtn').addEventListener('click',()=>{S.open=!S.open; const t=$('tgBtn'), l=S.open?'Закрыть багажник':'Открыть багажник'; t.setAttribute('aria-pressed',String(S.open)); t.setAttribute('aria-label',l); t.title=l; kick();});
+['garage','barTop','barFront','spacing'].forEach(k=>{
+  const el=$(k); el.value=S[k];
+  el.addEventListener('change',()=>{const v=parseFloat(el.value); if(!isFinite(v)) {el.value=S[k]; return;} S[k]=v; store.set(k,v);
+    if(k!=='garage') S.front=autoFront(A()); update();});
+});
+$('colors').innerHTML=COLORS.map(([n,c])=>`<button aria-label="${n}" title="${n}" data-c="${c}" style="background:${c}" aria-pressed="${c===S.color}"></button>`).join('');
+$('colors').querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
+  S.color=btn.dataset.c; store.set('color',S.color); bodyMat.color.set(S.color); paintMats.forEach(m=>m.color.set(S.color));
+  $('colors').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===btn))); kick();
+}));
+
+/* full screen: native Fullscreen API where the browser allows it, otherwise the stage covers the window */
+const fsBtn=$('fsBtn');
+function setFsLabel(on){ const l=on?'Свернуть':'На весь экран'; fsBtn.setAttribute('aria-pressed',String(on)); fsBtn.setAttribute('aria-label',l); fsBtn.title=l;
+  fsBtn.querySelector('path').setAttribute('d', on?'M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5':'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5'); }
+function pseudoFull(on){ stage.classList.toggle('full',on); document.body.classList.toggle('lock',on); setFsLabel(on); resize(); kick(); }
+fsBtn.addEventListener('click',()=>{
+  if(document.fullscreenElement){ document.exitFullscreen().catch(()=>{}); return; }
+  if(stage.classList.contains('full')){ pseudoFull(false); return; }
+  if(stage.requestFullscreen){ stage.requestFullscreen().then(()=>{ setFsLabel(true); resize(); }).catch(()=>pseudoFull(true)); }
+  else pseudoFull(true);
+});
+document.addEventListener('fullscreenchange',()=>{ setFsLabel(!!document.fullscreenElement); resize(); kick(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&stage.classList.contains('full')) pseudoFull(false); });
+
+const offBtn=$('offBtn'), hwBtn=$('hwBtn');
+function setDrvBtn(){ const fr=drive.mode==='free', hw=drive.mode==='hw';
+  offBtn.setAttribute('aria-pressed',String(fr)); hwBtn.setAttribute('aria-pressed',String(hw));
+  offBtn.title=fr?'Остановиться':'Бездорожье'; offBtn.setAttribute('aria-label',offBtn.title);
+  hwBtn.title=hw?'Остановиться':'Трасса: обтекание и расход'; hwBtn.setAttribute('aria-label',hwBtn.title);
+  $('hud').hidden=!hw; }
+offBtn.addEventListener('click',()=>{ drive.mode=drive.mode==='free'?'idle':'free'; setDrvBtn(); kick(); });
+hwBtn.addEventListener('click',()=>{ const on=drive.mode!=='hw'; drive.mode=on?'hw':'idle'; if(on){ buildFlow(); setView('side'); renderFuel(); } setDrvBtn(); kick(); });
+document.querySelectorAll('#spdSeg button, #hudSpd button').forEach(b=>b.addEventListener('click',()=>{ S.hwSpeed=+b.dataset.v; store.set('hwSpeed',S.hwSpeed); renderFuel(); }));
+[['baseFuel',3,20],['fuelPrice',1,1000]].forEach(([k,lo,hi])=>{ const el=$(k); el.value=S[k]; el.addEventListener('change',()=>{ const v=parseFloat(el.value); if(!(v>=lo&&v<=hi)){ el.value=S[k]; return; } S[k]=v; store.set(k,v); renderFuel(); }); });
+function renderFuel(){
+  document.querySelectorAll('#spdSeg button, #hudSpd button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.v===S.hwSpeed)));
+  const rows=[['Только поперечины',BARS_CDA,null]]; const a=A(), b=B();
+  [a,b].forEach((x,i)=>{ if(x){ const ae=boxAero(x); rows.push([`<span class="badge ${i?'b':'a'}" style="margin:0 6px 0 0">${i?'B':'A'}</span>${x.model}`, ae.cda, ae]); } });
+  const f1=v=>v.toLocaleString('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1});
+  $('fuelBody').innerHTML=rows.map(([n,cda,ae])=>{ const r=fuelDelta(cda); return `<tr><th scope="row">${n}${ae?`<small style="display:block;font:400 .72rem var(--mono);color:var(--muted)">Cd≈${ae.cd.toFixed(2)} · лоб ${ae.area.toFixed(2)} м²</small>`:''}</th><td class="n">+${f1(r.dl)}</td><td class="n">+${Math.round(r.pct*100)}%</td><td class="n">${fmt(r.rub)}</td></tr>`; }).join('');
+  const base=fuelDelta(0).base;
+  $('hudRows').innerHTML=rows.map(([n,cda])=>{ const r=fuelDelta(cda); return `<div class="r"><span class="n">${n.replace('Только поперечины','Поперечины')}</span><span class="v">+${f1(r.dl)} л</span><span class="p">+${Math.round(r.pct*100)}%</span></div>`; }).join('')+`<div class="base">на 100 км · без бокса ≈ ${f1(base)} л${rows.length>1?` · с A ≈ ${fmt(fuelDelta(rows[1][1]).rub)} ₽ лишних на 1000 км`:''}</div>`;
+  $('fuelNote').textContent=`Без бокса при ${S.hwSpeed} км/ч ≈ ${f1(base)} л/100 км. Оценка по упрощённой модели сопротивления воздуха, а не замер: сопротивление бокса считается по его лобовой площади и форме носа и хвоста, расход растёт пропорционально нагрузке на дорогу. Реальная прибавка зависит от ветра, загрузки и манеры езды, но порядок цифр и разница между боксами показательны.`;
+}
+// opening drive: starts once the detailed car is in (or after 4 s), skipped for reduced motion
+let introDone=false;
+function startIntro(){ if(introDone) return; introDone=true;
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if(drive.mode==='idle'){ drive.mode='intro'; drive.t=0; kick(); } }
+setTimeout(startIntro,4000);
+
+renderItemChips();
+loadCarModel();
+selectBox(S.sel);
+curFront=targetFront;
+resize();
+kick();
+})();
+
+</script>
+
+</body></html>
