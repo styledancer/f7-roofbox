@@ -839,7 +839,7 @@ function applyRims(){
   if(rimGeo[S.rim]) return put(rimGeo[S.rim]);
   loadModel(r.model, g=>{ let src=null; g.scene.traverse(o=>{ if(o.isMesh&&!src) src=o; }); if(!src) return;
     let mat=null;
-    if(r.textured){ const t=src.material; mat=new THREE.MeshPhysicalMaterial({map:t.map, normalMap:t.normalMap, metalness:0.55, roughness:0.62, clearcoat:0.15, clearcoatRoughness:0.5}); if(mat.normalMap) mat.normalScale.set(1,-1); }
+    if(r.textured){ const t=src.material; mat=new THREE.MeshPhysicalMaterial({map:t.map, normalMap:t.normalMap, color:new THREE.Color(1.9,1.9,1.9), metalness:0.3, roughness:0.68, clearcoat:0.1, clearcoatRoughness:0.6}); if(mat.normalMap) mat.normalScale.set(1,-1); }
     const key=Object.keys(RIMS).find(k=>RIMS[k]===r); rimGeo[key]={geo:src.geometry,mat}; if(RIMS[S.rim]===r) put(rimGeo[key]); });
 }
 // crossbars
