@@ -330,7 +330,7 @@ h2 .badge{margin-left:4px}
       <div class="snapm" id="snapM" role="dialog" aria-modal="true" aria-label="AI-снимок" hidden>
         <div class="snapc">
           <div class="snapv"><img id="snapImg" alt="Снимок машины с боксом на фоне сгенерированного пейзажа"><div class="snapw glass" id="snapWait" role="status"><i class="spin"></i><span id="snapWaitTx">Kandinsky рисует пейзаж…</span></div></div>
-          <div class="snapbar"><div class="seg" id="snapVar" role="group" aria-label="Вариант" hidden style="margin:0 auto 0 0"><button data-v="whole" aria-pressed="true">Цельное фото</button><button data-v="exact" aria-pressed="false">Точная модель</button></div><button class="mini pri" id="snapShare" disabled>Поделиться</button><button class="mini" id="snapAgain" disabled>Ещё вариант</button><button class="mini" id="snapClose">Закрыть</button></div>
+          <div class="snapbar"><div class="seg" id="snapVar" role="group" aria-label="Вариант" hidden style="margin:0 auto 0 0"><button data-v="whole" aria-pressed="true">Точная машина</button><button data-v="ai" aria-pressed="false">Как нарисовал ИИ</button></div><button class="mini pri" id="snapShare" disabled>Поделиться</button><button class="mini" id="snapAgain" disabled>Ещё вариант</button><button class="mini" id="snapClose">Закрыть</button></div>
           <details><summary>Промт для нейросети</summary><p class="fine" id="snapPrompt"></p></details>
         </div>
       </div>
@@ -1986,6 +1986,19 @@ async function fbCall(path,opt){
 }
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 let snapJob=0;
+async function cfScene(layer,w,h){
+  // reference: the fitted car on a plain grey card, scaled under 512 px as the model requires
+  const ref=document.createElement('canvas'); ref.width=w; ref.height=h; const rx=ref.getContext('2d');
+  rx.fillStyle='#9a9a9a'; rx.fillRect(0,0,w,h); rx.drawImage(layer,0,0);
+  const k=Math.min(1,511/Math.max(w,h)), sm=document.createElement('canvas'); sm.width=Math.round(w*k); sm.height=Math.round(h*k); sm.getContext('2d').drawImage(ref,0,0,sm.width,sm.height);
+  const blob=await new Promise(r=>sm.toBlob(r,'image/jpeg',0.92)), sw=sunWordsEn();
+  const prompt='Image 0 shows a '+carWordsEn()+' on a plain grey background. Create a photorealistic professional automotive photograph in which exactly this car, at exactly the same position, size and camera angle in the frame, is parked on '+SNAP_EN[S.snapScn]+'. '+SNAP_EN_L[S.snapLight]+', '+sw.text+'. The ground surface continues under the car and all four tyres stand on it, with soft contact shadows under the tyres and the car shadow falling '+sw.to+'. Eye-level camera from about 1.4 m, 35mm lens, the horizon behind the car. Do not move, resize or change the car. No other cars, no people, no text.';
+  const fd=new FormData(); fd.append('prompt',prompt); fd.append('input_image_0',new File([blob],'car.jpg',{type:'image/jpeg'})); fd.append('width',String(w)); fd.append('height',String(h));
+  const acc=await cfAccount();
+  const d=await cfJson('https://api.cloudflare.com/client/v4/accounts/'+encodeURIComponent(acc)+'/ai/run/@cf/black-forest-labs/flux-2-klein-4b',{method:'POST',headers:{'Authorization':'Bearer '+cfTok()},body:fd});
+  const img=(d.result&&d.result.image)||d.image; if(!img) throw new Error('Пустой ответ FLUX.2');
+  return {url:img.startsWith('data:')?img:'data:image/jpeg;base64,'+img, prompt};
+}
 async function cfHarmonize(montageUrl,w,h){
   // klein accepts reference images up to 512 px: send a scaled copy of the montage as image 0
   const im=await loadImg(montageUrl), k=Math.min(1,511/Math.max(im.width,im.height)), c=document.createElement('canvas');
@@ -2127,20 +2140,27 @@ async function takeSnap(){
   $('snapPrompt').textContent=prompt;
   $('snapImg').src=composite(null,layer,w,h); lastSnap=null; snapVariants=null; $('snapVar').hidden=true;
   if(!isNative){ snapUI('preview'); return; }
-  snapUI('wait',cf?'FLUX рисует пейзаж, несколько секунд…':'Kandinsky рисует пейзаж, обычно 20–60 секунд…');
+  snapUI('wait',cf?'FLUX строит сцену вокруг машины, несколько секунд…':'Kandinsky рисует пейзаж, обычно 20–60 секунд…');
   try{
+    if(cf){
+      // one pass: the car, already placed in the frame, is the reference; the model builds the scene, ground and shadows around it
+      let gen=null;
+      try{ gen=await cfScene(layer,w,h); }catch(e1){ if(job!==snapJob) return; toast('<b>Сцена вокруг машины не получилась</b>Рисую фон отдельно. '+String(e1.message||e1).replace(/</g,'&lt;').slice(0,140)); }
+      if(job!==snapJob) return;
+      if(gen){
+        const img=await loadImg(gen.url), env=envFromImage(img);
+        const lit=renderCarLayer(w,h,{cam:camSnap,env,sky:avgColor(img,0,0.4),gnd:avgColor(img,0.6,1)}); env.dispose();
+        const fitLit=fitCar(lit,w,h);
+        snapVariants={whole:await keepExactCar(gen.url,fitLit,w,h), ai:gen.url};
+        $('snapPrompt').textContent=gen.prompt; $('snapVar').hidden=false; showVariant('whole'); snapUI('done'); return;
+      }
+    }
     const bg=cf?await cfFlux(prompt):await kandinsky(prompt,w,h,job,i=>{ if(job===snapJob) $('snapWaitTx').textContent=i<10?'Kandinsky рисует пейзаж, обычно 20–60 секунд…':'Ещё рисует, очередь на сервисе… '+(3*(i+1))+' с'; });
     if(job!==snapJob) return;
     const img=await loadImg(bg);
     const env=envFromImage(img);
     const lit=renderCarLayer(w,h,{cam:camSnap,env,sky:avgColor(img,0,0.4),gnd:avgColor(img,0.6,1)}); env.dispose();
-    const fitLit=fitCar(lit,w,h); const montage=composite(img,fitLit.canvas,w,h); snapVariants={exact:montage}; lastSnap=montage; $('snapImg').src=montage; $('snapVar').hidden=true;
-    if(cf){
-      snapUI('wait','Вписываю машину в кадр: свет, тени, отражения…');
-      try{ const hm=await cfHarmonize(montage,w,h); if(job!==snapJob) return;
-        snapVariants.whole=await keepExactCar(hm.url,fitLit,w,h); $('snapPrompt').textContent=prompt+'\n\nВторой шаг (FLUX.2): '+hm.prompt; $('snapVar').hidden=false; showVariant('whole');
-      }catch(e2){ if(job!==snapJob) return; toast('<b>Цельное фото не получилось</b>Показана точная модель. '+String(e2.message||e2).replace(/</g,'&lt;').slice(0,140)); }
-    }
+    const fitLit=fitCar(lit,w,h); const montage=composite(img,fitLit.canvas,w,h); snapVariants={whole:montage}; lastSnap=montage; $('snapImg').src=montage; $('snapVar').hidden=true;
     snapUI('done');
   }catch(e){
     if(job!==snapJob||e.message==='cancel') return;
