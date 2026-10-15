@@ -2022,14 +2022,14 @@ function wxTargets(){
     return Object.assign(z, wmo(d.weather_code), {night:d.is_day?0:1, wind:d.wind_speed_10m||0, windDir:d.wind_direction_10m||0}); }
   return Object.assign(z,{clear:{}, cloudy:{cloud:0.95}, rain:{cloud:0.95, rain:0.8, wind:4}, snow:{cloud:0.9, snow:0.8, wind:2}, fog:{cloud:0.8, fog:1}, night:{night:1, cloud:0.2}}[m]);
 }
-async function fetchWeather(){
+async function fetchWeather(first){
   if(WX.mode!=='live') return;
   try{
     const u='https://api.open-meteo.com/v1/forecast?latitude='+WX_CITY.lat+'&longitude='+WX_CITY.lon+'&current=temperature_2m,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,precipitation,is_day&wind_speed_unit=ms&timezone=auto';
     const r=await fetch(u); if(!r.ok) throw new Error(r.status); const d=await r.json();
     if(!d||!d.current) throw new Error('empty'); WX.data=d; WX.err=false; store.set('wxData',d);
   }catch(e){ WX.err=true; }
-  wxApply();
+  wxApply(first);
 }
 // rain streaks and snow flakes live in a box around the car; the ground slides under them while driving
 const PN=1400, pGeo=new THREE.BufferGeometry(), pPos=new Float32Array(PN*6), pSeed=new Float32Array(PN*3);
@@ -2042,7 +2042,7 @@ const snowMat=new THREE.PointsMaterial({color:0xffffff, size:0.06, transparent:t
 const snowPts=new THREE.Points(snowGeo,snowMat); snowPts.frustumCulled=false; snowPts.visible=false; scene.add(snowPts);
 let wxT=0;
 function stepWeather(dt){
-  const t=wxTargets(), c=WX.cur, k=Math.min(1,dt*1.2); let moving=false;
+  const t=wxTargets(), c=WX.cur, k=Math.min(1,dt*3); let moving=false;
   ['cloud','rain','snow','fog','night'].forEach(n=>{ const d=t[n]-c[n]; if(Math.abs(d)>0.002){ c[n]+=d*k; moving=true; } else c[n]=t[n]; });
   WX.k=Object.assign({},c,{wind:t.wind, windDir:t.windDir});
   if(moving) applyWeatherScene();
@@ -2092,11 +2092,11 @@ function wxRender(){
   $('wxPill').innerHTML=ic+txt;
   $('wxMenu').innerHTML=Object.entries(WX_PRESETS).map(([k,v])=>`<button data-m="${k}" aria-pressed="${k===m}">${v}</button>`).join('');
 }
-function wxApply(){ wxRender(); kick(); }
+function wxApply(snap){ wxRender(); if(snap){ const t=wxTargets(); ['cloud','rain','snow','fog','night'].forEach(n=>WX.cur[n]=t[n]); applyWeatherScene(); } kick(); }
 $('wxPill').addEventListener('click',()=>{ const o=$('wxMenu').hidden; $('wxMenu').hidden=!o; $('wxPill').setAttribute('aria-expanded',String(o)); });
 $('wxMenu').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; WX.mode=b.dataset.m; store.set('wxMode',WX.mode); $('wxMenu').hidden=true; $('wxPill').setAttribute('aria-expanded','false'); wxApply(); fetchWeather(); });
 document.addEventListener('pointerdown',e=>{ if(!e.target.closest('.wx')){ $('wxMenu').hidden=true; $('wxPill').setAttribute('aria-expanded','false'); } });
-wxReady=true; wxApply(); fetchWeather(); setInterval(fetchWeather,15*60*1000);
+wxReady=true; wxApply(true); fetchWeather(true); setInterval(fetchWeather,15*60*1000);
 
 renderItemChips();
 loadCarModel();
