@@ -1924,7 +1924,7 @@ function carWordsEn(){
   return (col?col+' ':'')+CARDEF.name+' SUV with a '+bc+' roof cargo box on roof bars';
 }
 function snapPromptEn(){
-  return 'Photorealistic landscape photograph: '+SNAP_EN[S.snapScn]+'. '+SNAP_EN_L[S.snapLight]+', '+sunWordsEn().text+'. A wide, flat, empty stretch of ground fills the lower half of the frame, ready for a car to be parked on it. '+camWordsEn()+'. 35mm lens, professional automotive magazine photo, natural colors, sharp. No cars, no vehicles, no people, no text.';
+  return 'Photorealistic landscape photograph: '+SNAP_EN[S.snapScn]+'. '+SNAP_EN_L[S.snapLight]+', '+sunWordsEn().text+'. Shot from about 1.4 m height with the camera almost level, the horizon line is at about 40% from the top of the frame, and a wide, flat, empty ground surface fills the whole lower 60% of the image right up to the bottom edge, ready for a car to be parked on it.'+' 35mm lens, professional automotive magazine photo, natural colors, sharp. No cars, no vehicles, no people, no text.';
 }
 function snapPrompt(w,h){
   const sc=SNAP_SCN[S.snapScn][1], li=SNAP_LIGHT[S.snapLight][1];
@@ -1950,7 +1950,7 @@ function renderCarLayer(w,h,o){
   const env0=scene.environment, hs=hemi.color.getHex(), hg=hemi.groundColor.getHex(), hi=hemi.intensity;
   if(o.env){ scene.environment=o.env; }
   if(o.sky){ hemi.color.copy(o.sky); hemi.groundColor.copy(o.gnd); hemi.intensity=0.55; }
-  aoBlob.visible=true;
+  aoBlob.visible=true; const gl0=[CM.glass.transparent,CM.glass.opacity]; CM.glass.transparent=false; CM.glass.opacity=1; CM.glass.needsUpdate=true;
   const saved=[], hide=o=>{ if(o){ saved.push([o,o.visible]); o.visible=false; } };
   scene.children.forEach(o=>{ if(o!==car&&o!==ground&&!o.isLight) hide(o); });
   [flowLines,person,cmpGroup].forEach(hide);
@@ -1963,7 +1963,7 @@ function renderCarLayer(w,h,o){
   renderer.setRenderTarget(rt); renderer.setClearColor(0x000000,0); renderer.clear(); renderer.render(scene,cam);
   const px=new Uint8Array(W*H*4); renderer.readRenderTargetPixels(rt,0,0,W,H,px);
   renderer.setRenderTarget(null); renderer.setClearColor(cc,ca); rt.dispose();
-  saved.forEach(([q,v])=>q.visible=v); aoBlob.visible=false; scene.environment=env0; hemi.color.setHex(hs); hemi.groundColor.setHex(hg); hemi.intensity=hi;
+  saved.forEach(([q,v])=>q.visible=v); aoBlob.visible=false; CM.glass.transparent=gl0[0]; CM.glass.opacity=gl0[1]; CM.glass.needsUpdate=true; scene.environment=env0; hemi.color.setHex(hs); hemi.groundColor.setHex(hg); hemi.intensity=hi;
   [car.position.y,car.rotation.x,car.rotation.z]=pose;
   scene.background=bg; scene.fog=fog; ground.material.opacity=gOp; if(g0) setGhost(true);
   sun.color.setHex(sc); sun.intensity=si; fill.color.setHex(0xdfe8ff);
@@ -1992,7 +1992,7 @@ async function cfHarmonize(montageUrl,w,h){
   c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); c.getContext('2d').drawImage(im,0,0,c.width,c.height);
   const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',0.92));
   const sw=sunWordsEn();
-  const prompt='Image 0 is a rough photomontage of a '+carWordsEn()+' placed into a landscape. Recreate it as one coherent, realistic professional photograph with exactly the same composition, camera angle and framing. Keep the car, the roof box and the bars in the same position, size and shape, keep the landscape. Light the car with the same sun as the scene ('+sw.text+'), add soft contact shadows under the tyres and a shadow on the ground '+sw.to+', reflections of the surroundings in the paint and windows, matching colour grading, depth and atmosphere. Do not add other cars, people or text.';
+  const prompt='Image 0 is a rough photomontage of a '+carWordsEn()+' placed into a landscape. Recreate it as one coherent, realistic professional photograph with exactly the same composition, camera angle and framing. The car stands on the ground: keep the car, the roof box and the bars in exactly the same position, size and shape, keep the landscape. Light the car with the same sun as the scene ('+sw.text+'), add soft contact shadows under the tyres and a shadow on the ground '+sw.to+', reflections of the surroundings in the paint and windows, matching colour grading, depth and atmosphere. Do not add other cars, people or text.';
   const fd=new FormData(); fd.append('prompt',prompt); fd.append('input_image_0',new File([blob],'montage.jpg',{type:'image/jpeg'})); fd.append('width',String(w)); fd.append('height',String(h));
   const acc=await cfAccount();
   const d=await cfJson('https://api.cloudflare.com/client/v4/accounts/'+encodeURIComponent(acc)+'/ai/run/@cf/black-forest-labs/flux-2-klein-4b',{method:'POST',headers:{'Authorization':'Bearer '+cfTok()},body:fd});
@@ -2080,6 +2080,35 @@ function composite(bgImg,layer,w,h){
   return c.toDataURL('image/jpeg',0.92);
 }
 let lastSnap=null;
+// place the rendered car on the ground of the picture: wheels at 88 % of the frame height, centred, a sensible size
+function fitCar(layer,w,h){
+  const x=layer.getContext('2d'), d=x.getImageData(0,0,w,h).data; let x0=w,x1=0,y0=h,y1=0;
+  for(let y=0;y<h;y+=2) for(let i=0;i<w;i+=2){ if(d[(y*w+i)*4+3]>=250){ if(i<x0)x0=i; if(i>x1)x1=i; if(y<y0)y0=y; if(y>y1)y1=y; } }
+  const out=document.createElement('canvas'); out.width=w; out.height=h; const o=out.getContext('2d');
+  if(x1<=x0){ o.drawImage(layer,0,0); return {canvas:out,k:1,dx:0,dy:0}; }
+  const bw=x1-x0, bh=y1-y0, k=Math.min((w<h?0.88:0.62)*w/bw, 0.5*h/bh);
+  const dx=w/2-(x0+bw/2)*k, dy=h*0.88-y1*k;
+  o.imageSmoothingQuality='high'; o.drawImage(layer,dx,dy,w*k,h*k);
+  return {canvas:out,k,dx,dy};
+}
+// keep the light, shadows and colour of the regenerated photo but put the exact car back on top of it
+async function keepExactCar(url,fit,w,h){
+  const im=await loadImg(url), c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d');
+  const iw=im.naturalWidth||im.width, ih=im.naturalHeight||im.height, sc=Math.max(w/iw,h/ih); x.drawImage(im,(w-iw*sc)/2,(h-ih*sc)/2,iw*sc,ih*sc);
+  const car=fit.canvas, cd=car.getContext('2d').getImageData(0,0,w,h), hd=x.getImageData(0,0,w,h), a=cd.data, b=hd.data;
+  // colour statistics inside the car silhouette: exact render vs regenerated photo
+  const mA=[0,0,0], mB=[0,0,0], sA=[0,0,0], sB=[0,0,0]; let n=0;
+  for(let i=0;i<a.length;i+=4) if(a[i+3]>=250){ n++; for(let k=0;k<3;k++){ mA[k]+=a[i+k]; mB[k]+=b[i+k]; sA[k]+=a[i+k]*a[i+k]; sB[k]+=b[i+k]*b[i+k]; } }
+  if(n>100){ for(let k=0;k<3;k++){ mA[k]/=n; mB[k]/=n; sA[k]=Math.sqrt(Math.max(1,sA[k]/n-mA[k]*mA[k])); sB[k]=Math.sqrt(Math.max(1,sB[k]/n-mB[k]*mB[k])); }
+    const t=0.55; for(let i=0;i<a.length;i+=4) if(a[i+3]>0) for(let k=0;k<3;k++){ const v=(a[i+k]-mA[k])/sA[k]*Math.min(1.4,Math.max(0.7,sB[k]/sA[k]))*sA[k]+mB[k]; a[i+k]=a[i+k]*(1-t)+v*t; } }
+  // only the car body goes back on top (its own soft shadow stays from the photo); edges softened by a pixel
+  for(let i=0;i<a.length;i+=4) a[i+3]=a[i+3]>=250?255:0;
+  const m=document.createElement('canvas'); m.width=w; m.height=h; m.getContext('2d').putImageData(cd,0,0);
+  const f=document.createElement('canvas'); f.width=w; f.height=h; const fx=f.getContext('2d'); fx.filter='blur(0.7px)'; fx.drawImage(m,0,0);
+  x.drawImage(f,0,0);
+  const id=x.getImageData(0,0,w,h), dd=id.data; for(let i=0;i<dd.length;i+=4){ const r=(Math.random()-0.5)*8; dd[i]+=r; dd[i+1]+=r; dd[i+2]+=r; } x.putImageData(id,0,0);
+  return c.toDataURL('image/jpeg',0.93);
+}
 function snapUI(state,msg){
   $('snapM').hidden=false; document.body.classList.add('lock');
   $('snapWait').hidden=!(state==='wait'||state==='err'); $('snapWait').classList.toggle('err',state==='err'); $('snapWaitTx').textContent=msg||'';
@@ -2090,8 +2119,11 @@ async function takeSnap(){
   if(!isNative){ toast('<b>AI-снимок работает в приложении для Android</b>В браузере внешние запросы к нейросетям закрыты. Ниже показан кадр без пейзажа.'); }
   else if(!useCF()&&!(S.fbKey.trim()&&S.fbSecret.trim())){ toast('<b>Нужен ключ Cloudflare</b>Впишите токен Workers AI (Account ID найдётся сам) в блок «AI-снимок» ниже, там же инструкция.'); $('cfAcc').closest('section').scrollIntoView({behavior:'smooth'}); return; }
   const cf=useCF(), job=++snapJob, [w,h]=snapSize(), prompt=cf?snapPromptEn():snapPrompt(w,h);
-  const camSnap=camera.clone(); camSnap.aspect=w/h; camSnap.updateProjectionMatrix();
-  const layer=renderCarLayer(w,h,{cam:camSnap});
+  // eye-level camera for the photo: same side of the car as in the app, but from 1.35 m like the generated landscape
+  const camSnap=camera.clone(); camSnap.aspect=w/h; camSnap.fov=40; camSnap.updateProjectionMatrix();
+  { const t=controls.target, d=camera.position.clone().sub(t); let hd=Math.hypot(d.x,d.z); if(hd<0.5){ d.set(-0.7,0,0.7); hd=1; }
+    const R=Math.max(hd,7); camSnap.position.set(t.x+d.x/hd*R, 1.35, t.z+d.z/hd*R); camSnap.lookAt(t.x,0.95,t.z); }
+  const layer=fitCar(renderCarLayer(w,h,{cam:camSnap}),w,h).canvas;
   $('snapPrompt').textContent=prompt;
   $('snapImg').src=composite(null,layer,w,h); lastSnap=null; snapVariants=null; $('snapVar').hidden=true;
   if(!isNative){ snapUI('preview'); return; }
@@ -2102,11 +2134,11 @@ async function takeSnap(){
     const img=await loadImg(bg);
     const env=envFromImage(img);
     const lit=renderCarLayer(w,h,{cam:camSnap,env,sky:avgColor(img,0,0.4),gnd:avgColor(img,0.6,1)}); env.dispose();
-    const montage=composite(img,lit,w,h); snapVariants={exact:montage}; lastSnap=montage; $('snapImg').src=montage; $('snapVar').hidden=true;
+    const fitLit=fitCar(lit,w,h); const montage=composite(img,fitLit.canvas,w,h); snapVariants={exact:montage}; lastSnap=montage; $('snapImg').src=montage; $('snapVar').hidden=true;
     if(cf){
       snapUI('wait','Вписываю машину в кадр: свет, тени, отражения…');
       try{ const hm=await cfHarmonize(montage,w,h); if(job!==snapJob) return;
-        snapVariants.whole=hm.url; $('snapPrompt').textContent=prompt+'\n\nВторой шаг (FLUX.2): '+hm.prompt; $('snapVar').hidden=false; showVariant('whole');
+        snapVariants.whole=await keepExactCar(hm.url,fitLit,w,h); $('snapPrompt').textContent=prompt+'\n\nВторой шаг (FLUX.2): '+hm.prompt; $('snapVar').hidden=false; showVariant('whole');
       }catch(e2){ if(job!==snapJob) return; toast('<b>Цельное фото не получилось</b>Показана точная модель. '+String(e2.message||e2).replace(/</g,'&lt;').slice(0,140)); }
     }
     snapUI('done');
