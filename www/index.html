@@ -2063,6 +2063,19 @@ function stepWeather(dt){
     snowGeo.attributes.position.needsUpdate=true; }
   return moving||rainLines.visible||snowPts.visible;
 }
+// headlights: two spot lights that light the ground ahead, plus a soft visible beam that shows up in the dark and in fog
+const HL={y:0.74, x:X(170), z:M(CAR.W)/2-0.3, len:9, rad:2.1};
+const beamMat=new THREE.ShaderMaterial({transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide, fog:false,
+  uniforms:{op:{value:0}, col:{value:new THREE.Color(1,0.95,0.84)}, len:{value:HL.len}},
+  vertexShader:'varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP=position; vec4 mv=modelViewMatrix*vec4(position,1.0); vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }',
+  fragmentShader:'uniform float op; uniform vec3 col; uniform float len; varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ float t=clamp(-vP.x/len,0.0,1.0); float edge=pow(abs(dot(vN,vV)),1.6); float a=op*pow(1.0-t,1.6)*edge*smoothstep(0.0,0.06,t); gl_FragColor=vec4(col*a,a); }'});
+const beamGeo=new THREE.ConeGeometry(HL.rad,HL.len,28,1,true); beamGeo.rotateZ(-Math.PI/2); beamGeo.translate(-HL.len/2,0,0); beamGeo.rotateZ(0.07);
+const headlights=[1,-1].map(sd=>{
+  const L=new THREE.SpotLight(0xfff1d6,0,26,0.5,0.55,1.4); L.position.set(HL.x,HL.y,sd*HL.z);
+  const tg=new THREE.Object3D(); tg.position.set(HL.x-10,0,sd*(HL.z+0.6)); car.add(tg); L.target=tg; car.add(L);
+  const b=new THREE.Mesh(beamGeo,beamMat); b.position.set(HL.x,HL.y,sd*HL.z); b.rotation.y=sd*0.04; b.renderOrder=6; b.visible=false; car.add(b);
+  return {L,b};
+});
 const BASE={sun:sun.intensity, hemi:hemi.intensity, fill:fill.intensity, exp:renderer.toneMappingExposure};
 function applyWeatherScene(){
   const c=WX.cur, stage=new THREE.Color(css('--stage'));
@@ -2082,8 +2095,11 @@ function applyWeatherScene(){
   cSoil.copy(lin('--soil')).multiplyScalar(1-0.35*wet).lerp(white,c.snow*0.85); cGrass.copy(lin('--grass')).multiplyScalar(1-0.35*wet).lerp(white,c.snow*0.8);
   sandFar.material.color.copy(cSoil).multiplyScalar(0.92); roadMat.color.copy(lin('--asphalt')).multiplyScalar(1-0.35*wet); roadMat.roughness=0.9-0.6*wet;
   terMat.roughness=1-0.45*wet; terDirty=true;
+  // headlights on at night and in fog
+  const hk=Math.max(c.night,c.fog*0.9);
+  headlights.forEach(h=>{ h.L.intensity=3.2*hk; h.b.visible=hk>0.02; }); beamMat.uniforms.op.value=0.10*c.night+0.22*c.fog;
   // lights glow at night
-  CM.reflector.emissive.setRGB(1,0.97,0.9).multiplyScalar(0.7*c.night); CM.red.emissive.setHex(0x3a0204).lerp(new THREE.Color(0xd01010),0.7*c.night); CM.amber.emissive.setHex(0x2a1200);
+  CM.reflector.emissive.setRGB(1,0.97,0.9).multiplyScalar(0.7*hk); CM.red.emissive.setHex(0x3a0204).lerp(new THREE.Color(0xd01010),0.7*c.night); CM.amber.emissive.setHex(0x2a1200);
   kick();
 }
 function wxRender(){
