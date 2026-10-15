@@ -7,7 +7,7 @@
 /* Layout: sticky 3D stage on top (phone) or left (desktop); tool panel of selectors, verdicts and a comparison table */
 :root{
   --bg:#EDF0F3; --panel:#FFFFFF; --ink:#16202B; --muted:#5E6B78; --line:#D6DCE3;
-  --accent:#2B59E0; --accent-soft:#E3EAFD; --stage:#E2E7ED; --grid:#C3CCD6; --soil:#C7B08A; --grass:#9AA874; --rock:#8C8478; --asphalt:#5B5F66; --lane:#F2F2EE; --glass:rgba(250,251,253,.66); --glass-line:rgba(22,32,43,.12); --glass-shadow:rgba(22,32,43,.10);
+  --accent:#2B59E0; --accent-soft:#E3EAFD; --stage:#E2E7ED; --grid:#C3CCD6; --soil:#CDB27C; --grass:#BBA46E; --rock:#857B6E; --asphalt:#3C3F44; --lane:#F2F2EE; --glass:rgba(250,251,253,.66); --glass-line:rgba(22,32,43,.12); --glass-shadow:rgba(22,32,43,.10);
   --good:#1D8A57; --warn:#A86C12; --bad:#C2362B;
   --a:#2B59E0; --b:#C96A12;
   --good-bg:#E2F3EA; --warn-bg:#FBF0DC; --bad-bg:#FBE4E1;
@@ -17,12 +17,12 @@
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#0F1318; --panel:#171C23; --ink:#E6EBF1; --muted:#95A2B0; --line:#29313B;
-  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#4B4335; --grass:#36422E; --rock:#5A554D; --asphalt:#2B2E33; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
+  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#5C4E36; --grass:#544732; --rock:#5A554D; --asphalt:#222428; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
   --good:#4CC38A; --warn:#E3A642; --bad:#F27367;
   --a:#86A2FF; --b:#F0A04B; --good-bg:#13291F; --warn-bg:#2E2412; --bad-bg:#331816; color-scheme:dark } }
 :root[data-theme="dark"]{
   --bg:#0F1318; --panel:#171C23; --ink:#E6EBF1; --muted:#95A2B0; --line:#29313B;
-  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#4B4335; --grass:#36422E; --rock:#5A554D; --asphalt:#2B2E33; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
+  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#5C4E36; --grass:#544732; --rock:#5A554D; --asphalt:#222428; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
   --good:#4CC38A; --warn:#E3A642; --bad:#F27367;
   --a:#86A2FF; --b:#F0A04B; --good-bg:#13291F; --warn-bg:#2E2412; --bad-bg:#331816; color-scheme:dark }
 
@@ -515,6 +515,7 @@ const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=0.92;
 // soft studio environment so metallic paint and glossy boxes get reflections
 function studioEnv(){
   const pm=new THREE.PMREMGenerator(renderer), es=new THREE.Scene();
@@ -529,14 +530,14 @@ stage.prepend(renderer.domElement);
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(35,1,0.05,100);
 const controls=new THREE.OrbitControls(camera,renderer.domElement);
-controls.enableDamping=true; controls.dampingFactor=0.08; controls.maxPolarAngle=Math.PI*0.495; controls.minDistance=2.5; controls.maxDistance=16;
+controls.enableDamping=true; controls.dampingFactor=0.08; controls.maxPolarAngle=Math.PI*0.495; controls.minDistance=2.5; controls.maxDistance=30;
 
-scene.add(new THREE.HemisphereLight(0xffffff,0x8a8f99,0.45));
+const hemi=new THREE.HemisphereLight(0xeef3ff,0x6b5f4c,0.32); scene.add(hemi);
 scene.environment=studioEnv();
-const sun=new THREE.DirectionalLight(0xffffff,0.9); sun.position.set(-4,8,5); sun.castShadow=true;
+const sun=new THREE.DirectionalLight(0xfff4e6,1.55); sun.position.set(-4,8,5); sun.castShadow=true;
 sun.shadow.mapSize.set(2048,2048); Object.assign(sun.shadow.camera,{left:-5,right:5,top:5,bottom:-5,near:1,far:25}); sun.shadow.bias=-0.0005;
 scene.add(sun);
-const fill=new THREE.DirectionalLight(0xffffff,0.35); fill.position.set(5,3,-4); scene.add(fill);
+const fill=new THREE.DirectionalLight(0xdfe8ff,0.3); fill.position.set(5,3,-4); scene.add(fill);
 
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(40,40), new THREE.ShadowMaterial({opacity:0.18}));
 ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
@@ -546,6 +547,45 @@ const X = mm => (mm - CAR.L/2)/1000;
 const M = mm => mm/1000;
 
 const bodyMat=new THREE.MeshStandardMaterial({color:S.color, metalness:0.35, roughness:0.38});
+const CM={
+  trim:new THREE.MeshPhysicalMaterial({color:0x0c0d0f,roughness:0.32,metalness:0,clearcoat:0.7,clearcoatRoughness:0.15}),
+  matte:new THREE.MeshStandardMaterial({color:0x18191c,roughness:0.78,metalness:0}),
+  chrome:new THREE.MeshStandardMaterial({color:0xdde1e6,roughness:0.1,metalness:1}),
+  rim:new THREE.MeshPhysicalMaterial({color:0x9aa0a8,roughness:0.26,metalness:0.92,clearcoat:0.6,clearcoatRoughness:0.1}),
+  rimDark:new THREE.MeshStandardMaterial({color:0x232528,roughness:0.45,metalness:0.6}),
+  tyre:new THREE.MeshStandardMaterial({color:0x161617,roughness:0.9,metalness:0}),
+  disc:new THREE.MeshStandardMaterial({color:0x707377,roughness:0.42,metalness:0.85}),
+  glass:new THREE.MeshPhysicalMaterial({color:0x0b1016,roughness:0.03,metalness:0.25,transparent:true,opacity:0.78,clearcoat:1,clearcoatRoughness:0,envMapIntensity:1.5}),
+  frit:new THREE.MeshPhysicalMaterial({color:0x07080a,roughness:0.08,metalness:0.2,clearcoat:1,clearcoatRoughness:0}),
+  lens:new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:0.02,metalness:0,transparent:true,opacity:0.22,clearcoat:1,clearcoatRoughness:0,depthWrite:false}),
+  reflector:new THREE.MeshStandardMaterial({color:0xc4cad2,roughness:0.16,metalness:0.95}),
+  red:new THREE.MeshPhysicalMaterial({color:0x8a0b10,roughness:0.12,metalness:0.1,clearcoat:1,clearcoatRoughness:0.05,emissive:0x3a0204}),
+  amber:new THREE.MeshPhysicalMaterial({color:0xd27a12,roughness:0.15,metalness:0.1,clearcoat:1,emissive:0x2a1200}),
+  under:new THREE.MeshStandardMaterial({color:0x1b1c1e,roughness:0.92,metalness:0}),
+  cabin:new THREE.MeshStandardMaterial({color:0x2a2b2e,roughness:0.85,metalness:0}),
+};
+function carPartMat(mat,obj){
+  const n=mat.name||''; let g=''; for(let q=obj.parent;q;q=q.parent){ if(/_\d+$/.test(q.name)&&!/^Object_/.test(q.name)){ g=q.name; break; } }
+  if(/PRIMARY/i.test(n)) return null;
+  if(/tyrewall/i.test(n)) return CM.tyre;
+  if(/shachepan/i.test(n)) return CM.disc;
+  if(/^wheel/i.test(g)) return /duge/i.test(n)?CM.rim:CM.rimDark;
+  if(/^boli31\.001/i.test(n)) return /^headlight/i.test(g)?CM.lens:CM.frit;
+  if(/^boli/i.test(n)) return CM.glass;
+  if(/wdboli/i.test(n)) return CM.red;
+  if(/^lights/i.test(n)){
+    if(/^(taillight|brakelight)/i.test(g)) return CM.red;
+    if(/^indicator_.r/i.test(g)) return CM.red;
+    if(/^indicator/i.test(g)) return CM.amber;
+    return CM.reflector;
+  }
+  if(/^duge/i.test(n)) return CM.chrome;
+  if(/^black_1$/i.test(n)) return CM.matte;
+  if(/^black/i.test(n)) return CM.trim;
+  if(/dipan/i.test(n)) return CM.under;
+  if(/files-4\.001/i.test(n)) return CM.frit;
+  return CM.cabin;
+}
 const glassMat=new THREE.MeshStandardMaterial({color:0x1a222c, metalness:0.6, roughness:0.15});
 const blackMat=new THREE.MeshStandardMaterial({color:0x22262b, metalness:0.2, roughness:0.7});
 const railMat=new THREE.MeshStandardMaterial({color:0x2a2e33, metalness:0.6, roughness:0.4});
@@ -701,6 +741,7 @@ function loadCarModel(){
     car.add(wrap);
     root.traverse(o=>{
       if(!o.isMesh) return; o.castShadow=true; o.receiveShadow=true;
+      if(!Array.isArray(o.material)){ const r=carPartMat(o.material,o); if(r) o.material=r; if(r===CM.glass||r===CM.lens) o.castShadow=false; }
       (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{ if(/PRIMARY/i.test(m.name) && !paintMats.includes(m)) paintMats.push(m); });
     });
     paintMats.forEach(paintFinish);
@@ -894,7 +935,7 @@ const rockMat=new THREE.MeshStandardMaterial({roughness:0.95,flatShading:true});
 const tuftMat=new THREE.MeshStandardMaterial({roughness:1,flatShading:true});
 const rocks=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),rockMat,70);
 const tufts=new THREE.InstancedMesh(new THREE.ConeGeometry(0.05,0.26,5),tuftMat,220);
-rocks.castShadow=true; rocks.receiveShadow=true; scene.add(rocks); scene.add(tufts);
+rocks.castShadow=true; rocks.receiveShadow=true; scene.add(rocks); tufts.visible=false; // vegetation removed: plain sand with stones
 let seed=7; const rnd=()=>{ seed=(seed*16807)%2147483647; return seed/2147483647; };
 const scat=(n,minZ,maxZ)=>Array.from({length:n},()=>({u:rnd()*TER.W, z:(rnd()<0.5?-1:1)*(minZ+rnd()*(maxZ-minZ)), s:rnd(), r:rnd()*6.28}));
 const rockData=scat(70,1.7,9), tuftData=scat(220,1.3,9);
@@ -1083,17 +1124,28 @@ const VIEWS={ q:[[-5.8,3.4,5.6],[0,1.1,0]], side:[[0,1.3,8.2],[0,1.1,0]], rear:[
 let camAnim=null;
 function setView(k){
   document.querySelectorAll('.views button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.view===k)));
-  const [p,t]=VIEWS[k];
-  camAnim={from:camera.position.clone(), to:new THREE.Vector3(...p), tf:controls.target.clone(), tt:new THREE.Vector3(...t), t:0};
+  curView=k; const [p,t]=fitView(k);
+  camAnim={from:camera.position.clone(), to:p, tf:controls.target.clone(), tt:t, t:0};
   if(matchMedia('(prefers-reduced-motion: reduce)').matches) camAnim.t=1;
   kick();
 }
-camera.position.set(...VIEWS.q[0]); controls.target.set(...VIEWS.q[1]);
+// on a tall phone screen the car must fit the narrow width: widen the lens a little and step the camera back
+let curView='q';
+function lensFor(a){ return a<1?44:35; }
+function fitView(k){
+  const [p,t]=VIEWS[k], P=new THREE.Vector3(...p), T=new THREE.Vector3(...t), a=camera.aspect||1;
+  const hf=2*Math.atan(Math.tan(lensFor(a)*Math.PI/360)*a), need=2*Math.atan(Math.tan(35*Math.PI/360)*1.45);
+  const f=Math.min(2.6,Math.max(1,Math.tan(need/2)/Math.tan(hf/2)))*(k==='top'?1:1);
+  return [T.clone().add(P.sub(T).multiplyScalar(f)),T];
+}
+{ const [p,t]=fitView('q'); camera.position.copy(p); controls.target.copy(t); }
 document.querySelectorAll('.views button').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 
 function resize(){
   const r=stage.getBoundingClientRect();
-  renderer.setSize(r.width,r.height,false); camera.aspect=r.width/Math.max(1,r.height); camera.updateProjectionMatrix(); render();
+  renderer.setSize(r.width,r.height,false); camera.aspect=r.width/Math.max(1,r.height); camera.fov=lensFor(camera.aspect); camera.updateProjectionMatrix();
+  if(!drive.userCam&&!camAnim){ const [p,t]=fitView(curView); camera.position.copy(p); controls.target.copy(t); }
+  render();
 }
 new ResizeObserver(resize).observe(stage);
 
@@ -1608,11 +1660,24 @@ function snapPrompt(w,h){
 const SNAP_NEG='автомобиль, машина, транспорт, люди, текст, надписи, водяной знак, логотип, размытие, искажения, мультяшный стиль';
 
 // render the car and box alone on a transparent background, with their contact shadow
-function renderCarLayer(w,h){
+function envFromImage(img){
+  const t=new THREE.Texture(img); t.needsUpdate=true; t.mapping=THREE.EquirectangularReflectionMapping; t.encoding=THREE.sRGBEncoding;
+  const pm=new THREE.PMREMGenerator(renderer); const e=pm.fromEquirectangular(t).texture; pm.dispose(); t.dispose(); return e;
+}
+function avgColor(img,y0,y1){ const c=document.createElement('canvas'); c.width=c.height=8; const x=c.getContext('2d'); const ih=img.naturalHeight||img.height, iw=img.naturalWidth||img.width; x.drawImage(img,0,ih*y0,iw,ih*(y1-y0),0,0,8,8); const d=x.getImageData(0,0,8,8).data; let r=0,g=0,b=0; for(let i=0;i<d.length;i+=4){r+=d[i];g+=d[i+1];b+=d[i+2];} return new THREE.Color(r/64/255,g/64/255,b/64/255); }
+const aoTex=(()=>{ const c=document.createElement('canvas'); c.width=c.height=128; const x=c.getContext('2d'); const g=x.createRadialGradient(64,64,4,64,64,64); g.addColorStop(0,'rgba(0,0,0,0.85)'); g.addColorStop(0.55,'rgba(0,0,0,0.5)'); g.addColorStop(1,'rgba(0,0,0,0)'); x.fillStyle=g; x.fillRect(0,0,128,128); const t=new THREE.CanvasTexture(c); return t; })();
+const aoBlob=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:aoTex,transparent:true,depthWrite:false,toneMapped:false}));
+aoBlob.rotation.x=-Math.PI/2; aoBlob.scale.set(M(CAR.L)*1.12,M(CAR.W)*1.25,1); aoBlob.position.set(X(CAR.L/2),0.004,0); aoBlob.visible=false; aoBlob.renderOrder=-1; car.add(aoBlob);
+function renderCarLayer(w,h,o){
+  o=o||{};
   const SS=2, W=w*SS, H=h*SS;
   const rt=new THREE.WebGLRenderTarget(W,H,{format:THREE.RGBAFormat,minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter});
   rt.texture.encoding=THREE.sRGBEncoding;
-  const cam=camera.clone(); cam.aspect=w/h; cam.updateProjectionMatrix();
+  const cam=(o.cam||camera).clone(); cam.aspect=w/h; cam.updateProjectionMatrix();
+  const env0=scene.environment, hs=hemi.color.getHex(), hg=hemi.groundColor.getHex(), hi=hemi.intensity;
+  if(o.env){ scene.environment=o.env; }
+  if(o.sky){ hemi.color.copy(o.sky); hemi.groundColor.copy(o.gnd); hemi.intensity=0.55; }
+  aoBlob.visible=true;
   const saved=[], hide=o=>{ if(o){ saved.push([o,o.visible]); o.visible=false; } };
   scene.children.forEach(o=>{ if(o!==car&&o!==ground&&!o.isLight) hide(o); });
   [flowLines,person,cmpGroup].forEach(hide);
@@ -1625,10 +1690,10 @@ function renderCarLayer(w,h){
   renderer.setRenderTarget(rt); renderer.setClearColor(0x000000,0); renderer.clear(); renderer.render(scene,cam);
   const px=new Uint8Array(W*H*4); renderer.readRenderTargetPixels(rt,0,0,W,H,px);
   renderer.setRenderTarget(null); renderer.setClearColor(cc,ca); rt.dispose();
-  saved.forEach(([o,v])=>o.visible=v);
+  saved.forEach(([q,v])=>q.visible=v); aoBlob.visible=false; scene.environment=env0; hemi.color.setHex(hs); hemi.groundColor.setHex(hg); hemi.intensity=hi;
   [car.position.y,car.rotation.x,car.rotation.z]=pose;
   scene.background=bg; scene.fog=fog; ground.material.opacity=gOp; if(g0) setGhost(true);
-  sun.color.setHex(sc); sun.intensity=si; fill.color.setHex(0xffffff);
+  sun.color.setHex(sc); sun.intensity=si; fill.color.setHex(0xdfe8ff);
   render();
   const big=document.createElement('canvas'); big.width=W; big.height=H;
   const bx=big.getContext('2d'), id=bx.createImageData(W,H);
@@ -1718,10 +1783,11 @@ function composite(bgImg,layer,w,h){
   const s=document.createElement('canvas'); s.width=s.height=8; const sx=s.getContext('2d'); sx.drawImage(c,0,h*0.3,w,h*0.7,0,0,8,8);
   const d=sx.getImageData(0,0,8,8).data; let r=0,g=0,b=0; for(let i=0;i<d.length;i+=4){ r+=d[i]; g+=d[i+1]; b+=d[i+2]; } r/=64; g/=64; b/=64;
   const t=document.createElement('canvas'); t.width=w; t.height=h; const tx=t.getContext('2d');
-  tx.drawImage(layer,0,0); tx.globalCompositeOperation='source-atop'; tx.fillStyle=`rgba(${r|0},${g|0},${b|0},${bgImg?0.13:0.05})`; tx.fillRect(0,0,w,h);
+  tx.drawImage(layer,0,0); tx.globalCompositeOperation='source-atop'; tx.fillStyle=`rgba(${r|0},${g|0},${b|0},${bgImg?0.08:0.04})`; tx.fillRect(0,0,w,h);
   x.drawImage(t,0,0);
   const v=x.createRadialGradient(w/2,h/2,Math.min(w,h)*0.35,w/2,h/2,Math.hypot(w,h)*0.6); v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(0,0,0,0.28)');
   x.fillStyle=v; x.fillRect(0,0,w,h);
+  if(bgImg){ const id=x.getImageData(0,0,w,h), d=id.data; for(let i=0;i<d.length;i+=4){ const n=(Math.random()-0.5)*10; d[i]+=n; d[i+1]+=n; d[i+2]+=n; } x.putImageData(id,0,0); }
   return c.toDataURL('image/jpeg',0.92);
 }
 let lastSnap=null;
@@ -1735,7 +1801,8 @@ async function takeSnap(){
   if(!isNative){ toast('<b>AI-снимок работает в приложении для Android</b>В браузере внешние запросы к нейросетям закрыты. Ниже показан кадр без пейзажа.'); }
   else if(!useCF()&&!(S.fbKey.trim()&&S.fbSecret.trim())){ toast('<b>Нужен ключ Cloudflare</b>Впишите токен Workers AI (Account ID найдётся сам) в блок «AI-снимок» ниже, там же инструкция.'); $('cfAcc').closest('section').scrollIntoView({behavior:'smooth'}); return; }
   const cf=useCF(), job=++snapJob, [w,h]=snapSize(), prompt=cf?snapPromptEn():snapPrompt(w,h);
-  const layer=renderCarLayer(w,h);
+  const camSnap=camera.clone(); camSnap.aspect=w/h; camSnap.updateProjectionMatrix();
+  const layer=renderCarLayer(w,h,{cam:camSnap});
   $('snapPrompt').textContent=prompt;
   $('snapImg').src=composite(null,layer,w,h); lastSnap=null;
   if(!isNative){ snapUI('preview'); return; }
@@ -1744,7 +1811,9 @@ async function takeSnap(){
     const bg=cf?await cfFlux(prompt):await kandinsky(prompt,w,h,job,i=>{ if(job===snapJob) $('snapWaitTx').textContent=i<10?'Kandinsky рисует пейзаж, обычно 20–60 секунд…':'Ещё рисует, очередь на сервисе… '+(3*(i+1))+' с'; });
     if(job!==snapJob) return;
     const img=await loadImg(bg);
-    lastSnap=composite(img,layer,w,h); $('snapImg').src=lastSnap; snapUI('done');
+    const env=envFromImage(img);
+    const lit=renderCarLayer(w,h,{cam:camSnap,env,sky:avgColor(img,0,0.4),gnd:avgColor(img,0.6,1)}); env.dispose();
+    lastSnap=composite(img,lit,w,h); $('snapImg').src=lastSnap; snapUI('done');
   }catch(e){
     if(job!==snapJob||e.message==='cancel') return;
     let m=e.message||String(e);
