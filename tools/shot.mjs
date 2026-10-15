@@ -25,6 +25,14 @@ await page.mouse.move(206, 400); for (let i = 0; i < 6; i++) { await page.mouse.
 await shot('6-close');
 await page.evaluate(() => { document.querySelector('#snapGo')?.click(); }); await page.waitForTimeout(3000);
 await page.screenshot({ path: `${out}/7-snap-preview.png` });
+// steel rims on the Haval, then the Outlander
+await page.evaluate(() => { localStorage.setItem('f7box.rim','"steel"'); }); await page.reload(); await page.waitForTimeout(9000);
+await view('side'); await shot('8-haval-steel');
+await page.evaluate(() => { localStorage.setItem('f7box.car','"outlander"'); localStorage.setItem('f7box.rim','"stock"'); }); await page.reload(); await page.waitForTimeout(12000);
+await shot('9-outlander-q'); await view('side'); await shot('10-outlander-side');
+await click('#tgBtn'); await view('rear'); await shot('11-outlander-rear');
+await page.evaluate(() => { localStorage.setItem('f7box.rim','"steel"'); }); await page.reload(); await page.waitForTimeout(12000); await view('side'); await shot('12-outlander-steel');
+await click('#paintBtn'); await shot('13-popover');
 require_fs: {
   const fs = await import('fs'); fs.writeFileSync(`${out}/console.txt`, logs.join('\n'));
 }

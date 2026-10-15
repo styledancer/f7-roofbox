@@ -122,6 +122,10 @@ body.lock{overflow:hidden}
 .swr .lbl{font:500 .72rem var(--body);color:var(--muted);white-space:nowrap;margin-right:2px}
 .sw{width:26px;height:26px;border-radius:50%;border:2px solid var(--glass-line);cursor:pointer;padding:0;flex:none;box-shadow:inset 0 -6px 10px rgba(0,0,0,.25),inset 0 4px 6px rgba(255,255,255,.35)}
 .sw[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent),inset 0 -6px 10px rgba(0,0,0,.25),inset 0 4px 6px rgba(255,255,255,.35)}
+.swr#carSw{flex-direction:column;align-items:stretch;gap:6px;padding:8px 10px}
+.crow{display:flex;gap:6px;align-items:center;flex-wrap:nowrap}
+.crow .lbl{min-width:56px}
+.crow .opt2{padding:6px 9px;border:1px solid var(--glass-line)}
 .sws{display:flex;gap:6px;align-items:center;padding:4px 10px 8px;flex-wrap:wrap}
 .sws .nmc{font:400 .72rem var(--body);color:var(--muted);margin-left:4px}
 
@@ -234,8 +238,8 @@ h2 .badge{margin-left:4px}
 <div class="app">
   <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
     <header>
-      <h1>Бокс на <span>Haval F7</span></h1>
-      <div class="sub">4691 × 1866 × 1690 мм · 2022</div>
+      <h1>Бокс на <span id="carName">Haval F7</span></h1>
+      <div class="sub" id="carSub">4691 × 1866 × 1690 мм · 2022</div>
     </header>
     <div class="stage" id="stage">
       <div class="ov tl">
@@ -397,7 +401,21 @@ h2 .badge{margin-left:4px}
 <script src="vendor/GLTFLoader.js"></script>
 <script>
 (function(){
-const CAR = {L:4691, W:1866, WB:2725, FO:950, track:1585, wheelR:365, roofFront:2150, hinge:[3980,1635], railFrom:2250, railTo:3950};
+// cars the app can show; the choice is kept on the device and applied on reload
+const CARS={
+  haval:{name:'Haval F7', sub:'2022', model:'haval_f7.json', kind:'haval', rimR:0.2286,
+    dims:{L:4691, W:1866, WB:2725, FO:950, track:1585, wheelR:365, roofFront:2150, hinge:[3980,1635], railFrom:2250, railTo:3950}, H:1690,
+    bars:{top:1760, front:2500, spacing:800},
+    colors:[['Белый металлик','#EDEEEC'],['Красный','#A11D21'],['Синий','#1E3C6E'],['Серый','#7A7F86'],['Чёрный','#121316']]},
+  outlander:{name:'Mitsubishi Outlander', sub:'III, 2015–2021', model:'outlander.json', kind:'norm', rimR:0.2286,
+    dims:{L:4670, W:1810, WB:2666, FO:973, track:1535, wheelR:359, roofFront:2060, hinge:[4045,1658], railFrom:2016, railTo:4054}, H:1710,
+    bars:{top:1775, front:2330, spacing:800},
+    colors:[['Белый перламутр','#EEEEEA'],['Красный','#8E1B1E'],['Синий','#1F3355'],['Серебристый','#A9ADB2'],['Серый титан','#55585D'],['Чёрный','#111214']]},
+};
+const CAR_ID=(()=>{ try{ const v=JSON.parse(localStorage.getItem('f7box.car')); return CARS[v]?v:'haval'; }catch(e){ return 'haval'; } })();
+const CARDEF=CARS[CAR_ID];
+const CAR=Object.assign({},CARDEF.dims);
+const CK=k=>(CAR_ID==='haval'||!['barTop','barFront','spacing','color'].includes(k))?k:CAR_ID+'.'+k;
 const OPEN_ANG = 92*Math.PI/180;
 const BOXES = [
   {id:'m3-m',   brand:'Thule', model:'Motion 3 M',       L:1750, W:840, H:440, V:400, Li:1640, Wi:690, Hi:390, shop:'https://www.thule.com/ru-ru/cargo-carrier/car-top-carrier/thule-motion-3-m-_-639200'},
@@ -435,7 +453,7 @@ const ITEMS = [
 ];
 ITEMS.forEach((it,i)=>it.color=ITEM_COLORS[i%ITEM_COLORS.length]);
 // Haval F7 body colours: white metallic is the default
-const COLORS = [['Белый металлик','#EDEEEC'],['Красный','#A11D21'],['Синий','#1E3C6E'],['Серый','#7A7F86'],['Чёрный','#121316']];
+const COLORS = CARDEF.colors;
 // factory finishes of the boxes; the first one is the default
 const FINISH={
   thule:[{id:'black',name:'Чёрный глянцевый',hex:'#141619',rough:.16,gloss:1},{id:'titan',name:'Титан глянцевый',hex:'#5C6066',rough:.2,gloss:1,metal:.35}],
@@ -449,9 +467,9 @@ const store = {get(k,d){try{const v=localStorage.getItem('f7box.'+k);return v===
 const S = {
   sel: store.get('sel','m3-l'), cmp: store.get('cmp',''), align: store.get('align','own'), itemsIn:'A',
   items: store.get('items',['yoyo','bike16']), custom: store.get('custom',[]),
-  garage: store.get('garage',2200), barTop: store.get('barTop',1760),
-  barFront: store.get('barFront',2500), spacing: store.get('spacing',800),
-  color: store.get('color','#EDEEEC'), front: null, open:false, lid:0, boxColor: store.get('boxColor',{}), wire:null,
+  garage: store.get('garage',2200), barTop: store.get(CK('barTop'),CARDEF.bars.top),
+  barFront: store.get(CK('barFront'),CARDEF.bars.front), spacing: store.get(CK('spacing'),CARDEF.bars.spacing),
+  color: store.get(CK('color'),CARDEF.colors[0][1]), rim: store.get('rim','stock'), front: null, open:false, lid:0, boxColor: store.get('boxColor',{}), wire:null,
   hwSpeed: store.get('hwSpeed',110), baseFuel: store.get('baseFuel',7.5), fuelPrice: store.get('fuelPrice',62)
 };
 const byId = id => BOXES.find(b=>b.id===id);
@@ -565,6 +583,8 @@ const CM={
   lens:new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:0.02,metalness:0,transparent:true,opacity:0.22,clearcoat:1,clearcoatRoughness:0,depthWrite:false}),
   reflector:new THREE.MeshStandardMaterial({color:0xc4cad2,roughness:0.16,metalness:0.95}),
   red:new THREE.MeshPhysicalMaterial({color:0x8a0b10,roughness:0.12,metalness:0.1,clearcoat:1,clearcoatRoughness:0.05,emissive:0x3a0204}),
+  plate:new THREE.MeshStandardMaterial({color:0xf2f2ee,roughness:0.5,metalness:0}),
+  rimSteel:new THREE.MeshPhysicalMaterial({color:0xc3c8ce,roughness:0.32,metalness:0.75,clearcoat:0.5,clearcoatRoughness:0.2}),
   amber:new THREE.MeshPhysicalMaterial({color:0xd27a12,roughness:0.15,metalness:0.1,clearcoat:1,emissive:0x2a1200}),
   under:new THREE.MeshStandardMaterial({color:0x1b1c1e,roughness:0.92,metalness:0}),
   cabin:new THREE.MeshStandardMaterial({color:0x2a2b2e,roughness:0.85,metalness:0}),
@@ -572,6 +592,7 @@ const CM={
 function carPartMat(mat,obj){
   const n=mat.name||''; let g=''; for(let q=obj.parent;q;q=q.parent){ if(/_\d+$/.test(q.name)&&!/^Object_/.test(q.name)){ g=q.name; break; } }
   if(/PRIMARY/i.test(n)) return null;
+  if(CARDEF.kind==='norm'&&CM[n]) return CM[n];
   if(/tyrewall/i.test(n)) return CM.tyre;
   if(/shachepan/i.test(n)) return CM.disc;
   if(/^wheel/i.test(g)) return /duge/i.test(n)?CM.rim:CM.rimDark;
@@ -727,6 +748,7 @@ function loadModel(url, onLoad){
   }).catch(err=>console.warn('model did not load', url, err));
 }
 function loadCarModel(){
+  if(CARDEF.kind==='norm') return loadNormModel();
   loadModel('haval_f7.json', g=>{
     const root=g.scene; root.updateMatrixWorld(true);
     const GS=M(CAR.WB)/(SRC.rearAxle-SRC.frontAxle);
@@ -736,7 +758,7 @@ function loadCarModel(){
       const place=(w,x,z,flip)=>{ const m=new THREE.Matrix4().makeRotationY(flip?Math.PI:0); m.setPosition(x,SRC.hubY,z); m.premultiply(inv); m.decompose(w.position,w.quaternion,w.scale); };
       const tx=M(CAR.track)/2/GS;
       place(wheel,-tx,SRC.frontAxle,false);
-      const keep=(w,f)=>spinWheels.push({obj:w, base:w.quaternion.clone(), sign:f?1:-1});
+      const keep=(w,f)=>spinWheels.push({obj:w, base:w.quaternion.clone(), sign:f?1:-1, axis:new THREE.Vector3(1,0,0)});
       keep(wheel,false);
       [[tx,SRC.frontAxle,true],[-tx,SRC.rearAxle,false],[tx,SRC.rearAxle,true]].forEach(([x,z,f])=>{ const c=wheel.clone(); par.add(c); place(c,x,z,f); keep(c,f); });
     }
@@ -766,8 +788,56 @@ function loadCarModel(){
     spinWheels.forEach(w=>{ const par=w.obj.parent, Mx=new THREE.Matrix4().copy(par.matrixWorld).invert().multiply(car.matrixWorld);
       const a=new THREE.Vector3(0,0,0).applyMatrix4(Mx), b=new THREE.Vector3(0,1,0).applyMatrix4(Mx); w.up=b.sub(a); w.pos=w.obj.position.clone(); });
     procParts.forEach(p=>p.visible=false);
+    collectStockRims(); applyRims();
     carModelReady=true; kick(); setTimeout(startIntro,300);
   });
+}
+// converted models are already in car space (metres, front towards -x); wheels are nodes wheel_0..3 centred on their hubs
+function loadNormModel(){
+  loadModel(CARDEF.model, g=>{
+    const root=g.scene; car.add(root);
+    root.traverse(o=>{
+      if(!o.isMesh) return; o.castShadow=true; o.receiveShadow=true;
+      const r=carPartMat(o.material,o); if(r) o.material=r; if(r===CM.glass||r===CM.lens) o.castShadow=false;
+      if(/PRIMARY/i.test(o.material.name) && !paintMats.includes(o.material)) paintMats.push(o.material);
+    });
+    paintMats.forEach(paintFinish);
+    for(let i=0;i<4;i++){ const w=root.getObjectByName('wheel_'+i); if(w) spinWheels.push({obj:w, base:w.quaternion.clone(), sign:1, axis:new THREE.Vector3(0,0,1)}); }
+    car.updateMatrixWorld(true);
+    const tg=root.getObjectByName('tailgate');
+    if(tg){ const bb=new THREE.Box3().expandByObject(tg), inv=new THREE.Matrix4().copy(car.matrixWorld).invert();
+      const hinge=new THREE.Vector3(bb.min.x,bb.max.y,0).applyMatrix4(inv);
+      glbPivot.position.copy(hinge); car.add(glbPivot); glbPivot.updateMatrixWorld(true); glbPivot.attach(tg); }
+    car.updateMatrixWorld(true);
+    spinWheels.forEach(w=>{ const par=w.obj.parent, Mx=new THREE.Matrix4().copy(par.matrixWorld).invert().multiply(car.matrixWorld);
+      const a=new THREE.Vector3(0,0,0).applyMatrix4(Mx), b=new THREE.Vector3(0,1,0).applyMatrix4(Mx); w.up=b.sub(a); w.pos=w.obj.position.clone(); });
+    procParts.forEach(p=>p.visible=false);
+    collectStockRims(); applyRims();
+    carModelReady=true; kick(); setTimeout(startIntro,300);
+  });
+}
+// ---- interchangeable rims: the stock rim meshes are hidden and a fitted rim is attached to each spinning wheel
+const RIMS={stock:{name:'Родные'}, steel:{name:'Штампованные', model:'rim_steel.json', R:0.2042}};
+let stockRims=[], rimGeo={}, rimMeshes=[];
+function collectStockRims(){ stockRims=[]; spinWheels.forEach(w=>w.obj.traverse(o=>{ if(o.isMesh&&(o.material===CM.rim||o.material===CM.rimDark)) stockRims.push(o); })); }
+function applyRims(){
+  const r=RIMS[S.rim]||RIMS.stock;
+  rimMeshes.forEach(m=>m.parent&&m.parent.remove(m)); rimMeshes=[];
+  stockRims.forEach(o=>o.visible=!r.model);
+  if(!r.model){ kick(); return; }
+  const put=geo=>{
+    const k=CARDEF.rimR/r.R; car.updateMatrixWorld(true);
+    spinWheels.forEach((w,i)=>{
+      const m=new THREE.Mesh(geo,CM.rimSteel); m.castShadow=true; m.receiveShadow=true;
+      const hub=new THREE.Vector3().setFromMatrixPosition(w.obj.matrixWorld); car.worldToLocal(hub);
+      const s=(CONTACT[i]&&CONTACT[i][1]<0)?-1:1;
+      m.scale.setScalar(k); if(s<0) m.rotation.y=Math.PI;
+      m.position.set(hub.x,hub.y,hub.z+s*(0.075-0.0998*k)); car.add(m); m.updateMatrixWorld(true); w.obj.attach(m); rimMeshes.push(m);
+    });
+    kick();
+  };
+  if(rimGeo[S.rim]) return put(rimGeo[S.rim]);
+  loadModel(r.model, g=>{ let geo=null; g.scene.traverse(o=>{ if(o.isMesh&&!geo) geo=o.geometry; }); if(!geo) return; rimGeo[S.rim]=geo; if(RIMS[S.rim]===r) put(geo); });
 }
 // crossbars
 const barMeshes=[0,1].map(()=>{const b=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.028,1.32), railMat); b.castShadow=true; car.add(b); return b;});
@@ -1000,8 +1070,8 @@ function stepDrive(dt){
   }
   // brake dive / acceleration squat from the change of speed
   const acc=Math.max(-4,Math.min(4,(speed-SUS.lastV)/Math.max(dt,1e-3))); SUS.lastV=speed; SUS.vp+=-acc*0.035*dt;
-  const q=new THREE.Quaternion(), AX=new THREE.Vector3(1,0,0);
-  spinWheels.forEach((w,i)=>{ w.obj.quaternion.copy(w.base).multiply(q.setFromAxisAngle(AX,w.sign*wheelAng));
+  const q=new THREE.Quaternion();
+  spinWheels.forEach((w,i)=>{ w.obj.quaternion.copy(w.base).multiply(q.setFromAxisAngle(w.axis,w.sign*wheelAng));
     if(w.up&&CONTACT[i]){ const [cx,cz]=CONTACT[i];
       const bodyG=car.position.y+cx*Math.sin(car.rotation.z)-cz*Math.sin(car.rotation.x);
       const t=Math.max(-SUS.travel,Math.min(SUS.travel,groundAt(cx,cz)-bodyG));
@@ -1588,16 +1658,22 @@ $('lidBtn').addEventListener('click',()=>{ const o=!$('lidSw').classList.contain
 document.addEventListener('pointerdown',e=>{ if(!e.target.closest('#lidSw')&&!e.target.closest('#lidBtn')){ $('lidSw').classList.remove('open'); $('lidBtn').setAttribute('aria-expanded','false'); } });
 ['garage','barTop','barFront','spacing'].forEach(k=>{
   const el=$(k); el.value=S[k];
-  el.addEventListener('change',()=>{const v=parseFloat(el.value); if(!isFinite(v)) {el.value=S[k]; return;} S[k]=v; store.set(k,v);
+  el.addEventListener('change',()=>{const v=parseFloat(el.value); if(!isFinite(v)) {el.value=S[k]; return;} S[k]=v; store.set(CK(k),v);
     if(k!=='garage') S.front=autoFront(A()); update();});
 });
-function setCarColor(c){ S.color=c; store.set('color',c); bodyMat.color.set(c); paintMats.forEach(paintFinish); renderCarColors(); kick(); }
+function setCarColor(c){ S.color=c; store.set(CK('color'),c); bodyMat.color.set(c); paintMats.forEach(paintFinish); renderCarColors(); kick(); }
 function renderCarColors(){
   const btns=COLORS.map(([n,c])=>`<button class="sw" aria-label="${n}" title="${n}" data-c="${c}" style="background:${c}" aria-pressed="${c===S.color}"></button>`).join('');
   const cur=(COLORS.find(x=>x[1]===S.color)||['Свой'])[0];
-  $('colors').innerHTML=btns; $('carSw').innerHTML=`<span class="lbl">${cur}</span>`+btns;
+  $('colors').innerHTML=btns;
+  $('carSw').innerHTML=`<div class="crow"><span class="lbl">${cur}</span>${btns}</div>`
+    +`<div class="crow"><span class="lbl">Диски</span>${Object.entries(RIMS).map(([k,v])=>`<button class="opt2" data-rim="${k}" aria-pressed="${k===S.rim}">${v.name}</button>`).join('')}</div>`
+    +`<div class="crow"><span class="lbl">Машина</span>${Object.entries(CARS).map(([k,v])=>`<button class="opt2" data-car="${k}" aria-pressed="${k===CAR_ID}">${v.name.replace('Mitsubishi ','')}</button>`).join('')}</div>`;
+  $('carSw').querySelectorAll('[data-rim]').forEach(b=>b.addEventListener('click',()=>{ S.rim=b.dataset.rim; store.set('rim',S.rim); applyRims(); renderCarColors(); }));
+  $('carSw').querySelectorAll('[data-car]').forEach(b=>b.addEventListener('click',()=>{ if(b.dataset.car===CAR_ID) return; store.set('car',b.dataset.car); location.reload(); }));
   document.querySelectorAll('#colors .sw, #carSw .sw').forEach(b=>b.addEventListener('click',()=>setCarColor(b.dataset.c)));
 }
+$('carName').textContent=CARDEF.name; $('carSub').textContent=`${CAR.L} × ${CAR.W} × ${CARDEF.H} мм · ${CARDEF.sub}`; document.title='Бокс на '+CARDEF.name;
 renderCarColors();
 $('paintBtn').addEventListener('click',()=>{ const o=!$('carSw').classList.contains('open'); $('carSw').classList.toggle('open',o); $('paintBtn').setAttribute('aria-expanded',String(o)); });
 document.addEventListener('pointerdown',e=>{ if(!e.target.closest('.tw')){ $('carSw').classList.remove('open'); $('paintBtn').setAttribute('aria-expanded','false'); } });
