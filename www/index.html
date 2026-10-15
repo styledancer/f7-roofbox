@@ -54,6 +54,10 @@ body.lock{overflow:hidden}
 .ov{position:absolute;z-index:4;display:flex;gap:6px;pointer-events:none}
 .ov>*{pointer-events:auto}
 .ov[hidden]{display:none}
+.lidside{position:absolute;z-index:3;width:38px;height:38px;border-radius:50%;transform:translate(-50%,-50%);display:grid;place-items:center;padding:0;cursor:pointer;opacity:.78;border-color:rgba(255,255,255,.5)}
+.lidside[hidden]{display:none}
+.lidside svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linejoin:round}
+.lidside[aria-pressed="true"]{background:var(--accent);color:#fff;opacity:.9}
 .tl{left:calc(10px + var(--il));top:calc(10px + var(--it));align-items:center}
 .wx{left:calc(10px + var(--il));top:calc(58px + var(--it));flex-direction:column;align-items:flex-start}
 .wxpill{display:inline-flex;align-items:center;gap:6px;border-radius:12px;padding:6px 10px;font:500 .78rem var(--body);cursor:pointer;color:var(--ink)}
@@ -322,6 +326,9 @@ h2 .badge{margin-left:4px}
       <div class="row"><label for="pos">Положение бокса A на дугах</label><button class="mini" id="autoBtn">Подобрать автоматически</button></div>
       <input type="range" id="pos" min="1200" max="2800" step="10" value="2000">
       <div class="row"><span class="fine" style="margin:0">← к лобовому</span><span class="fine" style="margin:0" id="posVal"></span><span class="fine" style="margin:0">к багажнику →</span></div>
+      <label for="posZ" style="display:block;margin-top:10px">Сдвиг вбок по поперечинам</label>
+      <input type="range" id="posZ" min="-250" max="250" step="10" value="0">
+      <div class="row"><span class="fine" style="margin:0">← к водителю</span><span class="fine" style="margin:0" id="posZVal"></span><span class="fine" style="margin:0">к пассажиру →</span></div>
     </section>
 
     <section id="cmpSec" hidden>
@@ -488,7 +495,7 @@ const S = {
   items: store.get('items',['yoyo','bike16']), custom: store.get('custom',[]),
   garage: store.get('garage',2200), barTop: store.get(CK('barTop'),CARDEF.bars.top),
   barFront: store.get(CK('barFront'),CARDEF.bars.front), spacing: store.get(CK('spacing'),CARDEF.bars.spacing),
-  color: store.get(CK('color'),CARDEF.colors[0][1]), rim: store.get('rim','stock'), showLimit: store.get('showLimit',true), front: null, open:false, lid:0, boxColor: store.get('boxColor',{}), wire:null,
+  color: store.get(CK('color'),CARDEF.colors[0][1]), rim: store.get('rim','stock'), showLimit: store.get('showLimit',true), boxZ: store.get('boxZ',0), front: null, open:false, lid:0, boxColor: store.get('boxColor',{}), wire:null,
   hwSpeed: store.get('hwSpeed',110), baseFuel: store.get('baseFuel',7.5), fuelPrice: store.get('fuelPrice',62)
 };
 const byId = id => BOXES.find(b=>b.id===id);
@@ -1274,6 +1281,7 @@ let running=false;
 function kick(){ if(!running){running=true; requestAnimationFrame(loop);} }
 let boxOnly=false;
 function render(){
+  if(typeof placeSideBtns==='function') try{ placeSideBtns(); }catch(e){}
   if(!boxOnly){ renderer.render(scene,camera); return; }
   // show the roof box(es) alone on a plain studio background
   const hid=[], hide=o=>{ if(o.visible){ o.visible=false; hid.push(o); } };
@@ -1290,7 +1298,7 @@ function loop(now){
   if(stepDrive(dt)) busy=true;
   const ease=0.18;
   if(Math.abs(curFront-targetFront)>0.5){curFront+= (targetFront-curFront)*ease; busy=true;} else curFront=targetFront;
-  boxGroup.position.set(X(curFront), M(S.barTop), 0);
+  boxGroup.position.set(X(curFront), M(S.barTop), M(S.boxZ));
   const tgTarget=S.open?tgLimit:0;
   if(Math.abs(tgAngle-tgTarget)>0.002){tgAngle+=(tgTarget-tgAngle)*0.12; busy=true;} else tgAngle=tgTarget;
   tgPivot.rotation.z=tgAngle; glbPivot.rotation.z=tgAngle;
@@ -1370,6 +1378,8 @@ const itemMats={
   tape:new THREE.MeshStandardMaterial({color:0xE9DCC3,roughness:0.6}),
 };
 const colorMats={};
+const failMat=new THREE.MeshBasicMaterial({color:0xe0302a, transparent:true, opacity:0.32, depthTest:false, depthWrite:false});
+const failEdge=new THREE.LineBasicMaterial({color:0xff3b30, transparent:true, opacity:0.9, depthTest:false});
 function cMat(c){ return colorMats[c]||(colorMats[c]=new THREE.MeshStandardMaterial({color:c,roughness:0.55,metalness:0.05})); }
 function kindOf(it){
   if(it.custom) return 'carton';
@@ -1469,8 +1479,18 @@ function renderItems(){
   const inB=S.itemsIn==='B'&&B(); const box=inB?B():A();
   (inB?cmpGroup:boxGroup).add(itemsGroup);
   const res=pack(box,selItems());
+  let end=0; res.forEach(r=>{ if(!r.fail) end=Math.max(end,r.x0+r.o[0]); });
   res.forEach(r=>{
-    if(r.fail) return; const [l,w,h]=r.o;
+    if(r.fail){
+      const [l,w,h]=r.it.d, x0=end+10; end=x0+l;
+      const pos=new THREE.Vector3(M((box.L-box.Li)/2+x0+l/2), M((box.H-box.Hi)/2+h/2), 0);
+      const model=itemModel(r.it); model.position.copy(pos);
+      model.traverse(o=>{ if(o.isMesh){ o.material=failMat; o.castShadow=false; o.renderOrder=8; } }); itemsGroup.add(model);
+      const g=new THREE.BoxGeometry(M(l),M(h),M(w));
+      const e=new THREE.LineSegments(new THREE.EdgesGeometry(g), failEdge); g.dispose(); e.position.copy(pos); e.renderOrder=9; itemsGroup.add(e);
+      return;
+    }
+    const [l,w,h]=r.o;
     const pos=new THREE.Vector3(M((box.L-box.Li)/2+r.x0+l/2), M((box.H-box.Hi)/2+h/2), 0);
     const model=itemModel(r.it); orientModel(model, r.it.d, r.o); model.position.copy(pos); itemsGroup.add(model);
     const g=new THREE.BoxGeometry(M(l)-0.004,M(h)-0.004,M(w)-0.004);
@@ -1584,13 +1604,14 @@ function renderItemChips(){
 }
 
 function update(){
+  if(typeof renderBoxZ==='function') try{ renderBoxZ(); }catch(e){}
   const a=A(), b=B(); const [lo,hi]=frontLimits(a);
   const pos=$('pos'); pos.min=lo; pos.max=Math.max(lo,hi); S.front=Math.max(lo,Math.min(Math.max(lo,hi),S.front)); pos.value=S.front;
   targetFront=S.front;
   $('posVal').textContent=`нос бокса A: ${fmt(S.front)} мм от бампера`;
   const eA=evaluate(a,S.front);
   const bf=b?bFront():0, eB=b?evaluate(b,bf):null;
-  if(b) cmpGroup.position.set(X(bf), M(S.barTop)+0.002, 0);
+  if(b) cmpGroup.position.set(X(bf), M(S.barTop)+0.002, M(S.boxZ));
   cmpGroup.visible=!!b;
   setGhost(S.wire===null?!!b:S.wire);
 
@@ -2166,6 +2187,36 @@ $('laySw').addEventListener('click',e=>{ const b=e.target.closest('[data-lay]');
   if(k==='box') setBoxOnly(!boxOnly);
   renderLayers(); kick(); });
 wxReady=true; wxApply(true); renderLayers(); fetchWeather(true); setInterval(fetchWeather,15*60*1000);
+
+// ---- sideways position: keep both mounting clamps on the 1320 mm crossbars
+function boxZLimit(){ const w=Math.max(A().W,(B()||A()).W); return Math.max(0,Math.floor((1320-w*0.82)/2/10)*10); }
+function renderBoxZ(){ const lim=boxZLimit(); S.boxZ=Math.max(-lim,Math.min(lim,S.boxZ)); const el=$('posZ'); el.min=-lim; el.max=lim; el.value=-S.boxZ;
+  $('posZVal').textContent=S.boxZ===0?'по центру':`${Math.abs(S.boxZ)} мм ${S.boxZ>0?'к водителю':'к пассажиру'}`; }
+$('posZ').addEventListener('input',e=>{ S.boxZ=-(+e.target.value); store.set('boxZ',S.boxZ); renderBoxZ(); kick(); });
+renderBoxZ();
+
+// ---- lid buttons on the sides of the box, drawn over the 3D view and following the box
+const sideBtns=[1,-1].map(sd=>{ const b=document.createElement('button'); b.className='lidside glass'; b.dataset.sd=sd;
+  b.setAttribute('aria-label', sd>0?'Открыть бокс со стороны водителя':'Открыть бокс со стороны пассажира');
+  b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15h16v4H4z"/><path d="M4 15l3-7h13l-3 7"/></svg>';
+  b.addEventListener('click',()=>{ const v=(S.lid&&lidSide===sd)?0:sd; const t=document.querySelector(`#lidSw [data-lid="${v}"]`); if(t) t.click(); });
+  stage.appendChild(b); return b; });
+const _v=new THREE.Vector3(), _c=new THREE.Vector3();
+function placeSideBtns(){
+  const a=A(), still=drive.mode==='idle'&&speed<0.05&&a;
+  sideBtns.forEach(b=>{
+    const sd=+b.dataset.sd; if(!still){ b.hidden=true; return; }
+    _v.set(M(a.L)*0.5, M(a.H)*0.42, sd*(M(a.W)/2+0.02)); boxGroup.localToWorld(_v);
+    _c.set(0,0,sd).applyQuaternion(car.quaternion);
+    const facing=_c.dot(camera.position.clone().sub(_v))>0;
+    const p=_v.clone().project(camera);
+    const vis=facing&&p.z<1&&Math.abs(p.x)<0.95&&Math.abs(p.y)<0.95;
+    b.hidden=!vis; if(!vis) return;
+    const r=stage.getBoundingClientRect();
+    b.style.left=((p.x+1)/2*r.width)+'px'; b.style.top=((1-p.y)/2*r.height)+'px';
+    b.setAttribute('aria-pressed',String(!!S.lid&&lidSide===sd));
+  });
+}
 
 renderItemChips();
 loadCarModel();

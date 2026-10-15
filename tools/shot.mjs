@@ -43,6 +43,8 @@ await shot('17-no-limit-no-wx');
 await click('#layBtn'); await page.waitForTimeout(400); await page.screenshot({ path: `${out}/18-layers.png` });
 await page.evaluate(() => document.querySelector('#laySw [data-lay="box"]').click()); await page.waitForTimeout(3000); await shot('19-box-only');
 await page.evaluate(() => { const b=document.querySelector('#lidSw [data-lid="1"]'); b&&b.click(); }); await shot('20-box-open');
+await page.evaluate(() => { localStorage.setItem('f7box.sel','"m3-m"'); localStorage.setItem('f7box.items','["suitL","suitL","bike16","ski"]'); localStorage.setItem('f7box.boxZ','150'); localStorage.setItem('f7box.wxMode','"off"'); }); await page.reload(); await page.waitForTimeout(9000);
+await shot('21-items-fail'); await view('top'); await shot('22-top-offset');
 require_fs: {
   const fs = await import('fs'); fs.writeFileSync(`${out}/console.txt`, logs.join('\n'));
 }
