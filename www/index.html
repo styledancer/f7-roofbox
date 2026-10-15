@@ -1953,7 +1953,7 @@ function renderCarLayer(w,h,o){
   aoBlob.visible=true; const gl0=[CM.glass.transparent,CM.glass.opacity]; CM.glass.transparent=false; CM.glass.opacity=1; CM.glass.needsUpdate=true;
   const saved=[], hide=o=>{ if(o){ saved.push([o,o.visible]); o.visible=false; } };
   scene.children.forEach(o=>{ if(o!==car&&o!==ground&&!o.isLight) hide(o); });
-  [flowLines,person,cmpGroup].forEach(hide);
+  [flowLines,person,cmpGroup,itemsGroup].forEach(hide); headlights.forEach(h=>hide(h.b));
   const pose=[car.position.y,car.rotation.x,car.rotation.z]; car.position.y=0; car.rotation.x=0; car.rotation.z=0;
   const bg=scene.background, fog=scene.fog, gOp=ground.material.opacity, g0=ghost;
   const sc=sun.color.getHex(), si=sun.intensity, L=SNAP_LIGHT[S.snapLight];
