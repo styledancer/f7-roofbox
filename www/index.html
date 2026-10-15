@@ -66,7 +66,12 @@ body.lock{overflow:hidden}
 .views.open{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition:opacity .18s ease,transform .22s ease}
 .views button{font:500 .78rem var(--body);border:0;background:transparent;color:var(--ink);border-radius:9px;padding:8px 10px;cursor:pointer;white-space:nowrap}
 .views button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
-.pick{min-width:0;flex:0 1 auto;max-width:min(240px,46%)}
+.pick{min-width:0;flex:0 1 auto;max-width:min(240px,46%);position:relative}
+.buy{position:absolute;left:0;bottom:calc(100% + 6px);display:inline-flex;align-items:center;gap:6px;border-radius:10px;padding:6px 10px;font:600 .76rem var(--body);color:var(--ink);text-decoration:none;white-space:nowrap;max-width:100%}
+.buy svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.buy .sh{font-weight:400;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.buy:hover{border-color:var(--accent)}
+.buy[hidden]{display:none}
 .chip{display:flex;align-items:center;gap:8px;border-radius:12px;padding:6px 10px 6px 8px;cursor:pointer;font:inherit;text-align:left;min-width:0;max-width:100%;width:100%}
 .chip .tx{display:flex;flex-direction:column;min-width:0;flex:1}
 .chip .nm{font-weight:600;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -263,8 +268,8 @@ h2 .badge{margin-left:4px}
         <div class="lgw"><span>поток медленнее</span><i class="lg"></i><span>быстрее</span></div>
       </div>
       <div class="ov bl" id="picks">
-        <div class="pick"><button class="chip glass" id="chipA" aria-expanded="false" aria-controls="popA"></button></div>
-        <div class="pick"><button class="chip glass" id="chipB" aria-expanded="false" aria-controls="popB"></button></div>
+        <div class="pick"><a class="buy glass" id="buyA" target="_blank" rel="noopener"></a><button class="chip glass" id="chipA" aria-expanded="false" aria-controls="popA"></button></div>
+        <div class="pick"><a class="buy glass" id="buyB" target="_blank" rel="noopener" hidden></a><button class="chip glass" id="chipB" aria-expanded="false" aria-controls="popB"></button></div>
         <div class="hpill glass" id="hpill"></div>
         <div class="pop glass" id="popA" role="listbox" aria-label="Бокс A" hidden></div>
         <div class="pop glass" id="popB" hidden>
@@ -395,12 +400,12 @@ h2 .badge{margin-left:4px}
 const CAR = {L:4691, W:1866, WB:2725, FO:950, track:1585, wheelR:365, roofFront:2150, hinge:[3980,1635], railFrom:2250, railTo:3950};
 const OPEN_ANG = 92*Math.PI/180;
 const BOXES = [
-  {id:'m3-m',   brand:'Thule', model:'Motion 3 M',       L:1750, W:840, H:440, V:400, Li:1640, Wi:690, Hi:390},
-  {id:'m3-l',   brand:'Thule', model:'Motion 3 L',       L:1940, W:870, H:420, V:440, prof:'l'},
-  {id:'m3-xl',  brand:'Thule', model:'Motion 3 XL',      L:2150, W:890, H:430, V:490, prof:'xl'},
-  {id:'m3-xll', brand:'Thule', model:'Motion 3 XL Low',  L:2160, W:890, H:360, V:400, prof:'xl_low'},
-  {id:'m3-xxl', brand:'Thule', model:'Motion 3 XXL',     L:2320, W:920, H:450, V:600, Li:2200, Wi:770, Hi:400},
-  {id:'m3-xxll',brand:'Thule', model:'Motion 3 XXL Low', L:2320, W:920, H:370, V:480, prof:'xxl_low'},
+  {id:'m3-m',   brand:'Thule', model:'Motion 3 M',       L:1750, W:840, H:440, V:400, Li:1640, Wi:690, Hi:390, shop:'https://www.thule.com/ru-ru/cargo-carrier/car-top-carrier/thule-motion-3-m-_-639200'},
+  {id:'m3-l',   brand:'Thule', model:'Motion 3 L',       L:1940, W:870, H:420, V:440, prof:'l', shop:'https://www.thule.com/ru-ru/cargo-carrier/car-top-carrier/thule-motion-3-l-_-639701'},
+  {id:'m3-xl',  brand:'Thule', model:'Motion 3 XL',      L:2150, W:890, H:430, V:490, prof:'xl', shop:'https://www.thule.com/ru-ru/cargo-carrier/car-top-carrier/thule-motion-3-xl-_-639800'},
+  {id:'m3-xll', brand:'Thule', model:'Motion 3 XL Low',  L:2160, W:890, H:360, V:400, prof:'xl_low', shop:'https://www.thule.com/ru-ru/cargo-carrier/car-top-carrier/thule-motion-3-xl-low-_-639400'},
+  {id:'m3-xxl', brand:'Thule', model:'Motion 3 XXL',     L:2320, W:920, H:450, V:600, Li:2200, Wi:770, Hi:400, shop:'https://www.thule.com/ru-ru/cargo-carrier/car-top-carrier/thule-motion-3-xxl-_-639900'},
+  {id:'m3-xxll',brand:'Thule', model:'Motion 3 XXL Low', L:2320, W:920, H:370, V:480, prof:'xxl_low', shop:'https://www.thule.com/ru-ru/cargo-carrier/car-top-carrier/thule-motion-3-xxl-low-_-639500'},
   {id:'lx-175', brand:'LUX', model:'Tavr 175', L:1730, W:830, H:405, V:450, prof:'lux175'},
   {id:'lx-197', brand:'LUX', model:'Tavr 197', L:1970, W:890, H:400, V:520, prof:'lux197'},
   {id:'ed-390', brand:'Евродеталь', model:'Магнум 390', L:1850, W:840, H:420, V:390},
@@ -1409,16 +1414,33 @@ function finishRow(box,k){ const cur=boxFinish(box); return `<div class="poph">�
 function bindFinish(root){ root.querySelectorAll('.sw[data-fin]').forEach(b=>b.addEventListener('click',()=>{ S.boxColor[b.dataset.box]=b.dataset.fin; store.set('boxColor',S.boxColor); setGhost(ghost); renderBoxButtons(); renderCmpSelect(); kick(); })); }
 const CHEV='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>';
 const optHtml=(b,sel)=>`<button class="opt" role="option" data-id="${b.id}" aria-selected="${sel}"><span class="br">${b.brand}</span><span class="md">${b.model}</span><span class="dm">${b.V} л · ${dimsTxt(b.L,b.W,b.H)}</span></button>`;
+// where the "Купить" button leads, per brand; a model can override it with its own `shop` link
+const SHOPS={
+  'Thule':{name:'thule.com', url:b=>b.shop||'https://www.thule.com/ru-ru/cargo-carrier/car-top-carrier'},
+  'LUX':{name:'lux-systems.ru', url:b=>b.shop||'https://www.lux-systems.ru/search?q='+encodeURIComponent('TAVR '+b.model.replace(/\D+/g,''))},
+  'Евродеталь':{name:'ВсеИнструменты', url:b=>b.shop||'https://www.vseinstrumenti.ru/brand/ed-2090545/'},
+};
+const CART='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 7H6.2"/><circle cx="9.5" cy="19" r="1.4"/><circle cx="16.5" cy="19" r="1.4"/></svg>';
+function renderBuy(id,b){
+  const el=$(id), sh=b&&SHOPS[b.brand]; el.hidden=!sh; if(!sh) return;
+  el.href=sh.url(b); el.innerHTML=CART+'Купить<span class="sh">· '+sh.name+'</span>';
+  el.setAttribute('aria-label','Купить '+b.brand+' '+b.model+' в магазине '+sh.name);
+}
+['buyA','buyB'].forEach(id=>$(id).addEventListener('click',e=>{
+  // inside the Android app open the store in the phone's browser, not inside the app
+  if(isNativeApp()){ e.preventDefault(); location.href=$(id).href; }
+}));
+function isNativeApp(){ return !!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()); }
 function closePops(except){ [['popA','chipA'],['popB','chipB']].forEach(([p,c])=>{ if(p!==except){ $(p).hidden=true; $(c).setAttribute('aria-expanded','false'); } }); }
 function renderBoxButtons(){
   const a=A();
   $('chipA').innerHTML=`<span class="badge a">A</span><span class="tx"><span class="nm">${a.brand} ${a.model}</span><span class="sb">${a.V} л · ${dimsTxt(a.L,a.W,a.H)}</span></span>${CHEV}`;
   $('popA').innerHTML=finishRow(a,'A')+'<div class="poph">Бокс A</div>'+BOXES.map(b=>optHtml(b,b.id===S.sel)).join('');
-  bindFinish($('popA'));
+  bindFinish($('popA')); renderBuy('buyA',a);
   $('popA').querySelectorAll('.opt').forEach(el=>el.addEventListener('click',()=>{ closePops(); selectBox(el.dataset.id); }));
 }
 function renderCmpSelect(){
-  const b=B();
+  const b=B(); renderBuy('buyB',b);
   $('chipB').innerHTML=b?`<span class="badge b">B</span><span class="tx"><span class="nm">${b.brand} ${b.model}</span><span class="sb">${b.V} л · ${dimsTxt(b.L,b.W,b.H)}</span></span>${CHEV}`
     :`<span class="badge b">B</span><span class="tx"><span class="nm">Сравнить</span><span class="sb">второй бокс</span></span>${CHEV}`;
   $('popBList').innerHTML='<div class="poph">Бокс B для сравнения</div><button class="opt" role="option" data-id="" aria-selected="'+(!b)+'"><span class="md">Не сравнивать</span></button>'
