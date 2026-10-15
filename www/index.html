@@ -1276,7 +1276,7 @@ try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{a
 new MutationObserver(()=>{applyTheme();kick();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 
 /* ---------- camera views ---------- */
-const VIEWS={ gate:[[-1.2,2.1,8.8],[-2.9,1.5,0]], q:[[-5.8,3.4,5.6],[0,1.1,0]], side:[[0,1.3,8.2],[0,1.1,0]], rear:[[7.4,2.6,2.2],[0.6,1.4,0]], top:[[0.01,9.5,0.4],[0,1,0]] };
+const VIEWS={ gate:[[-3.2,2.4,10.5],[-4.3,1.4,0]], q:[[-5.8,3.4,5.6],[0,1.1,0]], side:[[0,1.3,8.2],[0,1.1,0]], rear:[[7.4,2.6,2.2],[0.6,1.4,0]], top:[[0.01,9.5,0.4],[0,1,0]] };
 let camAnim=null;
 function setView(k){
   document.querySelectorAll('.views button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.view===k)));
@@ -1396,7 +1396,13 @@ function fitState(box,item){
 // 3D packing with "extreme points": every placed item offers new corners (in front of it, beside it, on top of it);
 // each next item, longest first, takes the lowest, rearmost-to-front, most-to-the-side corner where it fits inside the hull
 // without touching other items and stands on the floor or on something below it.
+const packMemo=new Map();
 function pack(box,items){
+  const key=box.id+'|'+items.map(it=>it.id+':'+it.d.join('x')).join(',');
+  if(packMemo.has(key)) return packMemo.get(key);
+  const out=packRaw(box,items); if(packMemo.size>60) packMemo.clear(); packMemo.set(key,out); return out;
+}
+function packRaw(box,items){
   const G=10, placed=[], half=box.Wi/2;
   const order=items.map((it,i)=>({it,i})).sort((a,b)=>Math.max(...b.it.d)-Math.max(...a.it.d)||(b.it.d[0]*b.it.d[1]*b.it.d[2])-(a.it.d[0]*a.it.d[1]*a.it.d[2]));
   let pts=[{x:0,y:0,z:-half}];
@@ -1410,13 +1416,16 @@ function pack(box,items){
     let best=null;
     for(const o of orients(it.d)){ const [l,w,h]=o; if(l>box.Li||w>box.Wi||h>box.Hi) continue;
       for(const p of pts){
-        // try the corner as given and, on the far side, mirrored so items can also line up along the other wall
-        for(const z0 of [p.z, half-(p.z+half)-w]){
-          const x0=p.x, y0=p.y;
-          if(x0+l>box.Li||z0<-half||z0+w>half) continue;
-          if(!inHull(x0,y0,z0,l,w,h)||hits(x0,y0,z0,l,w,h)||!supported(x0,y0,z0,l,w)) continue;
+        // from each corner also slide a little towards the middle and towards the tail: the hull tapers at the nose and the sides
+        const zs=new Set([p.z, half-(p.z+half)-w, -w/2]); for(let k=1;k<=12;k++){ zs.add(p.z+k*30); zs.add(half-(p.z+half)-w-k*30); }
+        for(const z0 of zs) for(let kx=0;kx<=16;kx++){
+          const x0=p.x+kx*30, y0=p.y;
+          if(x0+l>box.Li||z0<-half||z0+w>half) break;
+          if(best&&y0*4+x0*2>=best.sc) break;              // only gets worse further towards the tail
+          if(hits(x0,y0,z0,l,w,h)||!supported(x0,y0,z0,l,w)||!inHull(x0,y0,z0,l,w,h)) continue;
           const sc=y0*4+x0*2+(half-Math.abs(z0+w/2))*0.5+h*0.3;
           if(!best||sc<best.sc) best={sc,x0,y0,z0,o};
+          break;
         }
       }
     }
@@ -2298,7 +2307,7 @@ function drawSign(mm){
   signMat.map=signTex; signMat.needsUpdate=true;
 }
 function setGateH(mm){ const h=M(mm); deck.position.y=h+0.35; pillars.forEach(p=>{ p.scale.y=h; p.position.y=h/2; }); drawSign(mm); }
-const GATE={x0:-17, d0:0, state:'idle'};
+const GATE={x0:-12, d0:0, state:'idle'};
 function gateTotal(){ return Math.max(S.barTop+A().H, CARDEF.H); }
 function gateStep(dt){
   gate.position.x=GATE.x0+(dist-GATE.d0);

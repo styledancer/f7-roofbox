@@ -46,8 +46,8 @@ await page.evaluate(() => { const b=document.querySelector('#lidSw [data-lid="1"
 await page.evaluate(() => { localStorage.setItem('f7box.sel','"m3-l"'); localStorage.setItem('f7box.items','["ski","snow","tent","boots"]'); localStorage.setItem('f7box.boxZ','0'); localStorage.setItem('f7box.wxMode','"off"'); localStorage.setItem('f7box.garage','2200'); }); await page.reload(); await page.waitForTimeout(9000);
 await click('#wireBtn'); await view('top'); await shot('21-pack-top'); await view('side'); await shot('22-pack-side'); await click('#wireBtn');
 await view('rear'); await shot('23-tg-button');
-await page.evaluate(() => document.querySelector('#laySw [data-lay="gate"]').click()); await page.waitForTimeout(14000); await shot('24-gate-pass');
-await page.evaluate(() => { for (let i=0;i<3;i++) document.querySelector('#gateMinus').click(); document.querySelector('#gateAgain').click(); }); await page.waitForTimeout(14000); await shot('25-gate-stop');
+await page.evaluate(() => document.querySelector('#laySw [data-lay="gate"]').click()); await page.waitForTimeout(40000); await shot("24-gate-pass");
+await page.evaluate(() => { for (let i=0;i<3;i++) document.querySelector('#gateMinus').click(); document.querySelector('#gateAgain').click(); }); await page.waitForTimeout(40000); await shot("25-gate-stop");
 require_fs: {
   const fs = await import('fs'); fs.writeFileSync(`${out}/console.txt`, logs.join('\n'));
 }
