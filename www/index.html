@@ -1453,6 +1453,9 @@ function boxMesh(box){
   loadModel(box.mesh, g=>{
     let lid=null, base=null; g.scene.traverse(o=>{ if(!o.isMesh) return; if(/top/i.test(o.name)||/top/i.test(o.parent&&o.parent.name||'')) lid=o.geometry; else if(!base) base=o.geometry; });
     if(!base) return;
+    // the source model faces backwards: turn base and lid half a turn about the base's own centre
+    base.computeBoundingBox(); const c=base.boundingBox.getCenter(new THREE.Vector3());
+    [lid,base].forEach(x=>{ if(!x) return; x.translate(-c.x,0,-c.z); x.rotateY(Math.PI); x.translate(c.x,0,c.z); });
     [lid,base].forEach(x=>x&&x.computeVertexNormals());
     meshCache[box.mesh]={geo:base, lid, edges:new THREE.EdgesGeometry(base,40), lidEdges:lid?new THREE.EdgesGeometry(lid,40):null};
     rebuild('A'); rebuild('B'); update();
