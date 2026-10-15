@@ -54,6 +54,23 @@ body.lock{overflow:hidden}
 .ov{position:absolute;z-index:4;display:flex;gap:6px;pointer-events:none}
 .ov>*{pointer-events:auto}
 .ov[hidden]{display:none}
+.gateui{position:absolute;z-index:5;left:calc(10px + var(--il));right:calc(10px + var(--ir));bottom:calc(10px + var(--ib));border-radius:16px;padding:10px 12px;display:grid;gap:8px}
+.gateui[hidden]{display:none}
+.gateui .res{font:600 .9rem var(--body);display:flex;align-items:center;gap:8px}
+.gateui .res i{width:10px;height:10px;border-radius:50%;background:var(--muted);flex:none}
+.gateui .res.ok i{background:var(--good)} .gateui .res.bad i{background:var(--bad)}
+.gateui .res span{font-weight:400;color:var(--muted)}
+.gateui .hrow{display:flex;align-items:center;gap:8px}
+.gateui .hrow input{flex:1;margin:0}
+.gateui .hv{font:600 1rem var(--mono);min-width:72px;text-align:center;font-variant-numeric:tabular-nums}
+.gateui .pm{width:36px;height:36px;border-radius:10px;font:600 1.1rem var(--body);cursor:pointer;border:1px solid var(--glass-line);background:transparent;color:var(--ink)}
+.gateui .acts{display:flex;gap:6px;justify-content:flex-end}
+.gateui .acts .mini{padding:7px 12px}
+.tgside{position:absolute;z-index:3;width:40px;height:40px;border-radius:50%;transform:translate(-50%,-50%);display:grid;place-items:center;padding:0;cursor:pointer;opacity:.8;border-color:rgba(255,255,255,.5)}
+.tgside[hidden]{display:none}
+.tgside svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tgside[aria-pressed="true"]{background:var(--accent);color:#fff}
+#tgBtn{display:none}
 .lidside{position:absolute;z-index:3;width:38px;height:38px;border-radius:50%;transform:translate(-50%,-50%);display:grid;place-items:center;padding:0;cursor:pointer;opacity:.78;border-color:rgba(255,255,255,.5)}
 .lidside[hidden]{display:none}
 .lidside svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linejoin:round}
@@ -286,6 +303,7 @@ h2 .badge{margin-left:4px}
           <button class="opt2" data-lay="limit" aria-pressed="true">Высота проезда</button>
           <button class="opt2" data-lay="wx" aria-pressed="true">Погода</button>
           <button class="opt2" data-lay="box" aria-pressed="false">Только бокс</button>
+          <button class="opt2" data-lay="gate" aria-pressed="false">Проверка проезда</button>
         </div></div>
         <button class="ib glass more" id="moreBtn" aria-label="К настройкам и проверкам ниже" title="Подробнее"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
       </div>
@@ -316,6 +334,11 @@ h2 .badge{margin-left:4px}
           <div class="snapbar"><button class="mini pri" id="snapShare" disabled>Поделиться</button><button class="mini" id="snapAgain" disabled>Ещё вариант</button><button class="mini" id="snapClose">Закрыть</button></div>
           <details><summary>Промт для нейросети</summary><p class="fine" id="snapPrompt"></p></details>
         </div>
+      </div>
+      <div class="gateui glass" id="gateUI" hidden>
+        <div class="res" id="gateRes"><i></i><b>Едем к эстакаде…</b></div>
+        <div class="hrow"><button class="pm" id="gateMinus" aria-label="Ниже">−</button><input type="range" id="gateH" min="1600" max="3000" step="10" aria-label="Высота проезда"><button class="pm" id="gatePlus" aria-label="Выше">+</button><span class="hv" id="gateHv"></span></div>
+        <div class="acts"><button class="mini" id="gateAgain">Ещё раз</button><button class="mini" id="gateExit">Выйти</button></div>
       </div>
       <div class="toast glass" id="toast" role="alert"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg><div id="toastTx"></div></div>
     </div>
@@ -466,16 +489,20 @@ BOXES.forEach(b=>{ if(b.prof){ b.Li=b.L-2*WALL; b.Wi=b.W-2*WALL; b.Hi=b.H-2*WALL
 const ITEM_COLORS=['#E07A2E','#2F9E6B','#8B5CF6','#D6457A','#2B8FD6','#B59A1E','#5B8C2A','#C0504D','#3AA6A6','#7D6BD1','#D98E04'];
 const ITEMS = [
   {id:'yoyo',   name:'Коляска Babyzen YOYO², сложена', d:[520,440,180]},
-  {id:'airz',   name:'Коляска Anex Air Z, сложена',    d:[580,460,250]},
+  {id:'airz',   name:'Коляска Anex Air-Z, сложена',    d:[680,460,250]},
   {id:'bike16', name:'Детский велосипед 16″',          d:[1150,540,690]},
   {id:'bike16t',name:'Велосипед 16″, руль повёрнут',   d:[1150,300,690], est:true},
   {id:'suitL',  name:'Чемодан большой',                d:[750,500,300]},
   {id:'suitM',  name:'Чемодан средний',                d:[650,450,270]},
   {id:'cabin',  name:'Ручная кладь',                   d:[550,400,200]},
   {id:'duffel', name:'Спортивная сумка 70 л',          d:[700,350,350], est:true},
-  {id:'tent',   name:'Палатка 2-местная в чехле',      d:[600,180,180], est:true},
-  {id:'ski',    name:'Лыжи 170 см, пара',              d:[1700,200,120], est:true},
-  {id:'snow',   name:'Сноуборд 155 см',                d:[1550,300,100], est:true},
+  {id:'tent',   name:'Палатка 2-местная в чехле',      d:[550,200,200], est:true},
+  {id:'ski',    name:'Лыжи 170 см, пара с креплениями', d:[1700,130,190], est:true},
+  {id:'snow',   name:'Сноуборд 155 см с креплениями',  d:[1550,300,160], est:true},
+  {id:'boots',  name:'Горнолыжные ботинки в сумке',    d:[450,380,330], est:true},
+  {id:'sleep',  name:'Спальник в компрессионном мешке',d:[450,250,250], est:true},
+  {id:'chair',  name:'Складное кресло в чехле',        d:[900,170,170], est:true},
+  {id:'cooler', name:'Сумка-холодильник 30 л',         d:[450,300,330], est:true},
 ];
 ITEMS.forEach((it,i)=>it.color=ITEM_COLORS[i%ITEM_COLORS.length]);
 // Haval F7 body colours: white metallic is the default
@@ -1078,9 +1105,10 @@ function stepDrive(dt){
     if(!drive.userCam&&!camAnim){ const a=dt*0.07, p=camera.position, tg=controls.target, dx=p.x-tg.x, dz=p.z-tg.z;
       p.x=tg.x+dx*Math.cos(a)-dz*Math.sin(a); p.z=tg.z+dx*Math.sin(a)+dz*Math.cos(a); camera.lookAt(tg); } }
   else if(drive.mode==='free'){ ts=DRV_SPEED; ta=1; }
-  else if(drive.mode==='hw'){ ts=S.hwSpeed/3.6; ta=0; }   // the car really drives at the picked speed
-  const rT=drive.mode==='hw'?1:0, rOld=roadMix; roadMix+=(rT-roadMix)*Math.min(1,dt*1.5); if(Math.abs(roadMix-rT)<0.002) roadMix=rT;
-  flowMix+=(rT-flowMix)*Math.min(1,dt*(rT?0.7:2.5)); if(Math.abs(flowMix-rT)<0.002) flowMix=rT;
+  else if(drive.mode==='hw'){ ts=S.hwSpeed/3.6; ta=0; }
+  else if(drive.mode==='gate'){ ts=gateStep(dt); ta=0; }   // the car really drives at the picked speed
+  const rT=(drive.mode==='hw'||drive.mode==='gate')?1:0, fT=drive.mode==='hw'?1:0, rOld=roadMix; roadMix+=(rT-roadMix)*Math.min(1,dt*1.5); if(Math.abs(roadMix-rT)<0.002) roadMix=rT;
+  flowMix+=(fT-flowMix)*Math.min(1,dt*(fT?0.7:2.5)); if(Math.abs(flowMix-fT)<0.002) flowMix=fT;
   if(roadMix!==rOld) terDirty=true;
   roadMat.opacity=roadMix; laneMat.opacity=roadMix*0.9; road.visible=dashes.visible=roadMix>0.001; edges.forEach(e=>e.visible=roadMix>0.001);
   flowMat.opacity=flowMix*0.95; flowLines.visible=flowMix>0.001; if(flowLines.visible) stepFlow(dt); if(road.visible) placeDashes();
@@ -1248,7 +1276,7 @@ try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{a
 new MutationObserver(()=>{applyTheme();kick();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 
 /* ---------- camera views ---------- */
-const VIEWS={ q:[[-5.8,3.4,5.6],[0,1.1,0]], side:[[0,1.3,8.2],[0,1.1,0]], rear:[[7.4,2.6,2.2],[0.6,1.4,0]], top:[[0.01,9.5,0.4],[0,1,0]] };
+const VIEWS={ gate:[[-1.2,2.1,8.8],[-2.9,1.5,0]], q:[[-5.8,3.4,5.6],[0,1.1,0]], side:[[0,1.3,8.2],[0,1.1,0]], rear:[[7.4,2.6,2.2],[0.6,1.4,0]], top:[[0.01,9.5,0.4],[0,1,0]] };
 let camAnim=null;
 function setView(k){
   document.querySelectorAll('.views button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.view===k)));
@@ -1281,7 +1309,7 @@ let running=false;
 function kick(){ if(!running){running=true; requestAnimationFrame(loop);} }
 let boxOnly=false;
 function render(){
-  if(typeof placeSideBtns==='function') try{ placeSideBtns(); }catch(e){}
+  if(typeof placeSideBtns==='function') try{ placeSideBtns(); placeTgBtn(); }catch(e){}
   if(!boxOnly){ renderer.render(scene,camera); return; }
   // show the roof box(es) alone on a plain studio background
   const hid=[], hide=o=>{ if(o.visible){ o.visible=false; hid.push(o); } };
@@ -1365,8 +1393,40 @@ function fitState(box,item){
   const roomy=bestFit(box,item.d.map(v=>v+30),0);
   return {st:roomy?'good':'warn', txt:roomy?'влезает':'впритык', f};
 }
+// 3D packing with "extreme points": every placed item offers new corners (in front of it, beside it, on top of it);
+// each next item, longest first, takes the lowest, rearmost-to-front, most-to-the-side corner where it fits inside the hull
+// without touching other items and stands on the floor or on something below it.
 function pack(box,items){
-  let cur=0; return items.map(it=>{ const f=bestFit(box,it.d,cur); if(!f) return {it,fail:true}; cur=f.end+10; return Object.assign({it},f); });
+  const G=10, placed=[], half=box.Wi/2;
+  const order=items.map((it,i)=>({it,i})).sort((a,b)=>Math.max(...b.it.d)-Math.max(...a.it.d)||(b.it.d[0]*b.it.d[1]*b.it.d[2])-(a.it.d[0]*a.it.d[1]*a.it.d[2]));
+  let pts=[{x:0,y:0,z:-half}];
+  const inHull=(x0,y0,z0,l,w,h)=>{ for(const x of [x0+1,x0+l/2,x0+l-1]) for(const y of [y0<=1?1:y0,y0+h]) for(const z of [z0,z0+w]) if(!insideHull(box,x,y,z)) return false; return true; };
+  const hits=(x0,y0,z0,l,w,h)=>placed.some(p=>x0<p.x0+p.l+G-1&&x0+l+G-1>p.x0&&y0<p.y0+p.h-1&&y0+h>p.y0+1&&z0<p.z0+p.w+G-1&&z0+w+G-1>p.z0);
+  const supported=(x0,y0,z0,l,w)=>{ if(y0<=1) return true; let a=0;
+    placed.forEach(p=>{ if(Math.abs(p.y0+p.h-y0)<=2){ const ox=Math.min(x0+l,p.x0+p.l)-Math.max(x0,p.x0), oz=Math.min(z0+w,p.z0+p.w)-Math.max(z0,p.z0); if(ox>0&&oz>0) a+=ox*oz; } });
+    return a>=0.6*l*w; };
+  const res=new Array(items.length);
+  order.forEach(({it,i})=>{
+    let best=null;
+    for(const o of orients(it.d)){ const [l,w,h]=o; if(l>box.Li||w>box.Wi||h>box.Hi) continue;
+      for(const p of pts){
+        // try the corner as given and, on the far side, mirrored so items can also line up along the other wall
+        for(const z0 of [p.z, half-(p.z+half)-w]){
+          const x0=p.x, y0=p.y;
+          if(x0+l>box.Li||z0<-half||z0+w>half) continue;
+          if(!inHull(x0,y0,z0,l,w,h)||hits(x0,y0,z0,l,w,h)||!supported(x0,y0,z0,l,w)) continue;
+          const sc=y0*4+x0*2+(half-Math.abs(z0+w/2))*0.5+h*0.3;
+          if(!best||sc<best.sc) best={sc,x0,y0,z0,o};
+        }
+      }
+    }
+    if(!best){ res[i]={it,fail:true}; return; }
+    const [l,w,h]=best.o; placed.push({x0:best.x0,y0:best.y0,z0:best.z0,l,w,h});
+    pts.push({x:best.x0+l+G,y:best.y0,z:best.z0},{x:best.x0,y:best.y0+h,z:best.z0},{x:best.x0,y:best.y0,z:best.z0+w+G});
+    pts=pts.filter(q=>q.x<box.Li&&q.y<box.Hi&&q.z<half).sort((a,b)=>a.y-b.y||a.x-b.x||a.z-b.z);
+    res[i]=Object.assign({it},best,{end:best.x0+l});
+  });
+  return res;
 }
 /* item models: simple shapes built inside each item's real outer size (x = length, z = width, y = height),
    so what you see fills exactly the space the fit check uses */
@@ -1384,7 +1444,7 @@ function cMat(c){ return colorMats[c]||(colorMats[c]=new THREE.MeshStandardMater
 function kindOf(it){
   if(it.custom) return 'carton';
   return ({yoyo:'stroller',airz:'stroller',bike16:'bike',bike16t:'bike',suitL:'suitcase',suitM:'suitcase',cabin:'suitcase',
-           duffel:'duffel',tent:'tent',ski:'ski',snow:'snow'})[it.id]||'carton';
+           duffel:'duffel',tent:'tent',ski:'ski',snow:'snow',boots:'duffel',sleep:'duffel',chair:'tent',cooler:'carton'})[it.id]||'carton';
 }
 function itemModel(it){
   const L=M(it.d[0]), W=M(it.d[1]), H=M(it.d[2]), g=new THREE.Group(), main=cMat(it.color);
@@ -1491,7 +1551,7 @@ function renderItems(){
       return;
     }
     const [l,w,h]=r.o;
-    const pos=new THREE.Vector3(M((box.L-box.Li)/2+r.x0+l/2), M((box.H-box.Hi)/2+h/2), 0);
+    const pos=new THREE.Vector3(M((box.L-box.Li)/2+r.x0+l/2), M((box.H-box.Hi)/2+(r.y0||0)+h/2), M((r.z0===undefined?-w/2:r.z0)+w/2));
     const model=itemModel(r.it); orientModel(model, r.it.d, r.o); model.position.copy(pos); itemsGroup.add(model);
     const g=new THREE.BoxGeometry(M(l)-0.004,M(h)-0.004,M(w)-0.004);
     const e=new THREE.LineSegments(new THREE.EdgesGeometry(g), new THREE.LineBasicMaterial({color:r.it.color,transparent:true,opacity:0.55}));
@@ -2175,7 +2235,7 @@ function setBoxOnly(on){
   wxApply(); renderLayers(); kick();
 }
 function renderLayers(){
-  const st={limit:S.showLimit, wx:WX.mode!=='off', box:boxOnly};
+  const st={limit:S.showLimit, wx:WX.mode!=='off', box:boxOnly, gate:drive.mode==='gate'};
   document.querySelectorAll('#laySw [data-lay]').forEach(b=>b.setAttribute('aria-pressed',String(!!st[b.dataset.lay])));
   document.querySelector('.ov.wx').hidden=WX.mode==='off'||boxOnly;
 }
@@ -2216,6 +2276,84 @@ function placeSideBtns(){
     b.style.left=((p.x+1)/2*r.width)+'px'; b.style.top=((1-p.y)/2*r.height)+'px';
     b.setAttribute('aria-pressed',String(!!S.lid&&lidSide===sd));
   });
+}
+
+/* ---------- overpass check: the car drives up to an overpass with a height-limit sign; the clearance is adjustable ---------- */
+const gate=new THREE.Group(); gate.visible=false; scene.add(gate);
+const concrete=new THREE.MeshStandardMaterial({color:0x9c9a95, roughness:0.92});
+const deck=new THREE.Mesh(new THREE.BoxGeometry(1.4,0.7,11.5),concrete); deck.castShadow=true; deck.receiveShadow=true; gate.add(deck);
+const pillars=[1,-1].map(sd=>{ const p=new THREE.Mesh(new THREE.BoxGeometry(0.8,1,0.8),concrete); p.position.z=sd*5.1; p.castShadow=true; gate.add(p); return p; });
+function canvasTex(w,h,draw){ const c=document.createElement('canvas'); c.width=w; c.height=h; draw(c.getContext('2d'),w,h); const t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding; t.anisotropy=4; return t; }
+const stripeTex=canvasTex(512,32,(x,w,h)=>{ x.fillStyle='#f2c200'; x.fillRect(0,0,w,h); x.fillStyle='#161616'; for(let i=-2;i<w/16;i++){ x.beginPath(); x.moveTo(i*32,h); x.lineTo(i*32+16,h); x.lineTo(i*32+32,0); x.lineTo(i*32+16,0); x.fill(); } });
+const stripe=new THREE.Mesh(new THREE.PlaneGeometry(11.5,0.16),new THREE.MeshStandardMaterial({map:stripeTex,roughness:0.6})); stripe.rotation.y=Math.PI/2; stripe.position.set(0.701,-0.27,0); deck.add(stripe);
+const glowMat=new THREE.MeshBasicMaterial({color:0x2fbf6a,transparent:true,opacity:0.0,depthWrite:false});
+const glow=new THREE.Mesh(new THREE.PlaneGeometry(1.4,11.5),glowMat); glow.rotation.x=Math.PI/2; glow.position.y=-0.352; deck.add(glow);
+let signTex=null; const signMat=new THREE.MeshStandardMaterial({roughness:0.5,transparent:true});
+const sign=new THREE.Mesh(new THREE.CircleGeometry(0.34,40),signMat); sign.rotation.y=Math.PI/2; sign.position.set(0.72,0.05,0); deck.add(sign);
+function drawSign(mm){
+  if(signTex) signTex.dispose();
+  signTex=canvasTex(256,256,(x,w)=>{ x.clearRect(0,0,w,w); x.fillStyle='#fff'; x.beginPath(); x.arc(128,128,124,0,7); x.fill(); x.lineWidth=26; x.strokeStyle='#d0141a'; x.beginPath(); x.arc(128,128,108,0,7); x.stroke();
+    x.fillStyle='#111'; x.font='bold 74px Arial, sans-serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText((mm/1000).toFixed(1).replace('.',','),128,122);
+    x.font='bold 30px Arial, sans-serif'; x.fillText('м',128,184); x.beginPath(); x.moveTo(128,30); x.lineTo(112,54); x.lineTo(144,54); x.fill(); x.beginPath(); x.moveTo(128,226); x.lineTo(112,202); x.lineTo(144,202); x.fill(); });
+  signMat.map=signTex; signMat.needsUpdate=true;
+}
+function setGateH(mm){ const h=M(mm); deck.position.y=h+0.35; pillars.forEach(p=>{ p.scale.y=h; p.position.y=h/2; }); drawSign(mm); }
+const GATE={x0:-17, d0:0, state:'idle'};
+function gateTotal(){ return Math.max(S.barTop+A().H, CARDEF.H); }
+function gateStep(dt){
+  gate.position.x=GATE.x0+(dist-GATE.d0);
+  const total=gateTotal(), ok=total<S.garage, front=X(0), gap=front-(gate.position.x+0.7);
+  glowMat.color.set(ok?0x2fbf6a:0xe5342b); glowMat.opacity=gap<6?0.55:0.25;
+  let v=3.2, st='go';
+  if(!ok&&gap<0.55){ v=0; st='stop'; }
+  else if(!ok&&gap<5) v=Math.max(0,(gap-0.45)*0.9);
+  if(ok&&gate.position.x>M(CAR.L)/2+3){ v=0; st='done'; }
+  if(st!==GATE.state){ GATE.state=st; gateRender(); }
+  return v;
+}
+function gateRender(){
+  const total=gateTotal(), d=S.garage-total, ok=d>0, el=$('gateRes');
+  el.className='res '+(ok?'ok':'bad');
+  const what=(S.barTop+A().H>=CARDEF.H)?'бокс':'крыша';
+  el.innerHTML='<i></i>'+(ok?`<b>Проедете</b><span>запас ${fmt(d)} мм над ${what==='бокс'?'боксом':'крышей'}</span>`:`<b>Не проедете</b><span>${what==='бокс'?'бокс':'машина'} выше на ${fmt(-d)} мм</span>`);
+  $('gateHv').textContent=(S.garage/1000).toFixed(2).replace('.',',')+' м'; $('gateH').value=S.garage;
+}
+function setGarage(mm){ S.garage=Math.round(Math.max(1600,Math.min(3000,mm))/10)*10; store.set('garage',S.garage); const g=$('garage'); if(g) g.value=S.garage; setGateH(S.garage); gateRender(); update(); kick(); }
+function startGate(again){
+  if(!again){
+    if($('hwBtn').getAttribute('aria-pressed')==='true') $('hwBtn').click();
+    if($('offBtn').getAttribute('aria-pressed')==='true') $('offBtn').click();
+    if(boxOnly) setBoxOnly(false);
+    if(S.lid){ const t=document.querySelector('#lidSw [data-lid="0"]'); if(t) t.click(); }
+    setView('gate');
+  }
+  drive.mode='gate'; GATE.d0=dist; GATE.state=''; gate.position.x=GATE.x0; gate.visible=true; setGateH(S.garage);
+  $('gateUI').hidden=false; $('picks').hidden=true; limitPlane.visible=limitEdge.visible=false; gateRender(); renderLayers(); kick();
+}
+function stopGate(){
+  drive.mode='idle'; gate.visible=false; $('gateUI').hidden=true; $('picks').hidden=false; limitPlane.visible=limitEdge.visible=S.showLimit; setView('q'); renderLayers(); kick();
+}
+$('gateH').addEventListener('input',e=>setGarage(+e.target.value));
+$('gateMinus').addEventListener('click',()=>setGarage(S.garage-50));
+$('gatePlus').addEventListener('click',()=>setGarage(S.garage+50));
+$('gateAgain').addEventListener('click',()=>startGate(true));
+$('gateExit').addEventListener('click',stopGate);
+$('laySw').addEventListener('click',e=>{ const b=e.target.closest('[data-lay="gate"]'); if(!b) return; if(drive.mode==='gate') stopGate(); else startGate(false); $('laySw').classList.remove('open'); });
+
+/* ---------- tailgate button in 3D, next to the tailgate ---------- */
+const tgSide=document.createElement('button'); tgSide.className='tgside glass'; tgSide.setAttribute('aria-label','Открыть багажник');
+tgSide.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17v-4l2.5-4H14l3 4h4v4"/><path d="M14 9l4.5-4.5"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/></svg>';
+tgSide.addEventListener('click',()=>$('tgBtn').click()); stage.appendChild(tgSide);
+const _t=new THREE.Vector3(), _r=new THREE.Vector3();
+function placeTgBtn(){
+  if(drive.mode!=='idle'||speed>0.05||boxOnly){ tgSide.hidden=true; return; }
+  _t.set(M(CAR.L)/2+0.06, M(CAR.hinge[1])-0.42, 0); car.localToWorld(_t);
+  _r.set(M(CAR.L)/2-1.6,_t.y,0); car.localToWorld(_r);
+  const facing=camera.position.x>_r.x;
+  const p=_t.clone().project(camera), vis=facing&&p.z<1&&Math.abs(p.x)<0.95&&Math.abs(p.y)<0.95;
+  tgSide.hidden=!vis; if(!vis) return;
+  const rc=stage.getBoundingClientRect(); tgSide.style.left=((p.x+1)/2*rc.width)+'px'; tgSide.style.top=((1-p.y)/2*rc.height)+'px';
+  tgSide.setAttribute('aria-pressed',String(!!S.open));
 }
 
 renderItemChips();
