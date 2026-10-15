@@ -54,6 +54,15 @@ body.lock{overflow:hidden}
 .ov{position:absolute;z-index:4;display:flex;gap:6px;pointer-events:none}
 .ov>*{pointer-events:auto}
 .tl{left:calc(10px + var(--il));top:calc(10px + var(--it));align-items:center}
+.wx{left:calc(10px + var(--il));top:calc(58px + var(--it));flex-direction:column;align-items:flex-start}
+.wxpill{display:inline-flex;align-items:center;gap:6px;border-radius:12px;padding:6px 10px;font:500 .78rem var(--body);cursor:pointer;color:var(--ink)}
+.wxpill svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.wxpill .t{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.wxpill .d{color:var(--muted);font-weight:400}
+.wxmenu{display:flex;flex-direction:column;gap:2px;padding:4px;border-radius:12px;margin-top:6px}
+.wxmenu[hidden]{display:none}
+.wxmenu button{font:500 .78rem var(--body);border:0;background:transparent;color:var(--ink);border-radius:9px;padding:8px 10px;cursor:pointer;text-align:left;white-space:nowrap}
+.wxmenu button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
 .tools{right:calc(10px + var(--ir));top:calc(10px + var(--it));flex-direction:column}
 .bl{left:calc(10px + var(--il));right:calc(10px + var(--ir));bottom:calc(10px + var(--ib));align-items:flex-end;flex-wrap:wrap}
 .ib{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;cursor:pointer;padding:0;transition:background .15s,color .15s}
@@ -250,6 +259,10 @@ h2 .badge{margin-left:4px}
           <button data-view="rear" aria-pressed="false">Сзади</button>
           <button data-view="top" aria-pressed="false">Сверху</button>
         </div>
+      </div>
+      <div class="ov wx">
+        <button class="wxpill glass" id="wxPill" aria-expanded="false" aria-controls="wxMenu" title="Погода"></button>
+        <div class="wxmenu glass" id="wxMenu" role="group" aria-label="Погода" hidden></div>
       </div>
       <div class="ov tools">
         <button class="ib glass" id="fsBtn" aria-pressed="false" aria-label="На весь экран" title="На весь экран"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
@@ -1214,7 +1227,9 @@ function applyTheme(){
   cSoil.copy(lin('--soil')); sandFar.material.color.copy(lin('--soil')).multiplyScalar(0.92); cGrass.copy(lin('--grass')); rockMat.color.copy(lin('--rock')); roadMat.color.copy(lin('--asphalt')); laneMat.color.copy(lin('--lane')); tuftMat.color.copy(lin('--grass')); terDirty=true;
   edgeA.color.set(css('--a')); edgeB.color.set(css('--b')); setGhost(ghost);
   limitMat.color.set(css('--bad')); limitEdgeMat.color.set(css('--bad'));
+  if(wxReady) applyWeatherScene();
 }
+var wxReady=false;
 applyTheme();
 try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{applyTheme();kick();}); }catch(e){}
 new MutationObserver(()=>{applyTheme();kick();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
@@ -1268,6 +1283,7 @@ function loop(now){
   [boxGroup,cmpGroup].forEach(g=>{ const p=g.userData.pivot; if(!p) return; const sd=lidSide||1;
     p.position.set(0,p.userData.hy,-sd*p.userData.hz); p.userData.inner.position.set(0,-p.userData.hy,sd*p.userData.hz); p.rotation.x=-sd*lidAng; });
   if(stepPerson(dt)) busy=true;
+  if(stepWeather(dt)) busy=true;
   if(camAnim){
     camAnim.t=Math.min(1,camAnim.t+0.06); const e=1-Math.pow(1-camAnim.t,3);
     camera.position.lerpVectors(camAnim.from,camAnim.to,e); controls.target.lerpVectors(camAnim.tf,camAnim.tt,e);
@@ -1982,6 +1998,105 @@ $('fbKey').value=S.fbKey; $('fbSecret').value=S.fbSecret;
 $('fbKey').addEventListener('change',e=>{ S.fbKey=e.target.value.trim(); store.set('fbKey',S.fbKey); });
 $('fbSecret').addEventListener('change',e=>{ S.fbSecret=e.target.value.trim(); store.set('fbSecret',S.fbSecret); });
 renderSnapSheet();
+
+/* ---------- weather: live conditions for a city (Open-Meteo, no key) or a chosen preset ---------- */
+const WX_CITY={name:'Донецк', lat:48.0159, lon:37.8029};
+const WX_PRESETS={live:'Реальная погода: '+WX_CITY.name, off:'Без погоды', clear:'Ясно', cloudy:'Пасмурно', rain:'Дождь', snow:'Снег', fog:'Туман', night:'Ночь'};
+const WX={mode:store.get('wxMode','live'), data:store.get('wxData',null), err:false,
+  k:{cloud:0, rain:0, snow:0, fog:0, night:0, wind:0, windDir:0}, cur:{cloud:0, rain:0, snow:0, fog:0, night:0}};
+function wmo(c){ // WMO weather code -> what to draw
+  if(c===0||c===1) return {cloud:c*0.2};
+  if(c===2) return {cloud:0.5}; if(c===3) return {cloud:0.9};
+  if(c===45||c===48) return {cloud:0.8, fog:1};
+  if(c>=51&&c<=57) return {cloud:0.85, rain:0.35};
+  if((c>=61&&c<=67)||(c>=80&&c<=82)) return {cloud:0.95, rain:c===65||c===82?1:0.7};
+  if((c>=71&&c<=77)||c===85||c===86) return {cloud:0.9, snow:c===75||c===86?1:0.6};
+  if(c>=95) return {cloud:1, rain:1};
+  return {cloud:0.3};
+}
+const WMO_RU=c=>c===0?'ясно':c<=2?'малооблачно':c===3?'пасмурно':(c===45||c===48)?'туман':c<=57?'морось':c<=67?'дождь':c<=77?'снег':c<=82?'ливень':c<=86?'снегопад':'гроза';
+function wxTargets(){
+  const m=WX.mode, z={cloud:0, rain:0, snow:0, fog:0, night:0, wind:0, windDir:0};
+  if(m==='off') return z;
+  if(m==='live'){ const d=WX.data&&WX.data.current; if(!d) return z;
+    return Object.assign(z, wmo(d.weather_code), {night:d.is_day?0:1, wind:d.wind_speed_10m||0, windDir:d.wind_direction_10m||0}); }
+  return Object.assign(z,{clear:{}, cloudy:{cloud:0.95}, rain:{cloud:0.95, rain:0.8, wind:4}, snow:{cloud:0.9, snow:0.8, wind:2}, fog:{cloud:0.8, fog:1}, night:{night:1, cloud:0.2}}[m]);
+}
+async function fetchWeather(){
+  if(WX.mode!=='live') return;
+  try{
+    const u='https://api.open-meteo.com/v1/forecast?latitude='+WX_CITY.lat+'&longitude='+WX_CITY.lon+'&current=temperature_2m,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,precipitation,is_day&wind_speed_unit=ms&timezone=auto';
+    const r=await fetch(u); if(!r.ok) throw new Error(r.status); const d=await r.json();
+    if(!d||!d.current) throw new Error('empty'); WX.data=d; WX.err=false; store.set('wxData',d);
+  }catch(e){ WX.err=true; }
+  wxApply();
+}
+// rain streaks and snow flakes live in a box around the car; the ground slides under them while driving
+const PN=1400, pGeo=new THREE.BufferGeometry(), pPos=new Float32Array(PN*6), pSeed=new Float32Array(PN*3);
+for(let i=0;i<PN;i++){ pSeed[i*3]=(Math.random()-0.5)*24; pSeed[i*3+1]=Math.random()*9; pSeed[i*3+2]=(Math.random()-0.5)*20; }
+pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
+const rainMat=new THREE.LineBasicMaterial({color:0xaab7c6, transparent:true, opacity:0, depthWrite:false, fog:true});
+const rainLines=new THREE.LineSegments(pGeo,rainMat); rainLines.frustumCulled=false; rainLines.visible=false; scene.add(rainLines);
+const snowGeo=new THREE.BufferGeometry(), sPos=new Float32Array(PN*3); snowGeo.setAttribute('position',new THREE.BufferAttribute(sPos,3));
+const snowMat=new THREE.PointsMaterial({color:0xffffff, size:0.06, transparent:true, opacity:0, depthWrite:false, sizeAttenuation:true});
+const snowPts=new THREE.Points(snowGeo,snowMat); snowPts.frustumCulled=false; snowPts.visible=false; scene.add(snowPts);
+let wxT=0;
+function stepWeather(dt){
+  const t=wxTargets(), c=WX.cur, k=Math.min(1,dt*1.2); let moving=false;
+  ['cloud','rain','snow','fog','night'].forEach(n=>{ const d=t[n]-c[n]; if(Math.abs(d)>0.002){ c[n]+=d*k; moving=true; } else c[n]=t[n]; });
+  WX.k=Object.assign({},c,{wind:t.wind, windDir:t.windDir});
+  if(moving) applyWeatherScene();
+  wxT+=dt; const wx=-(t.wind||0)*0.35+speed; // wind and our own driving push the drops backwards
+  rainLines.visible=c.rain>0.01; snowPts.visible=c.snow>0.01;
+  if(rainLines.visible){ rainMat.opacity=0.55*c.rain; const n=Math.floor(PN*Math.min(1,0.25+c.rain));
+    for(let i=0;i<PN;i++){ const o=i*6;
+      if(i>=n){ pPos.fill(0,o,o+6); continue; }
+      let y=(pSeed[i*3+1]-wxT*9)%9; if(y<0) y+=9; let x=((pSeed[i*3]+wxT*wx*0.6)%24+36)%24-12; const z=pSeed[i*3+2];
+      const vx=wx*0.035; pPos[o]=x; pPos[o+1]=y; pPos[o+2]=z; pPos[o+3]=x+vx; pPos[o+4]=y+0.32; pPos[o+5]=z; }
+    pGeo.attributes.position.needsUpdate=true; }
+  if(snowPts.visible){ snowMat.opacity=0.95*c.snow; const n=Math.floor(PN*Math.min(1,0.3+c.snow));
+    for(let i=0;i<PN;i++){ const o=i*3;
+      if(i>=n){ sPos[o]=0; sPos[o+1]=-5; sPos[o+2]=0; continue; }
+      let y=(pSeed[i*3+1]-wxT*1.1)%9; if(y<0) y+=9;
+      const sway=0.3*Math.sin(wxT*1.3+i);
+      sPos[o]=((pSeed[i*3]+wxT*wx*0.5+sway)%24+36)%24-12; sPos[o+1]=y; sPos[o+2]=pSeed[i*3+2]+0.3*Math.cos(wxT*0.9+i*1.7); }
+    snowGeo.attributes.position.needsUpdate=true; }
+  return moving||rainLines.visible||snowPts.visible;
+}
+const BASE={sun:sun.intensity, hemi:hemi.intensity, fill:fill.intensity, exp:renderer.toneMappingExposure};
+function applyWeatherScene(){
+  const c=WX.cur, stage=new THREE.Color(css('--stage'));
+  const sky=stage.clone().lerp(new THREE.Color(0x9aa3ad),c.cloud*0.55).lerp(new THREE.Color(0xb9bec4),c.fog*0.6).lerp(new THREE.Color(0x0d1420),c.night*0.92);
+  scene.background=sky; scene.fog=new THREE.Fog(sky, 20-14*c.fog-6*(c.rain+c.snow)*0.5, 46-30*c.fog-12*(c.rain+c.snow)*0.5);
+  sun.intensity=BASE.sun*(1-0.75*c.cloud)*(1-0.9*c.night); fill.intensity=BASE.fill*(1-0.6*c.night);
+  hemi.intensity=BASE.hemi*(1+0.6*c.cloud)*(1-0.55*c.night); hemi.color.setHex(0xeef3ff).lerp(new THREE.Color(0x4a5a80),c.night);
+  sun.color.setHex(0xfff4e6).lerp(new THREE.Color(0xdfe6ee),c.cloud).lerp(new THREE.Color(0x8ea2d6),c.night);
+  sun.shadow.radius=1+6*c.cloud;
+  renderer.toneMappingExposure=BASE.exp*(1-0.35*c.night);
+  // wet ground is darker and shinier, snow whitens it
+  const lin=v=>new THREE.Color(css(v)).convertSRGBToLinear(), wet=Math.max(c.rain,c.fog*0.3), white=new THREE.Color(0.92,0.94,0.97);
+  cSoil.copy(lin('--soil')).multiplyScalar(1-0.35*wet).lerp(white,c.snow*0.85); cGrass.copy(lin('--grass')).multiplyScalar(1-0.35*wet).lerp(white,c.snow*0.8);
+  sandFar.material.color.copy(cSoil).multiplyScalar(0.92); roadMat.color.copy(lin('--asphalt')).multiplyScalar(1-0.35*wet); roadMat.roughness=0.9-0.6*wet;
+  terMat.roughness=1-0.45*wet; terDirty=true;
+  // lights glow at night
+  CM.reflector.emissive.setRGB(1,0.97,0.9).multiplyScalar(0.7*c.night); CM.red.emissive.setHex(0x3a0204).lerp(new THREE.Color(0xd01010),0.7*c.night); CM.amber.emissive.setHex(0x2a1200);
+  kick();
+}
+function wxRender(){
+  const m=WX.mode, d=WX.data&&WX.data.current, ic='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 11a3.5 3.5 0 0 0 1 7z"/></svg>';
+  let txt;
+  if(m==='live'){
+    if(d){ const tt=Math.round(d.temperature_2m); txt=`${WX_CITY.name} <span class="t">${tt>0?'+':''}${tt}°</span> <span class="d">${WMO_RU(d.weather_code)} · ${(d.wind_speed_10m||0).toFixed(0)} м/с</span>`; }
+    else txt=`${WX_CITY.name} <span class="d">${WX.err?'нет связи':'загрузка…'}</span>`;
+  } else txt=`<span class="d">Погода:</span> ${WX_PRESETS[m]}`;
+  $('wxPill').innerHTML=ic+txt;
+  $('wxMenu').innerHTML=Object.entries(WX_PRESETS).map(([k,v])=>`<button data-m="${k}" aria-pressed="${k===m}">${v}</button>`).join('');
+}
+function wxApply(){ wxRender(); kick(); }
+$('wxPill').addEventListener('click',()=>{ const o=$('wxMenu').hidden; $('wxMenu').hidden=!o; $('wxPill').setAttribute('aria-expanded',String(o)); });
+$('wxMenu').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; WX.mode=b.dataset.m; store.set('wxMode',WX.mode); $('wxMenu').hidden=true; $('wxPill').setAttribute('aria-expanded','false'); wxApply(); fetchWeather(); });
+document.addEventListener('pointerdown',e=>{ if(!e.target.closest('.wx')){ $('wxMenu').hidden=true; $('wxPill').setAttribute('aria-expanded','false'); } });
+wxReady=true; wxApply(); fetchWeather(); setInterval(fetchWeather,15*60*1000);
 
 renderItemChips();
 loadCarModel();

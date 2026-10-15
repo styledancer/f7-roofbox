@@ -34,6 +34,10 @@ await click('#tgBtn'); await view('rear'); await shot('11-outlander-rear');
 await page.evaluate(() => { localStorage.setItem('f7box.rim','"steel"'); }); await page.reload(); await page.waitForTimeout(12000); await view('side'); await shot('12-outlander-steel');
 await click('#paintBtn'); await shot('13-popover');
 await page.evaluate(() => { localStorage.setItem('f7box.car','"haval"'); localStorage.setItem('f7box.sel','"t-100"'); localStorage.setItem('f7box.rim','"old"'); }); await page.reload(); await page.waitForTimeout(9000); await view('side'); await shot('14-touring');
+for (const m of ['live','rain','snow','fog','night']) {
+  await page.evaluate((m) => { localStorage.setItem('f7box.wxMode', JSON.stringify(m)); localStorage.setItem('f7box.rim','"stock"'); localStorage.setItem('f7box.sel','"m3-l"'); }, m);
+  await page.reload(); await page.waitForTimeout(9000); await shot('15-wx-'+m);
+}
 require_fs: {
   const fs = await import('fs'); fs.writeFileSync(`${out}/console.txt`, logs.join('\n'));
 }
