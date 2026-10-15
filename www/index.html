@@ -2048,7 +2048,7 @@ function stepWeather(dt){
   if(moving) applyWeatherScene();
   wxT+=dt; const wx=-(t.wind||0)*0.35+speed; // wind and our own driving push the drops backwards
   rainLines.visible=c.rain>0.01; snowPts.visible=c.snow>0.01;
-  if(rainLines.visible){ rainMat.opacity=0.55*c.rain; const n=Math.floor(PN*Math.min(1,0.25+c.rain));
+  if(rainLines.visible){ rainMat.opacity=0.8*c.rain; const n=Math.floor(PN*Math.min(1,0.25+c.rain));
     for(let i=0;i<PN;i++){ const o=i*6;
       if(i>=n){ pPos.fill(0,o,o+6); continue; }
       let y=(pSeed[i*3+1]-wxT*9)%9; if(y<0) y+=9; let x=((pSeed[i*3]+wxT*wx*0.6)%24+36)%24-12; const z=pSeed[i*3+2];
@@ -2072,7 +2072,11 @@ function applyWeatherScene(){
   hemi.intensity=BASE.hemi*(1+0.6*c.cloud)*(1-0.55*c.night); hemi.color.setHex(0xeef3ff).lerp(new THREE.Color(0x4a5a80),c.night);
   sun.color.setHex(0xfff4e6).lerp(new THREE.Color(0xdfe6ee),c.cloud).lerp(new THREE.Color(0x8ea2d6),c.night);
   sun.shadow.radius=1+6*c.cloud;
-  renderer.toneMappingExposure=BASE.exp*(1-0.35*c.night);
+  renderer.toneMappingExposure=BASE.exp*(1-0.3*c.night);
+  // the studio reflections would keep everything lit at night: dim them with the light
+  const envK=(1-0.88*c.night)*(1-0.35*c.cloud);
+  scene.traverse(o=>{ if(!o.isMesh) return; (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{ if(m&&'envMapIntensity' in m){ if(m.userData.envBase===undefined) m.userData.envBase=m.envMapIntensity; m.envMapIntensity=m.userData.envBase*envK; } }); });
+  rainMat.color.setHex(0x6f7d8c).lerp(new THREE.Color(0xc4d0dc),c.night);
   // wet ground is darker and shinier, snow whitens it
   const lin=v=>new THREE.Color(css(v)).convertSRGBToLinear(), wet=Math.max(c.rain,c.fog*0.3), white=new THREE.Color(0.92,0.94,0.97);
   cSoil.copy(lin('--soil')).multiplyScalar(1-0.35*wet).lerp(white,c.snow*0.85); cGrass.copy(lin('--grass')).multiplyScalar(1-0.35*wet).lerp(white,c.snow*0.8);
