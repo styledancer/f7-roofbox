@@ -43,7 +43,7 @@ await shot('17-no-limit-no-wx');
 await click('#layBtn'); await page.waitForTimeout(400); await page.screenshot({ path: `${out}/18-layers.png` });
 await page.evaluate(() => document.querySelector('#laySw [data-lay="box"]').click()); await page.waitForTimeout(3000); await shot('19-box-only');
 await page.evaluate(() => { const b=document.querySelector('#lidSw [data-lid="1"]'); b&&b.click(); }); await shot('20-box-open');
-await page.evaluate(() => { localStorage.setItem('f7box.sel','"m3-l"'); localStorage.setItem('f7box.items','["ski","snow","tent","boots"]'); localStorage.setItem('f7box.boxZ','0'); localStorage.setItem('f7box.wxMode','"off"'); localStorage.setItem('f7box.garage','2200'); }); await page.reload(); await page.waitForTimeout(9000);
+await page.evaluate(() => { localStorage.setItem('f7box.sel','"m3-l"'); localStorage.setItem('f7box.items','["ski","snow","tent","yoyo","bike16"]'); localStorage.setItem('f7box.boxZ','0'); localStorage.setItem('f7box.wxMode','"off"'); localStorage.setItem('f7box.garage','2200'); }); await page.reload(); await page.waitForTimeout(9000);
 await click('#wireBtn'); await view('top'); await shot('21-pack-top'); await view('side'); await shot('22-pack-side'); await click('#wireBtn');
 await view('rear'); await shot('23-tg-button');
 await page.evaluate(() => document.querySelector('#laySw [data-lay="gate"]').click()); await page.waitForTimeout(40000); await shot("24-gate-pass");

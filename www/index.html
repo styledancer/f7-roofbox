@@ -300,7 +300,6 @@ h2 .badge{margin-left:4px}
           <button class="snapgo" id="snapGo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Снимок</button>
         </div></div>
         <div class="tw"><button class="ib glass" id="layBtn" aria-expanded="false" aria-controls="laySw" aria-label="Слои" title="Слои"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></button><div class="swr glass col" id="laySw" role="group" aria-label="Слои">
-          <button class="opt2" data-lay="limit" aria-pressed="true">Высота проезда</button>
           <button class="opt2" data-lay="wx" aria-pressed="true">Погода</button>
           <button class="opt2" data-lay="box" aria-pressed="false">Только бокс</button>
           <button class="opt2" data-lay="gate" aria-pressed="false">Проверка проезда</button>
@@ -842,7 +841,7 @@ function loadCarModel(){
       const a=new THREE.Vector3(0,0,0).applyMatrix4(Mx), b=new THREE.Vector3(0,1,0).applyMatrix4(Mx); w.up=b.sub(a); w.pos=w.obj.position.clone(); });
     procParts.forEach(p=>p.visible=false);
     collectStockRims(); applyRims();
-    carModelReady=true; if(wxReady) applyWeatherScene(); kick(); setTimeout(startIntro,300);
+    carModelReady=true; if(wxReady) applyWeatherScene(); kick();
   });
 }
 // converted models are already in car space (metres, front towards -x); wheels are nodes wheel_0..3 centred on their hubs
@@ -866,7 +865,7 @@ function loadNormModel(){
       const a=new THREE.Vector3(0,0,0).applyMatrix4(Mx), b=new THREE.Vector3(0,1,0).applyMatrix4(Mx); w.up=b.sub(a); w.pos=w.obj.position.clone(); });
     procParts.forEach(p=>p.visible=false);
     collectStockRims(); applyRims();
-    carModelReady=true; if(wxReady) applyWeatherScene(); kick(); setTimeout(startIntro,300);
+    carModelReady=true; if(wxReady) applyWeatherScene(); kick();
   });
 }
 // ---- interchangeable rims: the stock rim meshes are hidden and a fitted rim is attached to each spinning wheel
@@ -1389,8 +1388,8 @@ function bestFit(box,d,from){
   return best;
 }
 function fitState(box,item){
-  const f=bestFit(box,item.d,0); if(!f) return {st:'bad',txt:'не влезает'};
-  const roomy=bestFit(box,item.d.map(v=>v+30),0);
+  const r=pack(box,[item])[0]; if(r.fail) return {st:'bad',txt:'не влезает'}; const f=r;
+  const roomy=!pack(box,[Object.assign({},item,{id:item.id+'+',d:item.d.map(v=>v+30)})])[0].fail;
   return {st:roomy?'good':'warn', txt:roomy?'влезает':'впритык', f};
 }
 // 3D packing with "extreme points": every placed item offers new corners (in front of it, beside it, on top of it);
@@ -1406,12 +1405,16 @@ function packRaw(box,items){
   const G=10, placed=[], half=box.Wi/2;
   const order=items.map((it,i)=>({it,i})).sort((a,b)=>Math.max(...b.it.d)-Math.max(...a.it.d)||(b.it.d[0]*b.it.d[1]*b.it.d[2])-(a.it.d[0]*a.it.d[1]*a.it.d[2]));
   let pts=[{x:0,y:0,z:-half}];
-  const inHull=(x0,y0,z0,l,w,h)=>{ for(const x of [x0+1,x0+l/2,x0+l-1]) for(const y of [y0<=1?1:y0,y0+h]) for(const z of [z0,z0+w]) if(!insideHull(box,x,y,z)) return false; return true; };
+  const inHull=(x0,y0,z0,l,w,h)=>{
+    const ins=Math.min(140,l*0.08), yb=y0<=1?1:y0;
+    for(const x of [x0+ins,x0+l/2,x0+l-ins]) for(const y of [yb,y0+h]) for(const z of [z0,z0+w]) if(!insideHull(box,x,y,z)) return false;
+    for(const x of [x0+1,x0+l-1]) for(const z of [z0+w*0.2,z0+w*0.8]) if(!insideHull(box,x,y0+h*0.5,z)||!insideHull(box,x,yb,z)) return false;
+    return true; };
   const hits=(x0,y0,z0,l,w,h)=>placed.some(p=>x0<p.x0+p.l+G-1&&x0+l+G-1>p.x0&&y0<p.y0+p.h-1&&y0+h>p.y0+1&&z0<p.z0+p.w+G-1&&z0+w+G-1>p.z0);
   const supported=(x0,y0,z0,l,w)=>{ if(y0<=1) return true; let a=0;
     placed.forEach(p=>{ if(Math.abs(p.y0+p.h-y0)<=2){ const ox=Math.min(x0+l,p.x0+p.l)-Math.max(x0,p.x0), oz=Math.min(z0+w,p.z0+p.w)-Math.max(z0,p.z0); if(ox>0&&oz>0) a+=ox*oz; } });
     return a>=0.6*l*w; };
-  const res=new Array(items.length);
+  const res=new Array(items.length), failed=[];
   order.forEach(({it,i})=>{
     let best=null;
     for(const o of orients(it.d)){ const [l,w,h]=o; if(l>box.Li||w>box.Wi||h>box.Hi) continue;
@@ -1429,11 +1432,19 @@ function packRaw(box,items){
         }
       }
     }
-    if(!best){ res[i]={it,fail:true}; return; }
+    if(!best){ failed.push({it,i}); return; }
     const [l,w,h]=best.o; placed.push({x0:best.x0,y0:best.y0,z0:best.z0,l,w,h});
     pts.push({x:best.x0+l+G,y:best.y0,z:best.z0},{x:best.x0,y:best.y0+h,z:best.z0},{x:best.x0,y:best.y0,z:best.z0+w+G});
     pts=pts.filter(q=>q.x<box.Li&&q.y<box.Hi&&q.z<half).sort((a,b)=>a.y-b.y||a.x-b.x||a.z-b.z);
     res[i]=Object.assign({it},best,{end:best.x0+l});
+  });
+  failed.forEach(({it,i})=>{
+      // best effort ignoring the shell: lowest spot that does not collide with packed items, so the item pokes out of the box
+      let bf=null; const [l,w,h]=[...it.d].sort((a,b)=>b-a);
+      for(const p of pts.concat([{x:0,y:0,z:-w/2}])) for(const z0 of [p.z,-w/2]){ const x0=Math.max(0,Math.min(p.x,box.Li-l*0.6)), y0=p.y;
+        if(hits(x0,y0,z0,l,w,h)) continue; const sc=y0*4+x0; if(!bf||sc<bf.sc) bf={sc,x0,y0,z0}; }
+      if(!bf){ const top=placed.reduce((m,p)=>Math.max(m,p.y0+p.h),0); bf={x0:0,y0:top,z0:-w/2}; }
+      res[i]={it,fail:true,x0:bf.x0,y0:bf.y0,z0:bf.z0,o:[l,w,h]}; placed.push({x0:bf.x0,y0:bf.y0,z0:bf.z0,l,w,h});
   });
   return res;
 }
@@ -1551,9 +1562,9 @@ function renderItems(){
   let end=0; res.forEach(r=>{ if(!r.fail) end=Math.max(end,r.x0+r.o[0]); });
   res.forEach(r=>{
     if(r.fail){
-      const [l,w,h]=r.it.d, x0=end+10; end=x0+l;
-      const pos=new THREE.Vector3(M((box.L-box.Li)/2+x0+l/2), M((box.H-box.Hi)/2+h/2), 0);
-      const model=itemModel(r.it); model.position.copy(pos);
+      const [l,w,h]=r.o||r.it.d, x0=r.x0!==undefined?r.x0:end+10;
+      const pos=new THREE.Vector3(M((box.L-box.Li)/2+x0+l/2), M((box.H-box.Hi)/2+(r.y0||0)+h/2), M((r.z0!==undefined?r.z0:-w/2)+w/2));
+      const model=itemModel(r.it); orientModel(model, r.it.d, [l,w,h]); model.position.copy(pos);
       model.traverse(o=>{ if(o.isMesh){ o.material=failMat; o.castShadow=false; o.renderOrder=8; } }); itemsGroup.add(model);
       const g=new THREE.BoxGeometry(M(l),M(h),M(w));
       const e=new THREE.LineSegments(new THREE.EdgesGeometry(g), failEdge); g.dispose(); e.position.copy(pos); e.renderOrder=9; itemsGroup.add(e);
@@ -1731,7 +1742,7 @@ function update(){
       <div class="note">Бокс должен накрывать обе поперечины с запасом 10 см для креплений.</div></div>`;
   $('metricsTitle').innerHTML=`Посадка бокса <span class="badge a">A</span>`;
   $('hpill').innerHTML=`<span class="dot ${heightState(eA.total)}" style="margin:0"></span>${fmt(eA.total)} мм`; $('hpill').title='Высота машины с боксом A';
-  limitPlane.position.y=M(S.garage); limitEdge.position.y=M(S.garage); limitPlane.visible=limitEdge.visible=S.showLimit;
+  limitPlane.position.y=M(S.garage); limitEdge.position.y=M(S.garage); limitPlane.visible=limitEdge.visible=false;
   limitMat.opacity = Math.max(eA.total, eB?eB.total:0)>S.garage?0.22:0.08;
   placeBars();
   renderTable();
@@ -1846,7 +1857,7 @@ let introDone=false;
 function startIntro(){ if(introDone) return; introDone=true;
   if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   if(drive.mode==='idle'){ drive.mode='intro'; drive.t=0; kick(); } }
-setTimeout(startIntro,4000);
+
 
 /* ---------- AI snapshot: exact 3D car + box, Kandinsky paints only the scenery ---------- */
 const SNAP_SCN={
@@ -2251,7 +2262,7 @@ function renderLayers(){
 $('layBtn').addEventListener('click',()=>{ const o=!$('laySw').classList.contains('open'); $('laySw').classList.toggle('open',o); $('layBtn').setAttribute('aria-expanded',String(o)); });
 document.addEventListener('pointerdown',e=>{ if(!e.target.closest('#laySw')&&!e.target.closest('#layBtn')){ $('laySw').classList.remove('open'); $('layBtn').setAttribute('aria-expanded','false'); } });
 $('laySw').addEventListener('click',e=>{ const b=e.target.closest('[data-lay]'); if(!b) return; const k=b.dataset.lay;
-  if(k==='limit'){ S.showLimit=!S.showLimit; store.set('showLimit',S.showLimit); limitPlane.visible=limitEdge.visible=S.showLimit; }
+  if(k==='limit'){ S.showLimit=!S.showLimit; store.set('showLimit',S.showLimit); limitPlane.visible=limitEdge.visible=false; }
   if(k==='wx'){ if(WX.mode==='off'){ WX.mode=store.get('wxLast','live'); } else { store.set('wxLast',WX.mode); WX.mode='off'; } store.set('wxMode',WX.mode); wxApply(); fetchWeather(); }
   if(k==='box') setBoxOnly(!boxOnly);
   renderLayers(); kick(); });
@@ -2340,7 +2351,7 @@ function startGate(again){
   $('gateUI').hidden=false; $('picks').hidden=true; limitPlane.visible=limitEdge.visible=false; gateRender(); renderLayers(); kick();
 }
 function stopGate(){
-  drive.mode='idle'; gate.visible=false; $('gateUI').hidden=true; $('picks').hidden=false; limitPlane.visible=limitEdge.visible=S.showLimit; setView('q'); renderLayers(); kick();
+  drive.mode='idle'; gate.visible=false; $('gateUI').hidden=true; $('picks').hidden=false; limitPlane.visible=limitEdge.visible=false; setView('q'); renderLayers(); kick();
 }
 $('gateH').addEventListener('input',e=>setGarage(+e.target.value));
 $('gateMinus').addEventListener('click',()=>setGarage(S.garage-50));
