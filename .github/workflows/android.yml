@@ -27,6 +27,20 @@ jobs:
           cp node_modules/three/build/three.min.js www/vendor/
           cp node_modules/three/examples/js/controls/OrbitControls.js www/vendor/
           cp node_modules/three/examples/js/loaders/GLTFLoader.js www/vendor/
+      - name: Bake the Cloudflare key into the app (from repository secrets)
+        env:
+          CF_TOK: ${{ secrets.CF_TOKEN }}
+          CF_ACC: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          python3 - <<'PY'
+          import os
+          p='www/index.html'; s=open(p,encoding='utf-8').read()
+          tok=os.environ.get('CF_TOK','').strip(); acc=os.environ.get('CF_ACC','').strip()
+          if tok: s=s.replace("tok:'__CF_TOK__'","tok:'"+tok+"'")
+          if acc: s=s.replace("acc:'__CF_ACC__'","acc:'"+acc+"'")
+          open(p,'w',encoding='utf-8').write(s)
+          print('token baked:', bool(tok), 'account baked:', bool(acc))
+          PY
       - name: Create Android project
         run: |
           npx cap add android

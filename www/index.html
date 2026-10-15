@@ -1648,7 +1648,11 @@ async function fbCall(path,opt){
 }
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 let snapJob=0;
-const useCF=()=>!!S.cfTok.trim();
+// a token can be baked into the Android build from a GitHub secret; the user's own token, if entered, wins
+const CF_BUILTIN={acc:'__CF_ACC__',tok:'__CF_TOK__'};
+const cfB=k=>/^__CF_/.test(CF_BUILTIN[k])?'':CF_BUILTIN[k].trim();
+const cfTok=()=>S.cfTok.trim()||cfB('tok');
+const useCF=()=>!!cfTok();
 function withTimeout(p,ms,msg){ return Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(new Error(msg)),ms))]); }
 async function cfJson(url,opt){
   const r=await withTimeout(fetch(url,opt),60000,'Cloudflare не ответил за 60 секунд. Возможно, провайдер его блокирует: попробуйте другой интернет или VPN.');
@@ -1661,14 +1665,15 @@ async function cfJson(url,opt){
 }
 async function cfAccount(){
   if(S.cfAcc.trim()) return S.cfAcc.trim();
-  const d=await cfJson('https://api.cloudflare.com/client/v4/accounts',{headers:{'Authorization':'Bearer '+S.cfTok.trim()}});
+  if(!S.cfTok.trim()&&cfB('acc')) return cfB('acc');
+  const d=await cfJson('https://api.cloudflare.com/client/v4/accounts',{headers:{'Authorization':'Bearer '+cfTok()}});
   const a=(d.result||[])[0]; if(!a) throw new Error('По этому токену не найден аккаунт. Впишите Account ID вручную.');
-  S.cfAcc=a.id; store.set('cfAcc',a.id); $('cfAcc').value=a.id; return a.id;
+  if(S.cfTok.trim()){ S.cfAcc=a.id; store.set('cfAcc',a.id); $('cfAcc').value=a.id; } return a.id;
 }
 async function cfFlux(prompt){
   const acc=await cfAccount();
   const d=await cfJson('https://api.cloudflare.com/client/v4/accounts/'+encodeURIComponent(acc)+'/ai/run/@cf/black-forest-labs/flux-1-schnell',
-    {method:'POST',headers:{'Authorization':'Bearer '+S.cfTok.trim(),'Content-Type':'application/json'},body:JSON.stringify({prompt,steps:8})});
+    {method:'POST',headers:{'Authorization':'Bearer '+cfTok(),'Content-Type':'application/json'},body:JSON.stringify({prompt,steps:8})});
   const img=(d.result&&d.result.image)||d.image; if(!img) throw new Error('Пустой ответ Cloudflare');
   return img.startsWith('data:')?img:'data:image/jpeg;base64,'+img;
 }
@@ -1776,6 +1781,7 @@ $('snapClose').addEventListener('click',closeSnap);
 $('snapM').addEventListener('click',e=>{ if(e.target.id==='snapM') closeSnap(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('snapM').hidden) closeSnap(); });
 $('cfAcc').value=S.cfAcc; $('cfTok').value=S.cfTok;
+if(cfB('tok')){ $('cfTok').placeholder='встроенный ключ, можно не вводить'; $('cfAcc').placeholder='не нужен'; }
 ['cfAcc','cfTok'].forEach(k=>$(k).addEventListener('input',e=>{ S[k]=e.target.value.trim(); store.set(k,S[k]); }));
 $('fbKey').value=S.fbKey; $('fbSecret').value=S.fbSecret;
 $('fbKey').addEventListener('change',e=>{ S.fbKey=e.target.value.trim(); store.set('fbKey',S.fbKey); });
