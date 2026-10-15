@@ -817,7 +817,7 @@ function loadNormModel(){
   });
 }
 // ---- interchangeable rims: the stock rim meshes are hidden and a fitted rim is attached to each spinning wheel
-const RIMS={stock:{name:'Родные'}, steel:{name:'Штампованные', model:'rim_steel.json', R:0.2042}};
+const RIMS={stock:{name:'Родные'}, steel:{name:'Штамп', model:'rim_steel.json', R:0.2042}, old:{name:'Штамп б/у', model:'rim_old.json', R:0.2042, textured:true}};
 let stockRims=[], rimGeo={}, rimMeshes=[];
 function collectStockRims(){ stockRims=[]; spinWheels.forEach(w=>w.obj.traverse(o=>{ if(o.isMesh&&(o.material===CM.rim||o.material===CM.rimDark)) stockRims.push(o); })); }
 function applyRims(){
@@ -825,10 +825,10 @@ function applyRims(){
   rimMeshes.forEach(m=>m.parent&&m.parent.remove(m)); rimMeshes=[];
   stockRims.forEach(o=>o.visible=!r.model);
   if(!r.model){ kick(); return; }
-  const put=geo=>{
+  const put=({geo,mat})=>{
     const k=CARDEF.rimR/r.R; car.updateMatrixWorld(true);
     spinWheels.forEach((w,i)=>{
-      const m=new THREE.Mesh(geo,CM.rimSteel); m.castShadow=true; m.receiveShadow=true;
+      const m=new THREE.Mesh(geo,mat||CM.rimSteel); m.castShadow=true; m.receiveShadow=true;
       const hub=new THREE.Vector3().setFromMatrixPosition(w.obj.matrixWorld); car.worldToLocal(hub);
       const s=(CONTACT[i]&&CONTACT[i][1]<0)?-1:1;
       m.scale.setScalar(k); if(s<0) m.rotation.y=Math.PI;
@@ -837,7 +837,10 @@ function applyRims(){
     kick();
   };
   if(rimGeo[S.rim]) return put(rimGeo[S.rim]);
-  loadModel(r.model, g=>{ let geo=null; g.scene.traverse(o=>{ if(o.isMesh&&!geo) geo=o.geometry; }); if(!geo) return; rimGeo[S.rim]=geo; if(RIMS[S.rim]===r) put(geo); });
+  loadModel(r.model, g=>{ let src=null; g.scene.traverse(o=>{ if(o.isMesh&&!src) src=o; }); if(!src) return;
+    let mat=null;
+    if(r.textured){ const t=src.material; mat=new THREE.MeshPhysicalMaterial({map:t.map, normalMap:t.normalMap, metalness:0.55, roughness:0.62, clearcoat:0.15, clearcoatRoughness:0.5}); if(mat.normalMap) mat.normalScale.set(1,-1); }
+    const key=Object.keys(RIMS).find(k=>RIMS[k]===r); rimGeo[key]={geo:src.geometry,mat}; if(RIMS[S.rim]===r) put(rimGeo[key]); });
 }
 // crossbars
 const barMeshes=[0,1].map(()=>{const b=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.028,1.32), railMat); b.castShadow=true; car.add(b); return b;});
