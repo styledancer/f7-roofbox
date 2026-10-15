@@ -38,6 +38,11 @@ for (const m of ['night','fog']) {
   await page.evaluate((m) => { localStorage.setItem('f7box.wxMode', JSON.stringify(m)); localStorage.setItem('f7box.rim','"stock"'); localStorage.setItem('f7box.sel','"m3-l"'); }, m);
   await page.reload(); await page.waitForTimeout(9000); await shot('15-wx-'+m); await view('side'); await shot('16-wx-side-'+m);
 }
+await page.evaluate(() => { localStorage.setItem('f7box.wxMode','"off"'); localStorage.setItem('f7box.showLimit','false'); }); await page.reload(); await page.waitForTimeout(9000);
+await shot('17-no-limit-no-wx');
+await click('#layBtn'); await page.waitForTimeout(400); await page.screenshot({ path: `${out}/18-layers.png` });
+await page.evaluate(() => document.querySelector('#laySw [data-lay="box"]').click()); await page.waitForTimeout(3000); await shot('19-box-only');
+await page.evaluate(() => { const b=document.querySelector('#lidSw [data-lid="1"]'); b&&b.click(); }); await shot('20-box-open');
 require_fs: {
   const fs = await import('fs'); fs.writeFileSync(`${out}/console.txt`, logs.join('\n'));
 }
