@@ -196,7 +196,30 @@ h2 .badge{margin-left:4px}
 .cmpT th[scope=row]{font:400 .82rem var(--body);text-transform:none;letter-spacing:0;color:var(--muted);border-bottom:1px solid var(--line)}
 .cmpT tbody tr{cursor:default} .cmpT tbody tr:hover td{background:none}
 .cmpT .chip{margin:0}
-@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+
+.snapsw{width:236px;padding:10px;gap:8px;flex-direction:column;align-items:stretch}
+.snapsw .lbl{margin:0}
+.snapsw .grp{display:flex;flex-wrap:wrap;gap:4px}
+.snapsw .grp button{font:500 .76rem var(--body);border:1px solid var(--glass-line);background:transparent;color:var(--ink);border-radius:8px;padding:6px 9px;cursor:pointer}
+.snapsw .grp button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.snapgo{font:600 .86rem var(--body);border:0;border-radius:10px;padding:10px;background:var(--accent);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.snapgo svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
+.snapm{position:fixed;inset:0;z-index:60;background:rgba(8,10,14,.78);display:grid;place-items:center;padding:calc(12px + var(--it)) calc(12px + var(--ir)) calc(12px + var(--ib)) calc(12px + var(--il))}
+.snapm[hidden]{display:none}
+.snapc{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:10px;max-width:min(960px,100%);max-height:100%;min-width:0;overflow:auto}
+.snapv{position:relative;border-radius:12px;overflow:hidden;background:linear-gradient(160deg,#c9d3dd,#8d99a6);display:grid;place-items:center}
+.snapv img{display:block;max-width:100%;max-height:calc(100dvh - 190px);object-fit:contain}
+.snapw{position:absolute;inset:auto 10px 10px 10px;border-radius:12px;padding:10px 12px;font-size:.84rem;display:flex;align-items:center;gap:10px}
+.snapw[hidden]{display:none}
+.spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:spin .9s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.snapbar{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.snapbar .mini{padding:8px 12px}
+.snapbar .mini.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.snapc details{font-size:.8rem}
+.keyin{font:400 .82rem var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;width:100%;min-width:0}
+.keyrow{display:grid;gap:4px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}.spin{animation-duration:3s}}
 </style>
 
 <div class="app">
@@ -223,6 +246,11 @@ h2 .badge{margin-left:4px}
         <button class="ib glass" id="wireBtn" aria-pressed="false" aria-label="Каркас боксов" title="Каркас боксов"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></button>
         <button class="ib glass" id="offBtn" aria-pressed="false" aria-label="Бездорожье" title="Бездорожье"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19l6-10 4 6 2.5-3.5L21 19z"/></svg></button>
         <button class="ib glass" id="hwBtn" aria-pressed="false" aria-label="Трасса: обтекание и расход" title="Трасса: обтекание и расход"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3L5 21M15 3l4 18M12 4v2M12 10v3M12 17v3"/></svg></button>
+        <div class="tw"><button class="ib glass" id="snapBtn" aria-expanded="false" aria-controls="snapSw" aria-label="AI-снимок" title="AI-снимок"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h3l2-3h5"/><path d="M3 9v10h15v-6"/><circle cx="10.5" cy="14" r="3"/><path d="M18 2.5v6M15 5.5h6"/></svg></button><div class="swr glass snapsw" id="snapSw" role="group" aria-label="AI-снимок">
+          <span class="lbl">Где снимаем</span><div class="grp" id="snapScn"></div>
+          <span class="lbl">Свет</span><div class="grp" id="snapLight"></div>
+          <button class="snapgo" id="snapGo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Снимок</button>
+        </div></div>
         <button class="ib glass more" id="moreBtn" aria-label="К настройкам и проверкам ниже" title="Подробнее"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
       </div>
       <div class="hud glass" id="hud" hidden>
@@ -246,6 +274,13 @@ h2 .badge{margin-left:4px}
         </div>
       </div>
       <div class="readout" id="readout" hidden></div>
+      <div class="snapm" id="snapM" role="dialog" aria-modal="true" aria-label="AI-снимок" hidden>
+        <div class="snapc">
+          <div class="snapv"><img id="snapImg" alt="Снимок машины с боксом на фоне сгенерированного пейзажа"><div class="snapw glass" id="snapWait"><i class="spin"></i><span id="snapWaitTx">Kandinsky рисует пейзаж…</span></div></div>
+          <div class="snapbar"><button class="mini pri" id="snapShare" disabled>Поделиться</button><button class="mini" id="snapAgain" disabled>Ещё вариант</button><button class="mini" id="snapClose">Закрыть</button></div>
+          <details><summary>Промт для Kandinsky</summary><p class="fine" id="snapPrompt"></p></details>
+        </div>
+      </div>
       <div class="toast glass" id="toast" role="alert"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg><div id="toastTx"></div></div>
     </div>
   </div>
@@ -299,6 +334,15 @@ h2 .badge{margin-left:4px}
       </div>
       <div class="tablewrap" style="margin-top:10px"><table class="cmpT"><thead><tr><th></th><th class="n">+л/100 км</th><th class="n">+%</th><th class="n">₽ на 1000 км</th></tr></thead><tbody id="fuelBody"></tbody></table></div>
       <p class="fine" id="fuelNote"></p>
+    </section>
+
+    <section>
+      <h2>AI-снимок</h2>
+      <p class="fine" style="margin-top:0">Кнопка с объективом справа: машина и бокс рисуются точной 3D-моделью с текущего ракурса, а пейзаж вокруг генерирует Kandinsky. Нужен бесплатный ключ: зайдите на fusionbrain.ai, войдите, откройте раздел API и создайте ключ. Ключи хранятся только на этом устройстве.</p>
+      <div class="settings">
+        <div class="keyrow"><label for="fbKey">API Key</label><input class="keyin" id="fbKey" type="password" autocomplete="off" spellcheck="false"></div>
+        <div class="keyrow"><label for="fbSecret">Secret Key</label><input class="keyin" id="fbSecret" type="password" autocomplete="off" spellcheck="false"></div>
+      </div>
     </section>
 
     <section>
@@ -1487,6 +1531,196 @@ function startIntro(){ if(introDone) return; introDone=true;
   if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   if(drive.mode==='idle'){ drive.mode='intro'; drive.t=0; kick(); } }
 setTimeout(startIntro,4000);
+
+/* ---------- AI snapshot: exact 3D car + box, Kandinsky paints only the scenery ---------- */
+const SNAP_SCN={
+  mount:['Горы','асфальтовая смотровая площадка на горном перевале, вдали заснеженные вершины, хвойный лес на склонах'],
+  forest:['Лес','широкая лесная грунтовая дорога в сосновом бору, мох и папоротник по обочинам'],
+  lake:['Озеро','ровный галечный берег горного озера, спокойная вода с отражениями гор'],
+  sea:['Море','пустая площадка на скалистом морском берегу, волны, линия горизонта над морем'],
+  steppe:['Степь','бескрайняя степь, прямая укатанная грунтовая дорога, высокая сухая трава, далёкие холмы'],
+  city:['Город','пустая площадь в современном городе, мокрый асфальт, стеклянные фасады']};
+const SNAP_LIGHT={
+  sunset:['Закат','золотой час, тёплый низкий солнечный свет, длинные тени',0xffc58f,1.0,0xffe2c4],
+  day:['День','ясный солнечный день, голубое небо с лёгкими облаками',0xffffff,0.95,0xffffff],
+  cloudy:['Пасмурно','пасмурная погода, мягкий рассеянный свет, серое небо',0xe4e9ef,0.5,0xe9edf2],
+  fog:['Туман','утренний туман, мягкий свет, атмосферная дымка вдали',0xeef0f2,0.45,0xeef0f2],
+  dusk:['Вечер','синий час после заката, мягкий холодный свет, огни вдалеке',0xa9b8ff,0.45,0xb7c3ff]};
+S.snapScn=store.get('snapScn','mount'); if(!SNAP_SCN[S.snapScn]) S.snapScn='mount';
+S.snapLight=store.get('snapLight','sunset'); if(!SNAP_LIGHT[S.snapLight]) S.snapLight='sunset';
+S.fbKey=store.get('fbKey',''); S.fbSecret=store.get('fbSecret','');
+const isNative=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
+function nativePlugin(n){ const C=window.Capacitor; if(!C) return null; return (C.Plugins&&C.Plugins[n])||(C.registerPlugin?C.registerPlugin(n):null); }
+
+function snapSize(){
+  const r=stage.getBoundingClientRect(), a=r.width/Math.max(1,r.height);
+  const opts=[[576,1024],[640,960],[1024,1024],[960,640],[1024,576]];
+  return opts.reduce((b,o)=>Math.abs(Math.log(o[0]/o[1]/a))<Math.abs(Math.log(b[0]/b[1]/a))?o:b);
+}
+function camWords(w,h){
+  const dir=new THREE.Vector3().subVectors(controls.target,camera.position);
+  const pitch=Math.atan2(-dir.y,Math.hypot(dir.x,dir.z))*180/Math.PI;
+  const hgt=camera.position.y;
+  const k=Math.tan(pitch*Math.PI/180)/Math.tan(camera.fov*Math.PI/360);
+  if(pitch>55) return 'вид сверху с дрона, горизонта не видно, в кадре только поверхность земли вокруг пустого места в центре';
+  const fromTop=Math.round(Math.max(0,Math.min(1,(1-k)/2))*100);
+  const hw=hgt<1.6?'с уровня глаз, около '+hgt.toFixed(1).replace('.',',')+' м':'с высоты около '+hgt.toFixed(1).replace('.',',')+' м';
+  const tilt=pitch<4?'камера смотрит прямо, без наклона':'камера наклонена вниз примерно на '+Math.round(pitch)+'°';
+  return 'съёмка '+hw+', '+tilt+', линия горизонта примерно на '+fromTop+'% высоты кадра от верха, '+(w<h?'вертикальный кадр':'горизонтальный кадр');
+}
+function snapPrompt(w,h){
+  const sc=SNAP_SCN[S.snapScn][1], li=SNAP_LIGHT[S.snapLight][1];
+  return ('Фотореалистичный пейзаж: '+sc+'. '+li+'. На переднем плане в центре кадра пустой ровный участок земли, где будет стоять автомобиль, сам участок свободен. '+camWords(w,h)+'. Объектив 35 мм, профессиональная фотография для автожурнала, высокая детализация, естественные цвета. Без автомобилей, без людей, без текста.').slice(0,990);
+}
+const SNAP_NEG='автомобиль, машина, транспорт, люди, текст, надписи, водяной знак, логотип, размытие, искажения, мультяшный стиль';
+
+// render the car and box alone on a transparent background, with their contact shadow
+function renderCarLayer(w,h){
+  const SS=2, W=w*SS, H=h*SS;
+  const rt=new THREE.WebGLRenderTarget(W,H,{format:THREE.RGBAFormat,minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter});
+  rt.texture.encoding=THREE.sRGBEncoding;
+  const cam=camera.clone(); cam.aspect=w/h; cam.updateProjectionMatrix();
+  const saved=[], hide=o=>{ if(o){ saved.push([o,o.visible]); o.visible=false; } };
+  scene.children.forEach(o=>{ if(o!==car&&o!==ground&&!o.isLight) hide(o); });
+  [flowLines,person,cmpGroup].forEach(hide);
+  const pose=[car.position.y,car.rotation.x,car.rotation.z]; car.position.y=0; car.rotation.x=0; car.rotation.z=0;
+  const bg=scene.background, fog=scene.fog, gOp=ground.material.opacity, g0=ghost;
+  const sc=sun.color.getHex(), si=sun.intensity, L=SNAP_LIGHT[S.snapLight];
+  scene.background=null; scene.fog=null; ground.material.opacity=0.45; if(g0) setGhost(false);
+  sun.color.setHex(L[2]); sun.intensity=L[3]*0.95; fill.color.setHex(L[4]);
+  const cc=renderer.getClearColor(new THREE.Color()), ca=renderer.getClearAlpha();
+  renderer.setRenderTarget(rt); renderer.setClearColor(0x000000,0); renderer.clear(); renderer.render(scene,cam);
+  const px=new Uint8Array(W*H*4); renderer.readRenderTargetPixels(rt,0,0,W,H,px);
+  renderer.setRenderTarget(null); renderer.setClearColor(cc,ca); rt.dispose();
+  saved.forEach(([o,v])=>o.visible=v);
+  [car.position.y,car.rotation.x,car.rotation.z]=pose;
+  scene.background=bg; scene.fog=fog; ground.material.opacity=gOp; if(g0) setGhost(true);
+  sun.color.setHex(sc); sun.intensity=si; fill.color.setHex(0xffffff);
+  render();
+  const big=document.createElement('canvas'); big.width=W; big.height=H;
+  const bx=big.getContext('2d'), id=bx.createImageData(W,H);
+  for(let y=0;y<H;y++) id.data.set(px.subarray((H-1-y)*W*4,(H-y)*W*4),y*W*4);
+  bx.putImageData(id,0,0);
+  const out=document.createElement('canvas'); out.width=w; out.height=h;
+  const ox=out.getContext('2d'); ox.imageSmoothingQuality='high'; ox.drawImage(big,0,0,w,h);
+  return out;
+}
+
+// FusionBrain (Kandinsky) API. In the Android app requests go through the native HTTP layer, so CORS does not apply.
+const FB='https://api-key.fusionbrain.ai/';
+async function fbCall(path,opt){
+  const r=await fetch(FB+path,Object.assign({headers:{'X-Key':'Key '+S.fbKey.trim(),'X-Secret':'Secret '+S.fbSecret.trim()}},opt||{}));
+  if(!r.ok){ const t=await r.text().catch(()=>''); const e=new Error('HTTP '+r.status+(t?': '+t.slice(0,160):'')); e.status=r.status; throw e; }
+  const t=await r.text(); try{ return JSON.parse(t); }catch(e){ return t; }
+}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+let snapJob=0;
+async function kandinsky(prompt,w,h,job,onTick){
+  let mode='pipe', id;
+  try{
+    const list=await fbCall('key/api/v1/pipelines');
+    const arr=Array.isArray(list)?list:[];
+    const p=arr.find(x=>String(x.type||'').toUpperCase()==='TEXT2IMAGE'&&(!x.status||x.status==='ACTIVE'))||arr[0];
+    if(!p) throw Object.assign(new Error('no pipelines'),{status:404});
+    id=p.id;
+  }catch(e){
+    if(e.status===401||e.status===403) throw e;
+    mode='model'; const m=await fbCall('key/api/v1/models'); id=(Array.isArray(m)?m[0]:m).id;
+  }
+  const params={type:'GENERATE',numImages:1,width:w,height:h,negativePromptDecoder:SNAP_NEG,generateParams:{query:prompt}};
+  const fd=new FormData();
+  fd.append(mode==='pipe'?'pipeline_id':'model_id',String(id));
+  fd.append('params',new File([JSON.stringify(params)],'params.json',{type:'application/json'}));
+  const run=await fbCall(mode==='pipe'?'key/api/v1/pipeline/run':'key/api/v1/text2image/run',{method:'POST',body:fd});
+  if(!run||!run.uuid) throw new Error((run&&(run.errorDescription||run.message))||'Сервис не принял задачу');
+  for(let i=0;i<80;i++){
+    await wait(3000); if(job!==snapJob) throw new Error('cancel');
+    onTick&&onTick(i);
+    const d=await fbCall((mode==='pipe'?'key/api/v1/pipeline/status/':'key/api/v1/text2image/status/')+run.uuid);
+    if(d.status==='DONE'){
+      const res=d.result||{}, files=res.files||d.images||[];
+      if(res.censored||d.censored) throw new Error('Kandinsky отклонил картинку фильтром. Попробуйте другой пейзаж.');
+      if(!files.length) throw new Error('Пустой ответ сервиса');
+      const f=files[0]; return f.startsWith('data:')?f:'data:image/jpeg;base64,'+f;
+    }
+    if(d.status==='FAIL') throw new Error(d.errorDescription||'Генерация не удалась');
+  }
+  throw new Error('Сервис не успел за 4 минуты, похоже, очередь');
+}
+function loadImg(src){ return new Promise((ok,no)=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=()=>no(new Error('Не удалось открыть картинку')); i.src=src; }); }
+function composite(bgImg,layer,w,h){
+  const c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d');
+  if(bgImg){ x.drawImage(bgImg,0,0,w,h); }
+  else { const g=x.createLinearGradient(0,0,0,h); g.addColorStop(0,'#b9c6d3'); g.addColorStop(0.55,'#dfe4e8'); g.addColorStop(0.56,'#8d8a82'); g.addColorStop(1,'#6e6a63'); x.fillStyle=g; x.fillRect(0,0,w,h); }
+  // pull the car slightly toward the scene's average colour so it sits in the light of the picture
+  const s=document.createElement('canvas'); s.width=s.height=8; const sx=s.getContext('2d'); sx.drawImage(c,0,h*0.3,w,h*0.7,0,0,8,8);
+  const d=sx.getImageData(0,0,8,8).data; let r=0,g=0,b=0; for(let i=0;i<d.length;i+=4){ r+=d[i]; g+=d[i+1]; b+=d[i+2]; } r/=64; g/=64; b/=64;
+  const t=document.createElement('canvas'); t.width=w; t.height=h; const tx=t.getContext('2d');
+  tx.drawImage(layer,0,0); tx.globalCompositeOperation='source-atop'; tx.fillStyle=`rgba(${r|0},${g|0},${b|0},${bgImg?0.13:0.05})`; tx.fillRect(0,0,w,h);
+  x.drawImage(t,0,0);
+  const v=x.createRadialGradient(w/2,h/2,Math.min(w,h)*0.35,w/2,h/2,Math.hypot(w,h)*0.6); v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(0,0,0,0.28)');
+  x.fillStyle=v; x.fillRect(0,0,w,h);
+  return c.toDataURL('image/jpeg',0.92);
+}
+let lastSnap=null;
+function snapUI(state,msg){
+  $('snapM').hidden=false; document.body.classList.add('lock');
+  $('snapWait').hidden=state!=='wait'; $('snapWaitTx').textContent=msg||'';
+  $('snapShare').disabled=state!=='done'; $('snapAgain').disabled=state==='wait';
+}
+async function takeSnap(){
+  setSnapSheet(false);
+  if(!isNative){ toast('<b>AI-снимок работает в приложении для Android</b>В браузере внешние запросы к Kandinsky закрыты. Ниже показан кадр без пейзажа.'); }
+  else if(!S.fbKey.trim()||!S.fbSecret.trim()){ toast('<b>Нужен ключ Kandinsky</b>Получите бесплатный ключ на fusionbrain.ai (раздел API) и впишите его в блок «AI-снимок» ниже.'); $('fbKey').closest('section').scrollIntoView({behavior:'smooth'}); return; }
+  const job=++snapJob, [w,h]=snapSize(), prompt=snapPrompt(w,h);
+  const layer=renderCarLayer(w,h);
+  $('snapPrompt').textContent=prompt;
+  $('snapImg').src=composite(null,layer,w,h); lastSnap=null;
+  if(!isNative){ snapUI('preview'); return; }
+  snapUI('wait','Kandinsky рисует пейзаж, обычно 20–60 секунд…');
+  try{
+    const bg=await kandinsky(prompt,w,h,job,i=>{ if(job===snapJob) $('snapWaitTx').textContent=i<10?'Kandinsky рисует пейзаж, обычно 20–60 секунд…':'Ещё рисует, очередь на сервисе… '+(3*(i+1))+' с'; });
+    if(job!==snapJob) return;
+    const img=await loadImg(bg);
+    lastSnap=composite(img,layer,w,h); $('snapImg').src=lastSnap; snapUI('done');
+  }catch(e){
+    if(job!==snapJob||e.message==='cancel') return;
+    let m=e.message||String(e);
+    if(e.status===401||e.status===403) m='Ключ не подошёл. Проверьте API Key и Secret Key в блоке «AI-снимок».';
+    else if(/Failed to fetch|NetworkError|Load failed/i.test(m)) m='Нет связи с сервисом Kandinsky. Проверьте интернет.';
+    snapUI('err'); toast('<b>Снимок не получился</b>'+m.replace(/</g,'&lt;'));
+  }
+}
+async function shareSnap(){
+  if(!lastSnap) return;
+  try{
+    const Fs=nativePlugin('Filesystem'), Sh=nativePlugin('Share');
+    if(isNative&&Fs&&Sh){
+      const f=await Fs.writeFile({path:'f7-box-'+Date.now()+'.jpg',data:lastSnap.split(',')[1],directory:'CACHE'});
+      await Sh.share({title:'Бокс на Haval F7',files:[f.uri],dialogTitle:'Поделиться снимком'});
+    } else { const a=document.createElement('a'); a.href=lastSnap; a.download='f7-box.jpg'; document.body.appendChild(a); a.click(); a.remove(); }
+  }catch(e){ if(!/cancel/i.test(String(e&&e.message))) toast('<b>Не удалось поделиться</b>'+String(e.message||e).replace(/</g,'&lt;')); }
+}
+function closeSnap(){ snapJob++; $('snapM').hidden=true; document.body.classList.remove('lock'); }
+function setSnapSheet(o){ $('snapSw').classList.toggle('open',o); $('snapBtn').setAttribute('aria-expanded',String(o)); }
+function renderSnapSheet(){
+  $('snapScn').innerHTML=Object.entries(SNAP_SCN).map(([k,v])=>`<button data-k="${k}" aria-pressed="${k===S.snapScn}">${v[0]}</button>`).join('');
+  $('snapLight').innerHTML=Object.entries(SNAP_LIGHT).map(([k,v])=>`<button data-k="${k}" aria-pressed="${k===S.snapLight}">${v[0]}</button>`).join('');
+}
+$('snapScn').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; S.snapScn=b.dataset.k; store.set('snapScn',S.snapScn); renderSnapSheet(); });
+$('snapLight').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; S.snapLight=b.dataset.k; store.set('snapLight',S.snapLight); renderSnapSheet(); });
+$('snapBtn').addEventListener('click',()=>setSnapSheet(!$('snapSw').classList.contains('open')));
+document.addEventListener('pointerdown',e=>{ if(!e.target.closest('#snapSw')&&!e.target.closest('#snapBtn')) setSnapSheet(false); });
+$('snapGo').addEventListener('click',takeSnap);
+$('snapAgain').addEventListener('click',takeSnap);
+$('snapShare').addEventListener('click',shareSnap);
+$('snapClose').addEventListener('click',closeSnap);
+$('snapM').addEventListener('click',e=>{ if(e.target.id==='snapM') closeSnap(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('snapM').hidden) closeSnap(); });
+$('fbKey').value=S.fbKey; $('fbSecret').value=S.fbSecret;
+$('fbKey').addEventListener('change',e=>{ S.fbKey=e.target.value.trim(); store.set('fbKey',S.fbKey); });
+$('fbSecret').addEventListener('change',e=>{ S.fbSecret=e.target.value.trim(); store.set('fbSecret',S.fbSecret); });
+renderSnapSheet();
 
 renderItemChips();
 loadCarModel();

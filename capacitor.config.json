@@ -2,5 +2,12 @@
   "appId": "ru.f7box.app",
   "appName": "Бокс на F7",
   "webDir": "www",
-  "android": { "backgroundColor": "#E2E7ED" }
+  "android": {
+    "backgroundColor": "#E2E7ED"
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
 }
