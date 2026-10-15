@@ -7,7 +7,7 @@
 /* Layout: sticky 3D stage on top (phone) or left (desktop); tool panel of selectors, verdicts and a comparison table */
 :root{
   --bg:#EDF0F3; --panel:#FFFFFF; --ink:#16202B; --muted:#5E6B78; --line:#D6DCE3;
-  --accent:#2B59E0; --accent-soft:#E3EAFD; --stage:#E2E7ED; --grid:#C3CCD6; --soil:#B48E55; --grass:#A5834E; --rock:#857B6E; --asphalt:#3C3F44; --lane:#F2F2EE; --glass:rgba(250,251,253,.66); --glass-line:rgba(22,32,43,.12); --glass-shadow:rgba(22,32,43,.10);
+  --accent:#2B59E0; --accent-soft:#E3EAFD; --stage:#E2E7ED; --grid:#C3CCD6; --soil:#C9A86E; --grass:#BC9A62; --rock:#857B6E; --asphalt:#3C3F44; --lane:#F2F2EE; --glass:rgba(250,251,253,.66); --glass-line:rgba(22,32,43,.12); --glass-shadow:rgba(22,32,43,.10);
   --good:#1D8A57; --warn:#A86C12; --bad:#C2362B;
   --a:#2B59E0; --b:#C96A12;
   --good-bg:#E2F3EA; --warn-bg:#FBF0DC; --bad-bg:#FBE4E1;
@@ -1112,7 +1112,9 @@ function applyTheme(){
   grid=new THREE.GridHelper(14,14,new THREE.Color(css('--grid')),new THREE.Color(css('--grid')));
   grid.position.y=0.001; grid.visible=false; scene.add(grid);
   scene.fog=new THREE.Fog(new THREE.Color(css('--stage')),20,46);
-  cSoil.set(css('--soil')); sandFar.material.color.set(css('--soil')).multiplyScalar(0.96); cGrass.set(css('--grass')); rockMat.color.set(css('--rock')); roadMat.color.set(css('--asphalt')); laneMat.color.set(css('--lane')); tuftMat.color.set(css('--grass')).multiplyScalar(0.85); terDirty=true;
+  // palette colours are sRGB; the renderer works in linear light, so convert or everything washes out
+  const lin=v=>new THREE.Color(css(v)).convertSRGBToLinear();
+  cSoil.copy(lin('--soil')); sandFar.material.color.copy(lin('--soil')).multiplyScalar(0.92); cGrass.copy(lin('--grass')); rockMat.color.copy(lin('--rock')); roadMat.color.copy(lin('--asphalt')); laneMat.color.copy(lin('--lane')); tuftMat.color.copy(lin('--grass')); terDirty=true;
   edgeA.color.set(css('--a')); edgeB.color.set(css('--b')); setGhost(ghost);
   limitMat.color.set(css('--bad')); limitEdgeMat.color.set(css('--bad'));
 }
