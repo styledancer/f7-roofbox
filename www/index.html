@@ -802,7 +802,7 @@ function loadCarModel(){
       const a=new THREE.Vector3(0,0,0).applyMatrix4(Mx), b=new THREE.Vector3(0,1,0).applyMatrix4(Mx); w.up=b.sub(a); w.pos=w.obj.position.clone(); });
     procParts.forEach(p=>p.visible=false);
     collectStockRims(); applyRims();
-    carModelReady=true; kick(); setTimeout(startIntro,300);
+    carModelReady=true; if(wxReady) applyWeatherScene(); kick(); setTimeout(startIntro,300);
   });
 }
 // converted models are already in car space (metres, front towards -x); wheels are nodes wheel_0..3 centred on their hubs
@@ -826,7 +826,7 @@ function loadNormModel(){
       const a=new THREE.Vector3(0,0,0).applyMatrix4(Mx), b=new THREE.Vector3(0,1,0).applyMatrix4(Mx); w.up=b.sub(a); w.pos=w.obj.position.clone(); });
     procParts.forEach(p=>p.visible=false);
     collectStockRims(); applyRims();
-    carModelReady=true; kick(); setTimeout(startIntro,300);
+    carModelReady=true; if(wxReady) applyWeatherScene(); kick(); setTimeout(startIntro,300);
   });
 }
 // ---- interchangeable rims: the stock rim meshes are hidden and a fitted rim is attached to each spinning wheel
@@ -847,7 +847,7 @@ function applyRims(){
       m.scale.setScalar(k); if(s<0) m.rotation.y=Math.PI;
       m.position.set(hub.x,hub.y,hub.z+s*(0.075-0.0998*k)); car.add(m); m.updateMatrixWorld(true); w.obj.attach(m); rimMeshes.push(m);
     });
-    kick();
+    if(wxReady) applyWeatherScene(); kick();
   };
   if(rimGeo[S.rim]) return put(rimGeo[S.rim]);
   loadModel(r.model, g=>{ let src=null; g.scene.traverse(o=>{ if(o.isMesh&&!src) src=o; }); if(!src) return;
