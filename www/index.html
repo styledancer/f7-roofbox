@@ -103,6 +103,15 @@ body.lock{overflow:hidden}
 .hud .lg{flex:1;height:5px;border-radius:3px;background:linear-gradient(90deg,#3E7BE6,#BFC7D1,#E8553D)}
 .readout{display:none}
 
+.tw{position:relative}
+.swr{position:absolute;right:46px;top:0;display:flex;gap:6px;align-items:center;padding:6px 8px;border-radius:12px;opacity:0;visibility:hidden;transform:translateX(10px);transition:opacity .18s,transform .22s,visibility 0s linear .22s;pointer-events:none}
+.swr.open{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition:opacity .18s,transform .22s}
+.swr .lbl{font:500 .72rem var(--body);color:var(--muted);white-space:nowrap;margin-right:2px}
+.sw{width:26px;height:26px;border-radius:50%;border:2px solid var(--glass-line);cursor:pointer;padding:0;flex:none;box-shadow:inset 0 -6px 10px rgba(0,0,0,.25),inset 0 4px 6px rgba(255,255,255,.35)}
+.sw[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent),inset 0 -6px 10px rgba(0,0,0,.25),inset 0 4px 6px rgba(255,255,255,.35)}
+.sws{display:flex;gap:6px;align-items:center;padding:4px 10px 8px;flex-wrap:wrap}
+.sws .nmc{font:400 .72rem var(--body);color:var(--muted);margin-left:4px}
+
 .panel{display:flex;flex-direction:column;gap:14px;min-width:0}
 section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
 h2{font:600 .72rem var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px}
@@ -201,6 +210,8 @@ h2 .badge{margin-left:4px}
       <div class="ov tools">
         <button class="ib glass" id="fsBtn" aria-pressed="false" aria-label="На весь экран" title="На весь экран"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
         <button class="ib glass" id="tgBtn" aria-pressed="false" aria-label="Открыть багажник" title="Открыть багажник"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17v-4l2.5-4H14l3 4h4v4"/><path d="M14 9l4.5-4.5"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/></svg></button>
+        <div class="tw"><button class="ib glass" id="paintBtn" aria-expanded="false" aria-controls="carSw" aria-label="Цвет машины" title="Цвет машины"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.6-.8 1.3-1.6-.4-1 .2-2.1 1.3-2.1H17a4 4 0 0 0 4-4C21 7 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="14.5" cy="7" r="1.2"/></svg></button><div class="swr glass" id="carSw" role="group" aria-label="Цвет машины"></div></div>
+        <button class="ib glass" id="wireBtn" aria-pressed="false" aria-label="Каркас боксов" title="Каркас боксов"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></button>
         <button class="ib glass" id="offBtn" aria-pressed="false" aria-label="Бездорожье" title="Бездорожье"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19l6-10 4 6 2.5-3.5L21 19z"/></svg></button>
         <button class="ib glass" id="hwBtn" aria-pressed="false" aria-label="Трасса: обтекание и расход" title="Трасса: обтекание и расход"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3L5 21M15 3l4 18M12 4v2M12 10v3M12 17v3"/></svg></button>
         <button class="ib glass more" id="moreBtn" aria-label="К настройкам и проверкам ниже" title="Подробнее"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
@@ -348,16 +359,24 @@ const ITEMS = [
   {id:'snow',   name:'Сноуборд 155 см',                d:[1550,300,100], est:true},
 ];
 ITEMS.forEach((it,i)=>it.color=ITEM_COLORS[i%ITEM_COLORS.length]);
-const COLORS = [['Белый','#E9ECEF'],['Чёрный','#1C1F24'],['Серый','#8A9199'],['Синий','#2D4E7E'],['Красный','#9E2A2A']];
+// Haval F7 body colours: white metallic is the default
+const COLORS = [['Белый металлик','#EDEEEC'],['Красный','#A11D21'],['Синий','#1E3C6E'],['Серый','#7A7F86'],['Чёрный','#121316']];
+// factory finishes of the boxes; the first one is the default
+const FINISH={
+  thule:[{id:'black',name:'Чёрный глянцевый',hex:'#141619',rough:.16,gloss:1},{id:'titan',name:'Титан глянцевый',hex:'#5C6066',rough:.2,gloss:1,metal:.35}],
+  lux:[{id:'black',name:'Чёрный матовый',hex:'#1D1E20',rough:.72},{id:'grey',name:'Серый матовый',hex:'#676A6E',rough:.7},{id:'white',name:'Белый глянцевый',hex:'#E8E9E8',rough:.18,gloss:1}],
+  ed:[{id:'black',name:'Чёрный, шагрень',hex:'#202226',rough:.85}],
+  touring:[{id:'titan',name:'Тёмный титан, Aeroskin',hex:'#3B3E42',rough:.5,metal:.2}]};
+BOXES.forEach(b=>{ b.colors=b.id==='t-100'?FINISH.touring:(b.brand==='Thule'?FINISH.thule:(b.brand==='LUX'?FINISH.lux:FINISH.ed)); });
 
 const store = {get(k,d){try{const v=localStorage.getItem('f7box.'+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
                set(k,v){try{localStorage.setItem('f7box.'+k,JSON.stringify(v))}catch(e){}}};
 const S = {
-  sel: store.get('sel','m3-l'), cmp: store.get('cmp','m3-xll'), align: store.get('align','own'), itemsIn:'A',
+  sel: store.get('sel','m3-l'), cmp: store.get('cmp',''), align: store.get('align','own'), itemsIn:'A',
   items: store.get('items',['yoyo','bike16']), custom: store.get('custom',[]),
   garage: store.get('garage',2200), barTop: store.get('barTop',1760),
   barFront: store.get('barFront',2500), spacing: store.get('spacing',800),
-  color: store.get('color','#E9ECEF'), front: null, open:false,
+  color: store.get('color','#EDEEEC'), front: null, open:false, boxColor: store.get('boxColor',{}), wire:null,
   hwSpeed: store.get('hwSpeed',110), baseFuel: store.get('baseFuel',7.5), fuelPrice: store.get('fuelPrice',62)
 };
 const byId = id => BOXES.find(b=>b.id===id);
@@ -418,13 +437,24 @@ const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputEncoding=THREE.sRGBEncoding;
+// soft studio environment so metallic paint and glossy boxes get reflections
+function studioEnv(){
+  const pm=new THREE.PMREMGenerator(renderer), es=new THREE.Scene();
+  const g=new THREE.SphereGeometry(50,32,16), p=g.attributes.position, col=[], top=new THREE.Color(0.95,0.97,1), hor=new THREE.Color(0.72,0.75,0.8), gnd=new THREE.Color(0.33,0.31,0.28), c=new THREE.Color();
+  for(let i=0;i<p.count;i++){ const y=p.getY(i)/50; if(y>=0) c.copy(hor).lerp(top,Math.pow(y,0.6)); else c.copy(hor).lerp(gnd,Math.min(1,-y*3)); col.push(c.r,c.g,c.b); }
+  g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  es.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide})));
+  [[30,8,0,30,8,3.2],[22,6,-26,14,-10,2],[16,5,24,12,22,1.6]].forEach(([w,h,x,y,z,k])=>{ const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color(k,k,k),side:THREE.DoubleSide})); m.position.set(x,y,z); m.lookAt(0,0,0); es.add(m); });
+  const t=pm.fromScene(es,0.035).texture; pm.dispose(); return t;
+}
 stage.prepend(renderer.domElement);
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(35,1,0.05,100);
 const controls=new THREE.OrbitControls(camera,renderer.domElement);
 controls.enableDamping=true; controls.dampingFactor=0.08; controls.maxPolarAngle=Math.PI*0.495; controls.minDistance=2.5; controls.maxDistance=16;
 
-scene.add(new THREE.HemisphereLight(0xffffff,0x8a8f99,0.75));
+scene.add(new THREE.HemisphereLight(0xffffff,0x8a8f99,0.45));
+scene.environment=studioEnv();
 const sun=new THREE.DirectionalLight(0xffffff,0.9); sun.position.set(-4,8,5); sun.castShadow=true;
 sun.shadow.mapSize.set(2048,2048); Object.assign(sun.shadow.camera,{left:-5,right:5,top:5,bottom:-5,near:1,far:25}); sun.shadow.bias=-0.0005;
 scene.add(sun);
@@ -595,7 +625,7 @@ function loadCarModel(){
       if(!o.isMesh) return; o.castShadow=true; o.receiveShadow=true;
       (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{ if(/PRIMARY/i.test(m.name) && !paintMats.includes(m)) paintMats.push(m); });
     });
-    paintMats.forEach(m=>{ m.color.set(S.color); m.metalness=0.35; m.roughness=0.38; });
+    paintMats.forEach(paintFinish);
     // tailgate parts swing together around the top front edge of the tailgate
     car.updateMatrixWorld(true);
     let tg=[]; root.traverse(o=>{ if(/^(boot|windscreen_r|brakelight_m)/i.test(o.name)) tg.push(o); });
@@ -695,17 +725,26 @@ function contour(g, mat){
   const lg=new THREE.BufferGeometry(); lg.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
   return new THREE.LineSegments(lg,mat);
 }
-const matA=new THREE.MeshStandardMaterial({color:0x1d2127, metalness:0.45, roughness:0.28});
-const matB=new THREE.MeshStandardMaterial({color:0xD9822B, transparent:true, opacity:0.2, depthWrite:false, roughness:0.6, side:THREE.DoubleSide});
+const matA=new THREE.MeshPhysicalMaterial({color:0x141619, metalness:0.1, roughness:0.2});
+const matB=new THREE.MeshPhysicalMaterial({color:0x141619, metalness:0.1, roughness:0.2});
 const edgeA=new THREE.LineBasicMaterial({color:0x2B59E0}), edgeB=new THREE.LineBasicMaterial({color:0xD9822B});
 const boxGroup=new THREE.Group(), cmpGroup=new THREE.Group(), itemsGroup=new THREE.Group();
 car.add(boxGroup); car.add(cmpGroup);
 let ghost=false;
+// boxes are drawn in their factory finish; the wireframe ("каркас") view is optional and turns on by itself when two boxes are compared
+function boxFinish(box){ const id=S.boxColor[box.id]; return box.colors.find(c=>c.id===id)||box.colors[0]; }
+function applyBoxMat(mat, box, wire, accent){
+  if(wire){ mat.transparent=true; mat.opacity=0.2; mat.depthWrite=false; mat.side=THREE.DoubleSide; mat.color.set(accent); mat.metalness=0; mat.roughness=0.6; mat.clearcoat=0; }
+  else { const p=boxFinish(box); mat.transparent=false; mat.opacity=1; mat.depthWrite=true; mat.side=THREE.FrontSide; mat.color.set(p.hex); mat.metalness=p.metal||0.05; mat.roughness=p.rough; mat.clearcoat=p.gloss?1:0; mat.clearcoatRoughness=0.06; }
+  mat.needsUpdate=true;
+}
+function paintFinish(m){ m.color.set(S.color); m.metalness=0.55; m.roughness=0.3; if('clearcoat' in m){ m.clearcoat=1; m.clearcoatRoughness=0.05; } m.needsUpdate=true; }
 function setGhost(on){
   ghost=on;
-  if(matA.transparent!==on){ matA.transparent=on; matA.depthWrite=!on; matA.side=on?THREE.DoubleSide:THREE.FrontSide; matA.needsUpdate=true; }
-  matA.opacity=on?0.2:1; matA.metalness=on?0:0.45; matA.color.set(on?css('--a'):'#1d2127');
-  boxGroup.children.forEach(c=>{ if(c.isLineSegments) c.visible=on; if(c.isMesh&&c!==itemsGroup) c.castShadow=!on; });
+  const a=byId(S.sel), b=S.cmp?byId(S.cmp):null;
+  if(a) applyBoxMat(matA,a,on,css('--a')); if(b) applyBoxMat(matB,b,on,css('--b'));
+  [boxGroup,cmpGroup].forEach(g=>g.children.forEach(c=>{ if(c.isLineSegments) c.visible=on; if(c.isMesh) c.castShadow=!on; }));
+  const wb=document.getElementById('wireBtn'); if(wb) wb.setAttribute('aria-pressed',String(on));
 }
 
 // height limit plane + measuring post
@@ -894,7 +933,7 @@ function applyTheme(){
   grid.position.y=0.001; grid.visible=false; scene.add(grid);
   scene.fog=new THREE.Fog(new THREE.Color(css('--stage')),13,27);
   cSoil.set(css('--soil')); cGrass.set(css('--grass')); rockMat.color.set(css('--rock')); roadMat.color.set(css('--asphalt')); laneMat.color.set(css('--lane')); tuftMat.color.set(css('--grass')).multiplyScalar(0.85); terDirty=true;
-  matB.color.set(css('--b')); edgeA.color.set(css('--a')); edgeB.color.set(css('--b')); if(ghost) matA.color.set(css('--a'));
+  edgeA.color.set(css('--a')); edgeB.color.set(css('--b')); setGhost(ghost);
   limitMat.color.set(css('--bad')); limitEdgeMat.color.set(css('--bad'));
 }
 applyTheme();
@@ -1143,16 +1182,19 @@ function rebuild(which){
     m=new THREE.Mesh(geo, mat); line=contour(geo, edge);
   }
   m.castShadow=which==='A'; m.receiveShadow=which==='A'; g.add(m); g.add(line);
-  line.visible=ghost||which==='B';
+  line.visible=ghost; m.castShadow=!ghost;
 }
 /* box pickers over the 3D view */
+function finishRow(box,k){ const cur=boxFinish(box); return `<div class="poph">Цвет бокса ${k}</div><div class="sws">`+box.colors.map(c=>`<button class="sw" data-box="${box.id}" data-fin="${c.id}" title="${c.name}" aria-label="${c.name}" aria-pressed="${c.id===cur.id}" style="background:${c.hex}"></button>`).join('')+`<span class="nmc">${cur.name}</span></div>`; }
+function bindFinish(root){ root.querySelectorAll('.sw[data-fin]').forEach(b=>b.addEventListener('click',()=>{ S.boxColor[b.dataset.box]=b.dataset.fin; store.set('boxColor',S.boxColor); setGhost(ghost); renderBoxButtons(); renderCmpSelect(); kick(); })); }
 const CHEV='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>';
 const optHtml=(b,sel)=>`<button class="opt" role="option" data-id="${b.id}" aria-selected="${sel}"><span class="br">${b.brand}</span><span class="md">${b.model}</span><span class="dm">${b.V} л · ${dimsTxt(b.L,b.W,b.H)}</span></button>`;
 function closePops(except){ [['popA','chipA'],['popB','chipB']].forEach(([p,c])=>{ if(p!==except){ $(p).hidden=true; $(c).setAttribute('aria-expanded','false'); } }); }
 function renderBoxButtons(){
   const a=A();
   $('chipA').innerHTML=`<span class="badge a">A</span><span class="tx"><span class="nm">${a.brand} ${a.model}</span><span class="sb">${a.V} л · ${dimsTxt(a.L,a.W,a.H)}</span></span>${CHEV}`;
-  $('popA').innerHTML='<div class="poph">Бокс A</div>'+BOXES.map(b=>optHtml(b,b.id===S.sel)).join('');
+  $('popA').innerHTML=finishRow(a,'A')+'<div class="poph">Бокс A</div>'+BOXES.map(b=>optHtml(b,b.id===S.sel)).join('');
+  bindFinish($('popA'));
   $('popA').querySelectorAll('.opt').forEach(el=>el.addEventListener('click',()=>{ closePops(); selectBox(el.dataset.id); }));
 }
 function renderCmpSelect(){
@@ -1161,7 +1203,8 @@ function renderCmpSelect(){
     :`<span class="badge b">B</span><span class="tx"><span class="nm">Сравнить</span><span class="sb">второй бокс</span></span>${CHEV}`;
   $('popBList').innerHTML='<div class="poph">Бокс B для сравнения</div><button class="opt" role="option" data-id="" aria-selected="'+(!b)+'"><span class="md">Не сравнивать</span></button>'
     +BOXES.filter(x=>x.id!==S.sel).map(x=>optHtml(x,x.id===S.cmp)).join('');
-  $('popBList').querySelectorAll('.opt').forEach(el=>el.addEventListener('click',()=>{ S.cmp=el.dataset.id; store.set('cmp',S.cmp); rebuild('B'); renderBoxButtons(); renderCmpSelect(); update(); if(!S.cmp) closePops(); }));
+  if(b){ $('popBList').insertAdjacentHTML('afterbegin',finishRow(b,'B')); bindFinish($('popBList')); }
+  $('popBList').querySelectorAll('.opt').forEach(el=>el.addEventListener('click',()=>{ S.cmp=el.dataset.id; S.wire=null; store.set('cmp',S.cmp); rebuild('B'); renderBoxButtons(); renderCmpSelect(); update(); if(!S.cmp) closePops(); }));
 }
 ['A','B'].forEach(k=>$('chip'+k).addEventListener('click',()=>{ const p=$('pop'+k), open=p.hidden; closePops(); p.hidden=!open; $('chip'+k).setAttribute('aria-expanded',String(open)); if(open){ const sl=p.querySelector('[aria-selected="true"]'); if(sl) sl.scrollIntoView({block:'nearest'}); } }));
 const camBtn=$('camBtn'), viewsEl=$('views');
@@ -1199,7 +1242,7 @@ function update(){
   const bf=b?bFront():0, eB=b?evaluate(b,bf):null;
   if(b) cmpGroup.position.set(X(bf), M(S.barTop)+0.002, 0);
   cmpGroup.visible=!!b;
-  setGhost(!!b || S.items.length>0);
+  setGhost(S.wire===null?!!b:S.wire);
 
   $('alignWrap').hidden=!b; $('cmpSec').hidden=!b; $('showIn').hidden=!b;
   document.querySelectorAll('#alignWrap button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.align===S.align)));
@@ -1283,11 +1326,17 @@ $('tgBtn').addEventListener('click',()=>{S.open=!S.open; const t=$('tgBtn'), l=S
   el.addEventListener('change',()=>{const v=parseFloat(el.value); if(!isFinite(v)) {el.value=S[k]; return;} S[k]=v; store.set(k,v);
     if(k!=='garage') S.front=autoFront(A()); update();});
 });
-$('colors').innerHTML=COLORS.map(([n,c])=>`<button aria-label="${n}" title="${n}" data-c="${c}" style="background:${c}" aria-pressed="${c===S.color}"></button>`).join('');
-$('colors').querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
-  S.color=btn.dataset.c; store.set('color',S.color); bodyMat.color.set(S.color); paintMats.forEach(m=>m.color.set(S.color));
-  $('colors').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===btn))); kick();
-}));
+function setCarColor(c){ S.color=c; store.set('color',c); bodyMat.color.set(c); paintMats.forEach(paintFinish); renderCarColors(); kick(); }
+function renderCarColors(){
+  const btns=COLORS.map(([n,c])=>`<button class="sw" aria-label="${n}" title="${n}" data-c="${c}" style="background:${c}" aria-pressed="${c===S.color}"></button>`).join('');
+  const cur=(COLORS.find(x=>x[1]===S.color)||['Свой'])[0];
+  $('colors').innerHTML=btns; $('carSw').innerHTML=`<span class="lbl">${cur}</span>`+btns;
+  document.querySelectorAll('#colors .sw, #carSw .sw').forEach(b=>b.addEventListener('click',()=>setCarColor(b.dataset.c)));
+}
+renderCarColors();
+$('paintBtn').addEventListener('click',()=>{ const o=!$('carSw').classList.contains('open'); $('carSw').classList.toggle('open',o); $('paintBtn').setAttribute('aria-expanded',String(o)); });
+document.addEventListener('pointerdown',e=>{ if(!e.target.closest('.tw')){ $('carSw').classList.remove('open'); $('paintBtn').setAttribute('aria-expanded','false'); } });
+$('wireBtn').addEventListener('click',()=>{ S.wire=!ghost; update(); });
 
 /* full screen: native Fullscreen API where the browser allows it, otherwise the stage covers the window */
 const fsBtn=$('fsBtn');
