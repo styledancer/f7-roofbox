@@ -17,7 +17,8 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - uses: android-actions/setup-android@v3
+      - name: Android SDK (preinstalled on the runner)
+        run: echo "ANDROID_HOME=$ANDROID_HOME" && ls $ANDROID_HOME/platforms | tail -3
       - name: Install web dependencies
         run: npm install --no-audit --no-fund
       - name: Copy three.js into the app
