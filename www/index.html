@@ -2095,13 +2095,13 @@ function composite(bgImg,layer,w,h){
 let lastSnap=null;
 // place the rendered car on the ground of the picture: wheels at 88 % of the frame height, centred, a sensible size
 function fitCar(layer,w,h){
-  const x=layer.getContext('2d'), d=x.getImageData(0,0,w,h).data; let x0=w,x1=0,y0=h,y1=0;
-  for(let y=0;y<h;y+=2) for(let i=0;i<w;i+=2){ if(d[(y*w+i)*4+3]>=250){ if(i<x0)x0=i; if(i>x1)x1=i; if(y<y0)y0=y; if(y>y1)y1=y; } }
+  const LW=layer.width, LH=layer.height, x=layer.getContext('2d'), d=x.getImageData(0,0,LW,LH).data; let x0=LW,x1=0,y0=LH,y1=0;
+  for(let y=0;y<LH;y+=2) for(let i=0;i<LW;i+=2){ if(d[(y*LW+i)*4+3]>=250){ if(i<x0)x0=i; if(i>x1)x1=i; if(y<y0)y0=y; if(y>y1)y1=y; } }
   const out=document.createElement('canvas'); out.width=w; out.height=h; const o=out.getContext('2d');
   if(x1<=x0){ o.drawImage(layer,0,0); return {canvas:out,k:1,dx:0,dy:0}; }
   const bw=x1-x0, bh=y1-y0, k=Math.min((w<h?0.88:0.62)*w/bw, 0.5*h/bh);
   const dx=w/2-(x0+bw/2)*k, dy=h*0.88-y1*k;
-  o.imageSmoothingQuality='high'; o.drawImage(layer,dx,dy,w*k,h*k);
+  o.imageSmoothingQuality='high'; o.drawImage(layer,dx,dy,LW*k,LH*k);
   return {canvas:out,k,dx,dy};
 }
 // keep the light, shadows and colour of the regenerated photo but put the exact car back on top of it
@@ -2133,10 +2133,10 @@ async function takeSnap(){
   else if(!useCF()&&!(S.fbKey.trim()&&S.fbSecret.trim())){ toast('<b>Нужен ключ Cloudflare</b>Впишите токен Workers AI (Account ID найдётся сам) в блок «AI-снимок» ниже, там же инструкция.'); $('cfAcc').closest('section').scrollIntoView({behavior:'smooth'}); return; }
   const cf=useCF(), job=++snapJob, [w,h]=snapSize(), prompt=cf?snapPromptEn():snapPrompt(w,h);
   // eye-level camera for the photo: same side of the car as in the app, but from 1.35 m like the generated landscape
-  const camSnap=camera.clone(); camSnap.aspect=w/h; camSnap.fov=40; camSnap.updateProjectionMatrix();
+  const SQ=Math.max(w,h), camSnap=camera.clone(); camSnap.aspect=1; camSnap.fov=40; camSnap.updateProjectionMatrix();
   { const t=controls.target, d=camera.position.clone().sub(t); let hd=Math.hypot(d.x,d.z); if(hd<0.5){ d.set(-0.7,0,0.7); hd=1; }
-    const R=Math.max(hd,7); camSnap.position.set(t.x+d.x/hd*R, 1.35, t.z+d.z/hd*R); camSnap.lookAt(t.x,0.95,t.z); }
-  const layer=fitCar(renderCarLayer(w,h,{cam:camSnap}),w,h).canvas;
+    const R=Math.max(hd,9.5); camSnap.position.set(t.x+d.x/hd*R, 1.35, t.z+d.z/hd*R); camSnap.lookAt(t.x,0.95,t.z); }
+  const layer=fitCar(renderCarLayer(SQ,SQ,{cam:camSnap}),w,h).canvas;
   $('snapPrompt').textContent=prompt;
   $('snapImg').src=composite(null,layer,w,h); lastSnap=null; snapVariants=null; $('snapVar').hidden=true;
   if(!isNative){ snapUI('preview'); return; }
@@ -2149,7 +2149,7 @@ async function takeSnap(){
       if(job!==snapJob) return;
       if(gen){
         const img=await loadImg(gen.url), env=envFromImage(img);
-        const lit=renderCarLayer(w,h,{cam:camSnap,env,sky:avgColor(img,0,0.4),gnd:avgColor(img,0.6,1)}); env.dispose();
+        const lit=renderCarLayer(SQ,SQ,{cam:camSnap,env,sky:avgColor(img,0,0.4),gnd:avgColor(img,0.6,1)}); env.dispose();
         const fitLit=fitCar(lit,w,h);
         snapVariants={whole:await keepExactCar(gen.url,fitLit,w,h), ai:gen.url};
         $('snapPrompt').textContent=gen.prompt; $('snapVar').hidden=false; showVariant('whole'); snapUI('done'); return;
@@ -2159,7 +2159,7 @@ async function takeSnap(){
     if(job!==snapJob) return;
     const img=await loadImg(bg);
     const env=envFromImage(img);
-    const lit=renderCarLayer(w,h,{cam:camSnap,env,sky:avgColor(img,0,0.4),gnd:avgColor(img,0.6,1)}); env.dispose();
+    const lit=renderCarLayer(SQ,SQ,{cam:camSnap,env,sky:avgColor(img,0,0.4),gnd:avgColor(img,0.6,1)}); env.dispose();
     const fitLit=fitCar(lit,w,h); const montage=composite(img,fitLit.canvas,w,h); snapVariants={whole:montage}; lastSnap=montage; $('snapImg').src=montage; $('snapVar').hidden=true;
     snapUI('done');
   }catch(e){
