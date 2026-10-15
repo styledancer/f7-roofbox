@@ -489,8 +489,8 @@ const ITEM_COLORS=['#E07A2E','#2F9E6B','#8B5CF6','#D6457A','#2B8FD6','#B59A1E','
 const ITEMS = [
   {id:'yoyo',   name:'Коляска Babyzen YOYO², сложена', d:[520,440,180]},
   {id:'airz',   name:'Коляска Anex Air-Z, сложена',    d:[680,460,250]},
-  {id:'bike16', name:'Детский велосипед 16″',          d:[1150,540,690]},
-  {id:'bike16t',name:'Велосипед 16″, руль повёрнут',   d:[1150,300,690], est:true},
+  {id:'bike16', name:'Детский велосипед 16″, руль поперёк', d:[1150,540,690]},
+  {id:'bike16t',name:'Детский велосипед 16″, руль вдоль рамы', d:[1150,300,690], est:true},
   {id:'suitL',  name:'Чемодан большой',                d:[750,500,300]},
   {id:'suitM',  name:'Чемодан средний',                d:[650,450,270]},
   {id:'cabin',  name:'Ручная кладь',                   d:[550,400,200]},
@@ -1406,9 +1406,10 @@ function packRaw(box,items){
   const order=items.map((it,i)=>({it,i})).sort((a,b)=>Math.max(...b.it.d)-Math.max(...a.it.d)||(b.it.d[0]*b.it.d[1]*b.it.d[2])-(a.it.d[0]*a.it.d[1]*a.it.d[2]));
   let pts=[{x:0,y:0,z:-half}];
   const inHull=(x0,y0,z0,l,w,h)=>{
-    const ins=Math.min(140,l*0.08), yb=y0<=1?1:y0;
-    for(const x of [x0+ins,x0+l/2,x0+l-ins]) for(const y of [yb,y0+h]) for(const z of [z0,z0+w]) if(!insideHull(box,x,y,z)) return false;
-    for(const x of [x0+1,x0+l-1]) for(const z of [z0+w*0.2,z0+w*0.8]) if(!insideHull(box,x,y0+h*0.5,z)||!insideHull(box,x,yb,z)) return false;
+    // items have rounded corners and long things (skis, boards) have thin ends, so the extreme corners may touch the curved shell
+    const ins=Math.min(220,l*0.12), yb=y0<=1?1:y0, zi=Math.min(25,w*0.12);
+    for(const x of [x0+ins,x0+l/2,x0+l-ins]){ for(const z of [z0,z0+w]) if(!insideHull(box,x,yb,z)) return false; for(const z of [z0+zi,z0+w-zi]) if(!insideHull(box,x,y0+h,z)) return false; }
+    for(const x of [x0+1,x0+l-1]) for(const z of [z0+w*0.25,z0+w*0.75]) if(!insideHull(box,x,y0+h*0.35,z)||!insideHull(box,x,yb,z)) return false;
     return true; };
   const hits=(x0,y0,z0,l,w,h)=>placed.some(p=>x0<p.x0+p.l+G-1&&x0+l+G-1>p.x0&&y0<p.y0+p.h-1&&y0+h>p.y0+1&&z0<p.z0+p.w+G-1&&z0+w+G-1>p.z0);
   const supported=(x0,y0,z0,l,w)=>{ if(y0<=1) return true; let a=0;
