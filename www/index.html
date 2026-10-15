@@ -219,6 +219,7 @@ h2 .badge{margin-left:4px}
 .snapbar{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
 .snapbar .mini{padding:8px 12px}
 .snapbar .mini.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.snapbar .mini:disabled{opacity:.4;cursor:default}
 .snapc details{font-size:.8rem}
 .keyin{font:400 .82rem var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;width:100%;min-width:0}
 .keyrow{display:grid;gap:4px}
@@ -1667,7 +1668,7 @@ async function cfAccount(){
 async function cfFlux(prompt){
   const acc=await cfAccount();
   const d=await cfJson('https://api.cloudflare.com/client/v4/accounts/'+encodeURIComponent(acc)+'/ai/run/@cf/black-forest-labs/flux-1-schnell',
-    {method:'POST',headers:{'Authorization':'Bearer '+S.cfTok.trim(),'Content-Type':'application/json'},body:JSON.stringify({prompt,steps:8,seed:Math.floor(Math.random()*1e9)})});
+    {method:'POST',headers:{'Authorization':'Bearer '+S.cfTok.trim(),'Content-Type':'application/json'},body:JSON.stringify({prompt,steps:8})});
   const img=(d.result&&d.result.image)||d.image; if(!img) throw new Error('Пустой ответ Cloudflare');
   return img.startsWith('data:')?img:'data:image/jpeg;base64,'+img;
 }
