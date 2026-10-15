@@ -7,7 +7,7 @@
 /* Layout: sticky 3D stage on top (phone) or left (desktop); tool panel of selectors, verdicts and a comparison table */
 :root{
   --bg:#EDF0F3; --panel:#FFFFFF; --ink:#16202B; --muted:#5E6B78; --line:#D6DCE3;
-  --accent:#2B59E0; --accent-soft:#E3EAFD; --stage:#E2E7ED; --grid:#C3CCD6; --soil:#CDB27C; --grass:#BBA46E; --rock:#857B6E; --asphalt:#3C3F44; --lane:#F2F2EE; --glass:rgba(250,251,253,.66); --glass-line:rgba(22,32,43,.12); --glass-shadow:rgba(22,32,43,.10);
+  --accent:#2B59E0; --accent-soft:#E3EAFD; --stage:#E2E7ED; --grid:#C3CCD6; --soil:#C4A46C; --grass:#B39661; --rock:#857B6E; --asphalt:#3C3F44; --lane:#F2F2EE; --glass:rgba(250,251,253,.66); --glass-line:rgba(22,32,43,.12); --glass-shadow:rgba(22,32,43,.10);
   --good:#1D8A57; --warn:#A86C12; --bad:#C2362B;
   --a:#2B59E0; --b:#C96A12;
   --good-bg:#E2F3EA; --warn-bg:#FBF0DC; --bad-bg:#FBE4E1;
@@ -515,7 +515,7 @@ const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputEncoding=THREE.sRGBEncoding;
-renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=0.92;
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=0.85;
 // soft studio environment so metallic paint and glossy boxes get reflections
 function studioEnv(){
   const pm=new THREE.PMREMGenerator(renderer), es=new THREE.Scene();
@@ -991,14 +991,14 @@ const person=new THREE.Group(), pBody=new THREE.MeshStandardMaterial({color:0xBF
 const pBag=new THREE.MeshStandardMaterial({color:0xE07A2E,roughness:0.6});
 function pLimb(r1,r2,len,mat){ const g=new THREE.Group(), m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,len,12),mat); m.position.y=-len/2; m.castShadow=true; g.add(m);
   const j=new THREE.Mesh(new THREE.SphereGeometry(r1*1.02,12,8),mat); j.castShadow=true; g.add(j); return g; }
-const pHip=new THREE.Group(); pHip.position.y=0.93; person.add(pHip);
-const pLegs=[-1,1].map(sx=>{ const l=pLimb(0.068,0.05,0.9,pCloth); l.position.x=sx*0.1; pHip.add(l);
-  const foot=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.06,0.24),pCloth); foot.position.set(0,-0.9,-0.05); foot.castShadow=true; l.add(foot); return l; });
+const pHip=new THREE.Group(); pHip.position.y=0.88; person.add(pHip);
+const pLegs=[-1,1].map(sx=>{ const l=pLimb(0.075,0.052,0.83,pCloth); l.position.x=sx*0.1; pHip.add(l);
+  const foot=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.06,0.24),pCloth); foot.position.set(0,-0.84,-0.05); foot.castShadow=true; l.add(foot); return l; });
 const pTorso=new THREE.Group(); pHip.add(pTorso);
-const chest=new THREE.Mesh(new THREE.CylinderGeometry(0.19,0.15,0.56,16),pCloth); chest.scale.z=0.62; chest.position.y=0.27; chest.castShadow=true; pTorso.add(chest);
-const neck=new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.05,0.08,10),pBody); neck.position.y=0.59; pTorso.add(neck);
-const head=new THREE.Mesh(new THREE.SphereGeometry(0.105,18,14),pBody); head.scale.set(0.92,1.08,1); head.position.y=0.71; head.castShadow=true; pTorso.add(head);
-const pArms=[-1,1].map(sx=>{ const sh=new THREE.Group(); sh.position.set(sx*0.22,0.5,0); pTorso.add(sh);
+const chest=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.16,0.6,16),pCloth); chest.scale.z=0.62; chest.position.y=0.3; chest.castShadow=true; pTorso.add(chest);
+const neck=new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.05,0.08,10),pBody); neck.position.y=0.63; pTorso.add(neck);
+const head=new THREE.Mesh(new THREE.SphereGeometry(0.105,18,14),pBody); head.scale.set(0.92,1.08,1); head.position.y=0.755; head.castShadow=true; pTorso.add(head);
+const pArms=[-1,1].map(sx=>{ const sh=new THREE.Group(); sh.position.set(sx*0.23,0.54,0); pTorso.add(sh);
   const up=pLimb(0.052,0.045,0.3,pCloth); sh.add(up); const el=new THREE.Group(); el.position.y=-0.3; up.add(el);
   const fo=pLimb(0.045,0.038,0.27,pBody); el.add(fo); const hand=new THREE.Mesh(new THREE.SphereGeometry(0.045,10,8),pBody); hand.position.y=-0.29; fo.add(hand);
   return {sh,el}; });
@@ -1110,7 +1110,7 @@ function applyTheme(){
   if(grid){scene.remove(grid); grid.geometry.dispose();}
   grid=new THREE.GridHelper(14,14,new THREE.Color(css('--grid')),new THREE.Color(css('--grid')));
   grid.position.y=0.001; grid.visible=false; scene.add(grid);
-  scene.fog=new THREE.Fog(new THREE.Color(css('--stage')),13,27);
+  scene.fog=new THREE.Fog(new THREE.Color(css('--stage')),20,46);
   cSoil.set(css('--soil')); cGrass.set(css('--grass')); rockMat.color.set(css('--rock')); roadMat.color.set(css('--asphalt')); laneMat.color.set(css('--lane')); tuftMat.color.set(css('--grass')).multiplyScalar(0.85); terDirty=true;
   edgeA.color.set(css('--a')); edgeB.color.set(css('--b')); setGhost(ghost);
   limitMat.color.set(css('--bad')); limitEdgeMat.color.set(css('--bad'));
@@ -1134,7 +1134,7 @@ let curView='q';
 function lensFor(a){ return a<1?44:35; }
 function fitView(k){
   const [p,t]=VIEWS[k], P=new THREE.Vector3(...p), T=new THREE.Vector3(...t), a=camera.aspect||1;
-  const hf=2*Math.atan(Math.tan(lensFor(a)*Math.PI/360)*a), need=2*Math.atan(Math.tan(35*Math.PI/360)*1.45);
+  const hf=2*Math.atan(Math.tan(lensFor(a)*Math.PI/360)*a), need=2*Math.atan(Math.tan(35*Math.PI/360)*1.0);
   const f=Math.min(2.6,Math.max(1,Math.tan(need/2)/Math.tan(hf/2)))*(k==='top'?1:1);
   return [T.clone().add(P.sub(T).multiplyScalar(f)),T];
 }
