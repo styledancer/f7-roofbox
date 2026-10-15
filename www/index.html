@@ -211,6 +211,9 @@ h2 .badge{margin-left:4px}
 .snapv img{display:block;max-width:100%;max-height:calc(100dvh - 190px);object-fit:contain}
 .snapw{position:absolute;inset:auto 10px 10px 10px;border-radius:12px;padding:10px 12px;font-size:.84rem;display:flex;align-items:center;gap:10px}
 .snapw[hidden]{display:none}
+.snapw.err{border-color:var(--bad);align-items:flex-start}
+.snapw.err .spin{display:none}
+.snapw.err span::before{content:"Не получилось. ";font-weight:600;color:var(--bad)}
 .spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:spin .9s linear infinite;flex:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 .snapbar{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
@@ -276,7 +279,7 @@ h2 .badge{margin-left:4px}
       <div class="readout" id="readout" hidden></div>
       <div class="snapm" id="snapM" role="dialog" aria-modal="true" aria-label="AI-снимок" hidden>
         <div class="snapc">
-          <div class="snapv"><img id="snapImg" alt="Снимок машины с боксом на фоне сгенерированного пейзажа"><div class="snapw glass" id="snapWait"><i class="spin"></i><span id="snapWaitTx">Kandinsky рисует пейзаж…</span></div></div>
+          <div class="snapv"><img id="snapImg" alt="Снимок машины с боксом на фоне сгенерированного пейзажа"><div class="snapw glass" id="snapWait" role="status"><i class="spin"></i><span id="snapWaitTx">Kandinsky рисует пейзаж…</span></div></div>
           <div class="snapbar"><button class="mini pri" id="snapShare" disabled>Поделиться</button><button class="mini" id="snapAgain" disabled>Ещё вариант</button><button class="mini" id="snapClose">Закрыть</button></div>
           <details><summary>Промт для нейросети</summary><p class="fine" id="snapPrompt"></p></details>
         </div>
@@ -341,11 +344,11 @@ h2 .badge{margin-left:4px}
       <p class="fine" style="margin-top:0">Кнопка с камерой справа: машина и бокс рисуются точной 3D-моделью с текущего ракурса, а пейзаж вокруг генерирует нейросеть FLUX через Cloudflare (бесплатно около 100 снимков в сутки). Ключи хранятся только на этом устройстве.</p>
       <ol class="fine" style="padding-left:18px;margin:6px 0 0">
         <li>Зарегистрируйтесь на dash.cloudflare.com (почта, карта не нужна).</li>
-        <li>Account ID: на главной странице кабинета, меню у названия аккаунта, «Copy account ID».</li>
+        <li>Account ID можно не вводить, приложение найдёт его по токену. Вручную: это 32 символа в адресе кабинета после dash.cloudflare.com/.</li>
         <li>Токен: My Profile → API Tokens → Create Token → шаблон «Workers AI» → Create, скопируйте токен.</li>
       </ol>
       <div class="settings">
-        <div class="keyrow"><label for="cfAcc">Cloudflare Account ID</label><input class="keyin" id="cfAcc" type="text" autocomplete="off" spellcheck="false"></div>
+        <div class="keyrow"><label for="cfAcc">Cloudflare Account ID (можно оставить пустым)</label><input class="keyin" id="cfAcc" type="text" autocomplete="off" spellcheck="false"></div>
         <div class="keyrow"><label for="cfTok">Cloudflare API Token</label><input class="keyin" id="cfTok" type="password" autocomplete="off" spellcheck="false"></div>
       </div>
       <details style="margin-top:10px"><summary>Запасной вариант: Kandinsky</summary>
@@ -1644,15 +1647,27 @@ async function fbCall(path,opt){
 }
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 let snapJob=0;
-const useCF=()=>!!(S.cfAcc.trim()&&S.cfTok.trim());
-async function cfFlux(prompt){
-  const r=await fetch('https://api.cloudflare.com/client/v4/accounts/'+encodeURIComponent(S.cfAcc.trim())+'/ai/run/@cf/black-forest-labs/flux-1-schnell',
-    {method:'POST',headers:{'Authorization':'Bearer '+S.cfTok.trim(),'Content-Type':'application/json'},body:JSON.stringify({prompt,steps:8,seed:Math.floor(Math.random()*1e9)})});
+const useCF=()=>!!S.cfTok.trim();
+function withTimeout(p,ms,msg){ return Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(new Error(msg)),ms))]); }
+async function cfJson(url,opt){
+  const r=await withTimeout(fetch(url,opt),60000,'Cloudflare не ответил за 60 секунд. Возможно, провайдер его блокирует: попробуйте другой интернет или VPN.');
   const t=await r.text(); let d=null; try{ d=JSON.parse(t); }catch(e){}
   if(!r.ok||!d||d.success===false){
-    const msg=d&&d.errors&&d.errors.length?d.errors.map(x=>x.message).join('; '):('HTTP '+r.status+' '+t.slice(0,120));
+    const msg=d&&d.errors&&d.errors.length?d.errors.map(x=>(x.code?x.code+': ':'')+x.message).join('; '):('HTTP '+r.status+' '+t.slice(0,160));
     const e=new Error(msg); e.status=r.status; throw e;
   }
+  return d;
+}
+async function cfAccount(){
+  if(S.cfAcc.trim()) return S.cfAcc.trim();
+  const d=await cfJson('https://api.cloudflare.com/client/v4/accounts',{headers:{'Authorization':'Bearer '+S.cfTok.trim()}});
+  const a=(d.result||[])[0]; if(!a) throw new Error('По этому токену не найден аккаунт. Впишите Account ID вручную.');
+  S.cfAcc=a.id; store.set('cfAcc',a.id); $('cfAcc').value=a.id; return a.id;
+}
+async function cfFlux(prompt){
+  const acc=await cfAccount();
+  const d=await cfJson('https://api.cloudflare.com/client/v4/accounts/'+encodeURIComponent(acc)+'/ai/run/@cf/black-forest-labs/flux-1-schnell',
+    {method:'POST',headers:{'Authorization':'Bearer '+S.cfTok.trim(),'Content-Type':'application/json'},body:JSON.stringify({prompt,steps:8,seed:Math.floor(Math.random()*1e9)})});
   const img=(d.result&&d.result.image)||d.image; if(!img) throw new Error('Пустой ответ Cloudflare');
   return img.startsWith('data:')?img:'data:image/jpeg;base64,'+img;
 }
@@ -1706,13 +1721,13 @@ function composite(bgImg,layer,w,h){
 let lastSnap=null;
 function snapUI(state,msg){
   $('snapM').hidden=false; document.body.classList.add('lock');
-  $('snapWait').hidden=state!=='wait'; $('snapWaitTx').textContent=msg||'';
+  $('snapWait').hidden=!(state==='wait'||state==='err'); $('snapWait').classList.toggle('err',state==='err'); $('snapWaitTx').textContent=msg||'';
   $('snapShare').disabled=state!=='done'; $('snapAgain').disabled=state==='wait';
 }
 async function takeSnap(){
   setSnapSheet(false);
   if(!isNative){ toast('<b>AI-снимок работает в приложении для Android</b>В браузере внешние запросы к нейросетям закрыты. Ниже показан кадр без пейзажа.'); }
-  else if(!useCF()&&!(S.fbKey.trim()&&S.fbSecret.trim())){ toast('<b>Нужен ключ Cloudflare</b>Впишите Account ID и токен Workers AI в блок «AI-снимок» ниже, там же инструкция.'); $('cfAcc').closest('section').scrollIntoView({behavior:'smooth'}); return; }
+  else if(!useCF()&&!(S.fbKey.trim()&&S.fbSecret.trim())){ toast('<b>Нужен ключ Cloudflare</b>Впишите токен Workers AI (Account ID найдётся сам) в блок «AI-снимок» ниже, там же инструкция.'); $('cfAcc').closest('section').scrollIntoView({behavior:'smooth'}); return; }
   const cf=useCF(), job=++snapJob, [w,h]=snapSize(), prompt=cf?snapPromptEn():snapPrompt(w,h);
   const layer=renderCarLayer(w,h);
   $('snapPrompt').textContent=prompt;
@@ -1730,7 +1745,7 @@ async function takeSnap(){
     if(e.status===401||e.status===403) m=cf?'Cloudflare не принял ключ. Проверьте Account ID и что токен создан по шаблону «Workers AI». ('+m+')':'Ключ не подошёл. Проверьте API Key и Secret Key в блоке «AI-снимок».';
     else if(cf&&e.status===429) m='Дневной бесплатный лимит Cloudflare исчерпан, он обновится в 03:00 по Москве.';
     else if(/Failed to fetch|NetworkError|Load failed/i.test(m)) m='Нет связи с сервисом '+(cf?'Cloudflare':'Kandinsky')+'. Проверьте интернет.';
-    snapUI('err'); toast('<b>Снимок не получился</b>'+m.replace(/</g,'&lt;'));
+    snapUI('err',m);
   }
 }
 async function shareSnap(){
@@ -1760,7 +1775,7 @@ $('snapClose').addEventListener('click',closeSnap);
 $('snapM').addEventListener('click',e=>{ if(e.target.id==='snapM') closeSnap(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('snapM').hidden) closeSnap(); });
 $('cfAcc').value=S.cfAcc; $('cfTok').value=S.cfTok;
-['cfAcc','cfTok'].forEach(k=>$(k).addEventListener('change',e=>{ S[k]=e.target.value.trim(); store.set(k,S[k]); }));
+['cfAcc','cfTok'].forEach(k=>$(k).addEventListener('input',e=>{ S[k]=e.target.value.trim(); store.set(k,S[k]); }));
 $('fbKey').value=S.fbKey; $('fbSecret').value=S.fbSecret;
 $('fbKey').addEventListener('change',e=>{ S.fbKey=e.target.value.trim(); store.set('fbKey',S.fbKey); });
 $('fbSecret').addEventListener('change',e=>{ S.fbSecret=e.target.value.trim(); store.set('fbSecret',S.fbSecret); });
