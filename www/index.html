@@ -103,6 +103,14 @@ body.lock{overflow:hidden}
 .hud .lg{flex:1;height:5px;border-radius:3px;background:linear-gradient(90deg,#3E7BE6,#BFC7D1,#E8553D)}
 .readout{display:none}
 
+.swr.col{flex-direction:column;align-items:stretch;gap:2px;padding:4px}
+.swr .opt2{font:500 .78rem var(--body);border:0;background:transparent;color:var(--ink);border-radius:9px;padding:8px 10px;cursor:pointer;white-space:nowrap;text-align:left}
+.swr .opt2[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.toast{position:absolute;z-index:6;left:50%;bottom:calc(64px + var(--ib));transform:translate(-50%,8px);width:min(380px,calc(100% - 32px));border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;font-size:.84rem;line-height:1.35;opacity:0;visibility:hidden;transition:opacity .2s,transform .25s,visibility 0s linear .25s;border-color:var(--bad)}
+.toast.show{opacity:1;visibility:visible;transform:translate(-50%,0);transition:opacity .2s,transform .25s}
+.toast svg{width:20px;height:20px;flex:none;stroke:var(--bad);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-top:1px}
+.toast b{display:block;color:var(--bad);font-weight:600}
+
 .tw{position:relative}
 .swr{position:absolute;right:46px;top:0;display:flex;gap:6px;align-items:center;padding:6px 8px;border-radius:12px;opacity:0;visibility:hidden;transform:translateX(10px);transition:opacity .18s,transform .22s,visibility 0s linear .22s;pointer-events:none}
 .swr.open{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition:opacity .18s,transform .22s}
@@ -209,6 +217,7 @@ h2 .badge{margin-left:4px}
       </div>
       <div class="ov tools">
         <button class="ib glass" id="fsBtn" aria-pressed="false" aria-label="На весь экран" title="На весь экран"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        <div class="tw"><button class="ib glass" id="lidBtn" aria-expanded="false" aria-controls="lidSw" aria-label="Открыть бокс" title="Открыть бокс"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h16v5H4z"/><path d="M4 13l3-7h13l-3 7"/></svg></button><div class="swr glass col" id="lidSw" role="group" aria-label="Открыть бокс"><button class="opt2" data-lid="1" aria-pressed="false">Открыть слева (водитель)</button><button class="opt2" data-lid="-1" aria-pressed="false">Открыть справа (пассажир)</button><button class="opt2" data-lid="0" aria-pressed="true">Закрыть</button></div></div>
         <button class="ib glass" id="tgBtn" aria-pressed="false" aria-label="Открыть багажник" title="Открыть багажник"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17v-4l2.5-4H14l3 4h4v4"/><path d="M14 9l4.5-4.5"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/></svg></button>
         <div class="tw"><button class="ib glass" id="paintBtn" aria-expanded="false" aria-controls="carSw" aria-label="Цвет машины" title="Цвет машины"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.6-.8 1.3-1.6-.4-1 .2-2.1 1.3-2.1H17a4 4 0 0 0 4-4C21 7 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="14.5" cy="7" r="1.2"/></svg></button><div class="swr glass" id="carSw" role="group" aria-label="Цвет машины"></div></div>
         <button class="ib glass" id="wireBtn" aria-pressed="false" aria-label="Каркас боксов" title="Каркас боксов"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></button>
@@ -237,6 +246,7 @@ h2 .badge{margin-left:4px}
         </div>
       </div>
       <div class="readout" id="readout" hidden></div>
+      <div class="toast glass" id="toast" role="alert"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg><div id="toastTx"></div></div>
     </div>
   </div>
 
@@ -376,7 +386,7 @@ const S = {
   items: store.get('items',['yoyo','bike16']), custom: store.get('custom',[]),
   garage: store.get('garage',2200), barTop: store.get('barTop',1760),
   barFront: store.get('barFront',2500), spacing: store.get('spacing',800),
-  color: store.get('color','#EDEEEC'), front: null, open:false, boxColor: store.get('boxColor',{}), wire:null,
+  color: store.get('color','#EDEEEC'), front: null, open:false, lid:0, boxColor: store.get('boxColor',{}), wire:null,
   hwSpeed: store.get('hwSpeed',110), baseFuel: store.get('baseFuel',7.5), fuelPrice: store.get('fuelPrice',62)
 };
 const byId = id => BOXES.find(b=>b.id===id);
@@ -395,6 +405,14 @@ function sampledTailgate(){
   return pts;
 }
 const TG_PTS = sampledTailgate();
+// first opening angle at which the tailgate touches the box, or null if it opens fully
+function tailgateHit(front, box){
+  const x0=front, x1=front+box.L, y0=S.barTop, y1=S.barTop+box.H, [hx,hy]=CAR.hinge;
+  for(let s=0;s<=46;s++){ const a=OPEN_ANG*s/46, c=Math.cos(a), sn=Math.sin(a);
+    for(const p of TG_PTS){ const rx=p[0]-hx, ry=p[1]-hy, x=hx+rx*c-ry*sn, y=hy+rx*sn+ry*c;
+      if(x>=x0&&x<=x1&&y>=y0&&y<=y1) return a; } }
+  return null;
+}
 function tailgateClearance(front, box){
   const x0=front, x1=front+box.L, y0=S.barTop, y1=S.barTop+box.H;
   const [hx,hy]=CAR.hinge; let min=Infinity;
@@ -690,6 +708,27 @@ function cavityLitres(box){
     V+=Math.abs(A)/2*box.Li/N; }
   return box._vc=V/1e6;
 }
+// lid ('lid') or tub ('base') of the hull, split along the line where the lid meets the tub
+function boxPart(Lmm,Wmm,Hmm,p,part){
+  const L=M(Lmm), W=M(Wmm), H=M(Hmm), N=60, R=21, pos=[], idx=[], rings=[];
+  for(let i=0;i<=N;i++){
+    const t=i/N, x=t*L, {h,w,b,yc}=hullAt(t,L,W,H,p), ring=[];
+    for(let j=0;j<R;j++){
+      const th=(part==='lid'?0:Math.PI)+j/(R-1)*Math.PI, c=Math.cos(th), s=Math.sin(th);
+      const pz=w/2*Math.sign(c)*Math.pow(Math.abs(c),0.5);
+      const py= part==='lid' ? yc+(h-yc)*Math.pow(Math.abs(s),0.62) : yc-(yc-b)*Math.pow(Math.abs(s),0.2);
+      ring.push([x,py,pz]);
+    }
+    rings.push(ring); ring.forEach(q=>pos.push(q[0],q[1],q[2]));
+  }
+  for(let i=0;i<N;i++){ for(let j=0;j<R-1;j++){ const a=i*R+j, b2=i*R+j+1, c=(i+1)*R+j, dd=(i+1)*R+j+1; idx.push(a,c,b2, b2,c,dd); }
+    const a=i*R, b2=i*R+R-1, c=(i+1)*R, dd=(i+1)*R+R-1; idx.push(a,b2,c, b2,dd,c); }   // flat face along the split line
+  [[0,1],[N,-1]].forEach(([ri,dir])=>{ const ring=rings[ri], base=pos.length/3; let cy=0; ring.forEach(q=>cy+=q[1]); cy/=R;
+    pos.push(ring[0][0],cy,0); ring.forEach(q=>pos.push(q[0],q[1],q[2]));
+    for(let j=0;j<R;j++){ const a=base+1+j, b2=base+1+(j+1)%R; if(dir>0) idx.push(base,a,b2); else idx.push(base,b2,a); } });
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setIndex(idx);
+  g.computeVertexNormals(); g.userData.rings=rings; g.userData.open=true; return g;
+}
 function boxGeometry(Lmm,Wmm,Hmm,p){
   const L=M(Lmm), W=M(Wmm), H=M(Hmm), N=60, R=40;
   const pos=[], idx=[], rings=[];
@@ -718,10 +757,10 @@ function boxGeometry(Lmm,Wmm,Hmm,p){
   return g;
 }
 function contour(g, mat){
-  const rings=g.userData.rings, N=rings.length-1, R=rings[0].length, pts=[];
+  const rings=g.userData.rings, N=rings.length-1, R=rings[0].length, closed=!g.userData.open, pts=[];
   const seg=(a,b)=>pts.push(a[0],a[1],a[2],b[0],b[1],b[2]);
-  [0,R/8,R/4,3*R/8,R/2,3*R/4].forEach(j=>{for(let i=0;i<N;i++) seg(rings[i][j],rings[i+1][j]);});
-  [0,Math.round(N*0.32),Math.round(N*0.6),N].forEach(i=>{for(let j=0;j<R;j++) seg(rings[i][j],rings[i][(j+1)%R]);});
+  (closed?[0,R/8,R/4,3*R/8,R/2,3*R/4]:[0,Math.round((R-1)/4),Math.round((R-1)/2),Math.round(3*(R-1)/4),R-1]).forEach(j=>{for(let i=0;i<N;i++) seg(rings[i][j],rings[i+1][j]);});
+  [0,Math.round(N*0.32),Math.round(N*0.6),N].forEach(i=>{for(let j=0;j<(closed?R:R-1);j++) seg(rings[i][j],rings[i][(j+1)%R]);});
   const lg=new THREE.BufferGeometry(); lg.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
   return new THREE.LineSegments(lg,mat);
 }
@@ -743,7 +782,8 @@ function setGhost(on){
   ghost=on;
   const a=byId(S.sel), b=S.cmp?byId(S.cmp):null;
   if(a) applyBoxMat(matA,a,on,css('--a')); if(b) applyBoxMat(matB,b,on,css('--b'));
-  [boxGroup,cmpGroup].forEach(g=>g.children.forEach(c=>{ if(c.isLineSegments) c.visible=on; if(c.isMesh) c.castShadow=!on; }));
+  const walk=o=>{ if(o===itemsGroup) return; if(o.isLineSegments) o.visible=on; else if(o.isMesh) o.castShadow=!on; o.children.forEach(walk); };
+  [boxGroup,cmpGroup].forEach(g=>g.children.forEach(walk));
   const wb=document.getElementById('wireBtn'); if(wb) wb.setAttribute('aria-pressed',String(on));
 }
 
@@ -842,6 +882,44 @@ function stepDrive(dt){
   spinWheels.forEach(w=>{ w.obj.quaternion.copy(w.base).multiply(q.setFromAxisAngle(AX,w.sign*wheelAng)); });
   const settling=Math.abs(car.rotation.z-p.pitch)+Math.abs(car.rotation.x-p.roll)+Math.abs(car.position.y-p.y)>1e-4;
   return drive.mode!=='idle'||speed>0||amp>0||settling||(roadMix>0&&roadMix<1)||flowMix>0;
+}
+
+/* a person loading the roof box, shown while the car stands still.
+   Built facing -z (towards the car when standing on the +z side); arms swing a duffel bag up to the box and back. */
+const person=new THREE.Group(), pBody=new THREE.MeshStandardMaterial({color:0xBFC4CC,roughness:0.7}), pCloth=new THREE.MeshStandardMaterial({color:0x34404F,roughness:0.85});
+const pBag=new THREE.MeshStandardMaterial({color:0xE07A2E,roughness:0.6});
+function pLimb(r1,r2,len,mat){ const g=new THREE.Group(), m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,len,12),mat); m.position.y=-len/2; m.castShadow=true; g.add(m);
+  const j=new THREE.Mesh(new THREE.SphereGeometry(r1*1.02,12,8),mat); j.castShadow=true; g.add(j); return g; }
+const pHip=new THREE.Group(); pHip.position.y=0.93; person.add(pHip);
+const pLegs=[-1,1].map(sx=>{ const l=pLimb(0.068,0.05,0.9,pCloth); l.position.x=sx*0.1; pHip.add(l);
+  const foot=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.06,0.24),pCloth); foot.position.set(0,-0.9,-0.05); foot.castShadow=true; l.add(foot); return l; });
+const pTorso=new THREE.Group(); pHip.add(pTorso);
+const chest=new THREE.Mesh(new THREE.CylinderGeometry(0.19,0.15,0.56,16),pCloth); chest.scale.z=0.62; chest.position.y=0.27; chest.castShadow=true; pTorso.add(chest);
+const neck=new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.05,0.08,10),pBody); neck.position.y=0.59; pTorso.add(neck);
+const head=new THREE.Mesh(new THREE.SphereGeometry(0.105,18,14),pBody); head.scale.set(0.92,1.08,1); head.position.y=0.71; head.castShadow=true; pTorso.add(head);
+const pArms=[-1,1].map(sx=>{ const sh=new THREE.Group(); sh.position.set(sx*0.22,0.5,0); pTorso.add(sh);
+  const up=pLimb(0.052,0.045,0.3,pCloth); sh.add(up); const el=new THREE.Group(); el.position.y=-0.3; up.add(el);
+  const fo=pLimb(0.045,0.038,0.27,pBody); el.add(fo); const hand=new THREE.Mesh(new THREE.SphereGeometry(0.045,10,8),pBody); hand.position.y=-0.29; fo.add(hand);
+  return {sh,el}; });
+const bag=new THREE.Group(); const bagBody=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,0.5,16),pBag); bagBody.rotation.z=Math.PI/2; bagBody.castShadow=true; bag.add(bagBody);
+[-1,1].forEach(s=>{ const e=new THREE.Mesh(new THREE.SphereGeometry(0.15,16,10),pBag); e.scale.x=0.35; e.position.x=s*0.25; bag.add(e); });
+bag.position.set(-0.22,-0.32,-0.1); pArms[1].el.children[0].add(bag);
+car.add(person);
+let pT=0;
+const easeIO=t=>t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+function stepPerson(dt){
+  const a=A(), show=drive.mode==='idle'&&speed===0&&amp===0&&!!a;
+  person.visible=show; if(!show) return false;
+  const side=lidSide||1;
+  person.position.set(X(curFront+a.L*0.55), 0, side*(M(CAR.W)/2+0.45)); person.rotation.y=side>0?0:Math.PI;
+  const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!still) pT=(pT+dt/4.2)%1;
+  const ph=still?0.45:pT;                            // lift, push into the box, lower back
+  const k=ph<0.38?easeIO(ph/0.38):(ph<0.62?1:1-easeIO((ph-0.62)/0.38));
+  const reach=S.lid?1:0.85;                          // with the lid closed the bag only reaches the edge
+  pArms.forEach(({sh,el})=>{ sh.rotation.x=0.55+2.15*k*reach; el.rotation.x=1.1-0.9*k; });
+  pTorso.rotation.x=-0.08*k; person.position.y=0.035*k; pLegs.forEach(l=>l.rotation.x=0.04*k);
+  return !still;
 }
 
 /* ---------- highway mode: road, airflow over the roof, fuel estimate ---------- */
@@ -970,9 +1048,14 @@ function loop(now){
   const ease=0.18;
   if(Math.abs(curFront-targetFront)>0.5){curFront+= (targetFront-curFront)*ease; busy=true;} else curFront=targetFront;
   boxGroup.position.set(X(curFront), M(S.barTop), 0);
-  const tgTarget=S.open?OPEN_ANG:0;
+  const tgTarget=S.open?tgLimit:0;
   if(Math.abs(tgAngle-tgTarget)>0.002){tgAngle+=(tgTarget-tgAngle)*0.12; busy=true;} else tgAngle=tgTarget;
   tgPivot.rotation.z=tgAngle; glbPivot.rotation.z=tgAngle;
+  const lidT=(S.lid&&drive.mode!=='hw')?62*Math.PI/180:0;
+  if(Math.abs(lidAng-lidT)>0.002){ lidAng+=(lidT-lidAng)*0.12; busy=true; } else lidAng=lidT;
+  [boxGroup,cmpGroup].forEach(g=>{ const p=g.userData.pivot; if(!p) return; const sd=lidSide||1;
+    p.position.set(0,p.userData.hy,-sd*p.userData.hz); p.userData.inner.position.set(0,-p.userData.hy,sd*p.userData.hz); p.rotation.x=-sd*lidAng; });
+  if(stepPerson(dt)) busy=true;
   if(camAnim){
     camAnim.t=Math.min(1,camAnim.t+0.06); const e=1-Math.pow(1-camAnim.t,3);
     camera.position.lerpVectors(camAnim.from,camAnim.to,e); controls.target.lerpVectors(camAnim.tf,camAnim.tt,e);
@@ -1159,30 +1242,33 @@ function boxMesh(box){
   const c=meshCache[box.mesh]; if(c) return c.geo?c:null;
   meshCache[box.mesh]={};
   loadModel(box.mesh, g=>{
-    let geo=null; g.scene.traverse(o=>{ if(o.isMesh&&!geo) geo=o.geometry; });
-    if(!geo) return;
-    geo.computeVertexNormals();
-    meshCache[box.mesh]={geo, edges:new THREE.EdgesGeometry(geo,40)};
+    let lid=null, base=null; g.scene.traverse(o=>{ if(!o.isMesh) return; if(/top/i.test(o.name)||/top/i.test(o.parent&&o.parent.name||'')) lid=o.geometry; else if(!base) base=o.geometry; });
+    if(!base) return;
+    [lid,base].forEach(x=>x&&x.computeVertexNormals());
+    meshCache[box.mesh]={geo:base, lid, edges:new THREE.EdgesGeometry(base,40), lidEdges:lid?new THREE.EdgesGeometry(lid,40):null};
     rebuild('A'); rebuild('B'); update();
   });
   return null;
 }
 function rebuild(which){
   const g=which==='A'?boxGroup:cmpGroup, box=which==='A'?A():B();
-  g.children.filter(c=>c!==itemsGroup).forEach(c=>{g.remove(c); if(!c.userData.shared) c.geometry.dispose();});
+  g.children.filter(c=>c!==itemsGroup).forEach(c=>{ g.remove(c); c.traverse(o=>{ if(o.geometry&&!o.userData.shared) o.geometry.dispose(); }); });
   if(!box) return;
   const mat=which==='A'?matA:matB, edge=which==='A'?edgeA:edgeB;
   const own=box.mesh?boxMesh(box):null;
-  let m, line;
+  const pivot=new THREE.Group(); pivot.userData.lid=true; pivot.userData.hz=M(box.W)/2; pivot.userData.hy=M(box.H)*0.3;
+  const parts=[];
   if(own){
-    m=new THREE.Mesh(own.geo, mat); line=new THREE.LineSegments(own.edges, edge);
-    m.userData.shared=line.userData.shared=true;
+    parts.push([g,new THREE.Mesh(own.geo,mat),new THREE.LineSegments(own.edges,edge)]);
+    if(own.lid) parts.push([pivot,new THREE.Mesh(own.lid,mat),new THREE.LineSegments(own.lidEdges,edge)]);
+    parts.forEach(([,m,l])=>{ m.userData.shared=l.userData.shared=true; });
   } else {
-    const geo=boxGeometry(box.L,box.W,box.H,box.prof);
-    m=new THREE.Mesh(geo, mat); line=contour(geo, edge);
+    const gb=boxPart(box.L,box.W,box.H,box.prof,'base'), gl=boxPart(box.L,box.W,box.H,box.prof,'lid');
+    parts.push([g,new THREE.Mesh(gb,mat),contour(gb,edge)],[pivot,new THREE.Mesh(gl,mat),contour(gl,edge)]);
   }
-  m.castShadow=which==='A'; m.receiveShadow=which==='A'; g.add(m); g.add(line);
-  line.visible=ghost; m.castShadow=!ghost;
+  const inner=new THREE.Group(); pivot.add(inner); pivot.userData.inner=inner;
+  parts.forEach(([parent,m,l])=>{ const tgt=parent===pivot?inner:g; m.receiveShadow=true; m.castShadow=!ghost; l.visible=ghost; tgt.add(m); tgt.add(l); });
+  g.add(pivot); g.userData.pivot=pivot;
 }
 /* box pickers over the 3D view */
 function finishRow(box,k){ const cur=boxFinish(box); return `<div class="poph">Цвет бокса ${k}</div><div class="sws">`+box.colors.map(c=>`<button class="sw" data-box="${box.id}" data-fin="${c.id}" title="${c.name}" aria-label="${c.name}" aria-pressed="${c.id===cur.id}" style="background:${c.hex}"></button>`).join('')+`<span class="nmc">${cur.name}</span></div>`; }
@@ -1320,7 +1406,30 @@ $('cAdd').addEventListener('click',()=>{
   S.custom.push(it); S.items.push(it.id); store.set('custom',S.custom); store.set('items',S.items);
   ['cName','cL','cW','cH'].forEach(k=>$(k).value=''); renderItemChips(); update();
 });
-$('tgBtn').addEventListener('click',()=>{S.open=!S.open; const t=$('tgBtn'), l=S.open?'Закрыть багажник':'Открыть багажник'; t.setAttribute('aria-pressed',String(S.open)); t.setAttribute('aria-label',l); t.title=l; kick();});
+let toastTimer=0, tgLimit=OPEN_ANG, tgBounce=0;
+function toast(html){ $('toastTx').innerHTML=html; $('toast').classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>$('toast').classList.remove('show'),5500); }
+function setTgBtn(){ const t=$('tgBtn'), l=S.open?'Закрыть багажник':'Открыть багажник'; t.setAttribute('aria-pressed',String(S.open)); t.setAttribute('aria-label',l); t.title=l; }
+$('tgBtn').addEventListener('click',()=>{
+  if(S.open){ S.open=false; tgLimit=OPEN_ANG; setTgBtn(); kick(); return; }
+  const hits=[[A(),S.front]].concat(B()?[[B(),bFront()]]:[]).map(([bx,f])=>({bx,f,a:tailgateHit(f,bx)})).filter(h=>h.a!==null);
+  if(hits.length){
+    const h=hits.reduce((p,q)=>q.a<p.a?q:p);
+    let f=h.f; while(f>1200&&tailgateHit(f,h.bx)!==null) f-=10;
+    const need=Math.ceil((h.f-f)/10);
+    tgLimit=Math.max(0.05,h.a-0.03); S.open=true; tgBounce=performance.now(); kick();
+    setTimeout(()=>{ S.open=false; tgLimit=OPEN_ANG; setTgBtn(); kick(); },1300);
+    toast(`<b>Дверь багажника упрётся в ${h.bx.model}</b>Откроется только на ${Math.round(h.a*180/Math.PI)}° из ${Math.round(OPEN_ANG*180/Math.PI)}°. ${tailgateHit(f,h.bx)===null&&f>1200?`Сдвиньте бокс вперёд примерно на ${need} см.`:'Этот бокс слишком длинный для такой посадки.'}`);
+    return;
+  }
+  S.open=true; tgLimit=OPEN_ANG; setTgBtn(); kick();
+});
+// box lid: opens on the driver's or the passenger's side (Thule DualSide)
+let lidSide=0, lidAng=0;
+document.querySelectorAll('#lidSw .opt2').forEach(b=>b.addEventListener('click',()=>{ const v=+b.dataset.lid; if(v) lidSide=v; S.lid=v;
+  document.querySelectorAll('#lidSw .opt2').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); $('lidBtn').setAttribute('aria-pressed',String(!!v));
+  setTimeout(()=>{ $('lidSw').classList.remove('open'); $('lidBtn').setAttribute('aria-expanded','false'); },250); kick(); }));
+$('lidBtn').addEventListener('click',()=>{ const o=!$('lidSw').classList.contains('open'); $('lidSw').classList.toggle('open',o); $('lidBtn').setAttribute('aria-expanded',String(o)); });
+document.addEventListener('pointerdown',e=>{ if(!e.target.closest('#lidSw')&&!e.target.closest('#lidBtn')){ $('lidSw').classList.remove('open'); $('lidBtn').setAttribute('aria-expanded','false'); } });
 ['garage','barTop','barFront','spacing'].forEach(k=>{
   const el=$(k); el.value=S[k];
   el.addEventListener('change',()=>{const v=parseFloat(el.value); if(!isFinite(v)) {el.value=S[k]; return;} S[k]=v; store.set(k,v);
