@@ -278,7 +278,7 @@ h2 .badge{margin-left:4px}
         <div class="snapc">
           <div class="snapv"><img id="snapImg" alt="Снимок машины с боксом на фоне сгенерированного пейзажа"><div class="snapw glass" id="snapWait"><i class="spin"></i><span id="snapWaitTx">Kandinsky рисует пейзаж…</span></div></div>
           <div class="snapbar"><button class="mini pri" id="snapShare" disabled>Поделиться</button><button class="mini" id="snapAgain" disabled>Ещё вариант</button><button class="mini" id="snapClose">Закрыть</button></div>
-          <details><summary>Промт для Kandinsky</summary><p class="fine" id="snapPrompt"></p></details>
+          <details><summary>Промт для нейросети</summary><p class="fine" id="snapPrompt"></p></details>
         </div>
       </div>
       <div class="toast glass" id="toast" role="alert"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg><div id="toastTx"></div></div>
@@ -338,11 +338,23 @@ h2 .badge{margin-left:4px}
 
     <section>
       <h2>AI-снимок</h2>
-      <p class="fine" style="margin-top:0">Кнопка с объективом справа: машина и бокс рисуются точной 3D-моделью с текущего ракурса, а пейзаж вокруг генерирует Kandinsky. Нужен бесплатный ключ: зайдите на fusionbrain.ai, войдите, откройте раздел API и создайте ключ. Ключи хранятся только на этом устройстве.</p>
+      <p class="fine" style="margin-top:0">Кнопка с камерой справа: машина и бокс рисуются точной 3D-моделью с текущего ракурса, а пейзаж вокруг генерирует нейросеть FLUX через Cloudflare (бесплатно около 100 снимков в сутки). Ключи хранятся только на этом устройстве.</p>
+      <ol class="fine" style="padding-left:18px;margin:6px 0 0">
+        <li>Зарегистрируйтесь на dash.cloudflare.com (почта, карта не нужна).</li>
+        <li>Account ID: на главной странице кабинета, меню у названия аккаунта, «Copy account ID».</li>
+        <li>Токен: My Profile → API Tokens → Create Token → шаблон «Workers AI» → Create, скопируйте токен.</li>
+      </ol>
       <div class="settings">
-        <div class="keyrow"><label for="fbKey">API Key</label><input class="keyin" id="fbKey" type="password" autocomplete="off" spellcheck="false"></div>
-        <div class="keyrow"><label for="fbSecret">Secret Key</label><input class="keyin" id="fbSecret" type="password" autocomplete="off" spellcheck="false"></div>
+        <div class="keyrow"><label for="cfAcc">Cloudflare Account ID</label><input class="keyin" id="cfAcc" type="text" autocomplete="off" spellcheck="false"></div>
+        <div class="keyrow"><label for="cfTok">Cloudflare API Token</label><input class="keyin" id="cfTok" type="password" autocomplete="off" spellcheck="false"></div>
       </div>
+      <details style="margin-top:10px"><summary>Запасной вариант: Kandinsky</summary>
+        <p class="fine">Используется, только если поля Cloudflare пустые. Ключ на fusionbrain.ai, раздел API.</p>
+        <div class="settings">
+          <div class="keyrow"><label for="fbKey">API Key</label><input class="keyin" id="fbKey" type="password" autocomplete="off" spellcheck="false"></div>
+          <div class="keyrow"><label for="fbSecret">Secret Key</label><input class="keyin" id="fbSecret" type="password" autocomplete="off" spellcheck="false"></div>
+        </div>
+      </details>
     </section>
 
     <section>
@@ -1548,7 +1560,7 @@ const SNAP_LIGHT={
   dusk:['Вечер','синий час после заката, мягкий холодный свет, огни вдалеке',0xa9b8ff,0.45,0xb7c3ff]};
 S.snapScn=store.get('snapScn','mount'); if(!SNAP_SCN[S.snapScn]) S.snapScn='mount';
 S.snapLight=store.get('snapLight','sunset'); if(!SNAP_LIGHT[S.snapLight]) S.snapLight='sunset';
-S.fbKey=store.get('fbKey',''); S.fbSecret=store.get('fbSecret','');
+S.fbKey=store.get('fbKey',''); S.fbSecret=store.get('fbSecret',''); S.cfAcc=store.get('cfAcc',''); S.cfTok=store.get('cfTok','');
 const isNative=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
 function nativePlugin(n){ const C=window.Capacitor; if(!C) return null; return (C.Plugins&&C.Plugins[n])||(C.registerPlugin?C.registerPlugin(n):null); }
 
@@ -1567,6 +1579,23 @@ function camWords(w,h){
   const hw=hgt<1.6?'с уровня глаз, около '+hgt.toFixed(1).replace('.',',')+' м':'с высоты около '+hgt.toFixed(1).replace('.',',')+' м';
   const tilt=pitch<4?'камера смотрит прямо, без наклона':'камера наклонена вниз примерно на '+Math.round(pitch)+'°';
   return 'съёмка '+hw+', '+tilt+', линия горизонта примерно на '+fromTop+'% высоты кадра от верха, '+(w<h?'вертикальный кадр':'горизонтальный кадр');
+}
+const SNAP_EN={mount:'paved scenic overlook on a mountain pass, snow-capped peaks and pine forest on the slopes in the distance',
+  forest:'wide gravel forest road in a pine forest, moss and ferns along the edges',
+  lake:'flat pebble shore of a calm mountain lake, mountains reflected in the water',
+  sea:'empty flat area on a rocky sea coast, waves, sea horizon',
+  steppe:'endless steppe, straight packed dirt road, tall dry grass, distant hills',
+  city:'empty plaza in a modern city, wet asphalt, glass facades'};
+const SNAP_EN_L={sunset:'golden hour, warm low sunlight, long shadows',day:'clear sunny day, blue sky with light clouds',cloudy:'overcast, soft diffuse light, grey sky',fog:'morning fog, soft light, atmospheric haze in the distance',dusk:'blue hour after sunset, soft cool light, distant lights'};
+function camWordsEn(){
+  const dir=new THREE.Vector3().subVectors(controls.target,camera.position);
+  const pitch=Math.atan2(-dir.y,Math.hypot(dir.x,dir.z))*180/Math.PI, hgt=camera.position.y;
+  if(pitch>55) return 'top-down drone shot, no horizon visible, only the ground';
+  const k=Math.tan(pitch*Math.PI/180)/Math.tan(camera.fov*Math.PI/360), fromTop=Math.round(Math.max(0,Math.min(1,(1-k)/2))*100);
+  return 'shot from '+hgt.toFixed(1)+' m height, camera tilted down about '+Math.max(0,Math.round(pitch))+' degrees, horizon line at about '+fromTop+'% from the top of the frame';
+}
+function snapPromptEn(){
+  return 'Photorealistic landscape photograph: '+SNAP_EN[S.snapScn]+'. '+SNAP_EN_L[S.snapLight]+'. An empty level patch of ground in the center foreground where a car will be placed, the patch itself is empty. '+camWordsEn()+'. 35mm lens, professional automotive magazine photo, highly detailed, natural colors. No cars, no vehicles, no people, no text.';
 }
 function snapPrompt(w,h){
   const sc=SNAP_SCN[S.snapScn][1], li=SNAP_LIGHT[S.snapLight][1];
@@ -1615,6 +1644,18 @@ async function fbCall(path,opt){
 }
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 let snapJob=0;
+const useCF=()=>!!(S.cfAcc.trim()&&S.cfTok.trim());
+async function cfFlux(prompt){
+  const r=await fetch('https://api.cloudflare.com/client/v4/accounts/'+encodeURIComponent(S.cfAcc.trim())+'/ai/run/@cf/black-forest-labs/flux-1-schnell',
+    {method:'POST',headers:{'Authorization':'Bearer '+S.cfTok.trim(),'Content-Type':'application/json'},body:JSON.stringify({prompt,steps:8,seed:Math.floor(Math.random()*1e9)})});
+  const t=await r.text(); let d=null; try{ d=JSON.parse(t); }catch(e){}
+  if(!r.ok||!d||d.success===false){
+    const msg=d&&d.errors&&d.errors.length?d.errors.map(x=>x.message).join('; '):('HTTP '+r.status+' '+t.slice(0,120));
+    const e=new Error(msg); e.status=r.status; throw e;
+  }
+  const img=(d.result&&d.result.image)||d.image; if(!img) throw new Error('Пустой ответ Cloudflare');
+  return img.startsWith('data:')?img:'data:image/jpeg;base64,'+img;
+}
 async function kandinsky(prompt,w,h,job,onTick){
   let mode='pipe', id;
   try{
@@ -1650,7 +1691,7 @@ async function kandinsky(prompt,w,h,job,onTick){
 function loadImg(src){ return new Promise((ok,no)=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=()=>no(new Error('Не удалось открыть картинку')); i.src=src; }); }
 function composite(bgImg,layer,w,h){
   const c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d');
-  if(bgImg){ x.drawImage(bgImg,0,0,w,h); }
+  if(bgImg){ const iw=bgImg.naturalWidth||bgImg.width, ih=bgImg.naturalHeight||bgImg.height, sc=Math.max(w/iw,h/ih), dw=iw*sc, dh=ih*sc; x.drawImage(bgImg,(w-dw)/2,(h-dh)/2,dw,dh); }
   else { const g=x.createLinearGradient(0,0,0,h); g.addColorStop(0,'#b9c6d3'); g.addColorStop(0.55,'#dfe4e8'); g.addColorStop(0.56,'#8d8a82'); g.addColorStop(1,'#6e6a63'); x.fillStyle=g; x.fillRect(0,0,w,h); }
   // pull the car slightly toward the scene's average colour so it sits in the light of the picture
   const s=document.createElement('canvas'); s.width=s.height=8; const sx=s.getContext('2d'); sx.drawImage(c,0,h*0.3,w,h*0.7,0,0,8,8);
@@ -1670,24 +1711,25 @@ function snapUI(state,msg){
 }
 async function takeSnap(){
   setSnapSheet(false);
-  if(!isNative){ toast('<b>AI-снимок работает в приложении для Android</b>В браузере внешние запросы к Kandinsky закрыты. Ниже показан кадр без пейзажа.'); }
-  else if(!S.fbKey.trim()||!S.fbSecret.trim()){ toast('<b>Нужен ключ Kandinsky</b>Получите бесплатный ключ на fusionbrain.ai (раздел API) и впишите его в блок «AI-снимок» ниже.'); $('fbKey').closest('section').scrollIntoView({behavior:'smooth'}); return; }
-  const job=++snapJob, [w,h]=snapSize(), prompt=snapPrompt(w,h);
+  if(!isNative){ toast('<b>AI-снимок работает в приложении для Android</b>В браузере внешние запросы к нейросетям закрыты. Ниже показан кадр без пейзажа.'); }
+  else if(!useCF()&&!(S.fbKey.trim()&&S.fbSecret.trim())){ toast('<b>Нужен ключ Cloudflare</b>Впишите Account ID и токен Workers AI в блок «AI-снимок» ниже, там же инструкция.'); $('cfAcc').closest('section').scrollIntoView({behavior:'smooth'}); return; }
+  const cf=useCF(), job=++snapJob, [w,h]=snapSize(), prompt=cf?snapPromptEn():snapPrompt(w,h);
   const layer=renderCarLayer(w,h);
   $('snapPrompt').textContent=prompt;
   $('snapImg').src=composite(null,layer,w,h); lastSnap=null;
   if(!isNative){ snapUI('preview'); return; }
-  snapUI('wait','Kandinsky рисует пейзаж, обычно 20–60 секунд…');
+  snapUI('wait',cf?'FLUX рисует пейзаж, несколько секунд…':'Kandinsky рисует пейзаж, обычно 20–60 секунд…');
   try{
-    const bg=await kandinsky(prompt,w,h,job,i=>{ if(job===snapJob) $('snapWaitTx').textContent=i<10?'Kandinsky рисует пейзаж, обычно 20–60 секунд…':'Ещё рисует, очередь на сервисе… '+(3*(i+1))+' с'; });
+    const bg=cf?await cfFlux(prompt):await kandinsky(prompt,w,h,job,i=>{ if(job===snapJob) $('snapWaitTx').textContent=i<10?'Kandinsky рисует пейзаж, обычно 20–60 секунд…':'Ещё рисует, очередь на сервисе… '+(3*(i+1))+' с'; });
     if(job!==snapJob) return;
     const img=await loadImg(bg);
     lastSnap=composite(img,layer,w,h); $('snapImg').src=lastSnap; snapUI('done');
   }catch(e){
     if(job!==snapJob||e.message==='cancel') return;
     let m=e.message||String(e);
-    if(e.status===401||e.status===403) m='Ключ не подошёл. Проверьте API Key и Secret Key в блоке «AI-снимок».';
-    else if(/Failed to fetch|NetworkError|Load failed/i.test(m)) m='Нет связи с сервисом Kandinsky. Проверьте интернет.';
+    if(e.status===401||e.status===403) m=cf?'Cloudflare не принял ключ. Проверьте Account ID и что токен создан по шаблону «Workers AI». ('+m+')':'Ключ не подошёл. Проверьте API Key и Secret Key в блоке «AI-снимок».';
+    else if(cf&&e.status===429) m='Дневной бесплатный лимит Cloudflare исчерпан, он обновится в 03:00 по Москве.';
+    else if(/Failed to fetch|NetworkError|Load failed/i.test(m)) m='Нет связи с сервисом '+(cf?'Cloudflare':'Kandinsky')+'. Проверьте интернет.';
     snapUI('err'); toast('<b>Снимок не получился</b>'+m.replace(/</g,'&lt;'));
   }
 }
@@ -1717,6 +1759,8 @@ $('snapShare').addEventListener('click',shareSnap);
 $('snapClose').addEventListener('click',closeSnap);
 $('snapM').addEventListener('click',e=>{ if(e.target.id==='snapM') closeSnap(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('snapM').hidden) closeSnap(); });
+$('cfAcc').value=S.cfAcc; $('cfTok').value=S.cfTok;
+['cfAcc','cfTok'].forEach(k=>$(k).addEventListener('change',e=>{ S[k]=e.target.value.trim(); store.set(k,S[k]); }));
 $('fbKey').value=S.fbKey; $('fbSecret').value=S.fbSecret;
 $('fbKey').addEventListener('change',e=>{ S.fbKey=e.target.value.trim(); store.set('fbKey',S.fbKey); });
 $('fbSecret').addEventListener('change',e=>{ S.fbSecret=e.target.value.trim(); store.set('fbSecret',S.fbSecret); });
