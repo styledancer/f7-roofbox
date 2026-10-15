@@ -16,7 +16,7 @@ await shot('1-q');
 await view('side'); await shot('2-side');
 await page.evaluate(() => { const b=document.querySelector('#lidSw [data-lid="1"]'); b&&b.click(); }); await view('q'); await shot('3-lid-person');
 await page.evaluate(() => { const b=document.querySelector('#lidSw [data-lid="0"]'); b&&b.click(); });
-await click('#offBtn'); await page.waitForTimeout(4000); await shot('4-offroad');
+await click('#offBtn'); await view('side'); await page.waitForTimeout(5000); await shot('4-offroad'); await page.screenshot({ path: `${out}/4b-offroad.png` }); await page.waitForTimeout(400); await page.screenshot({ path: `${out}/4c-offroad.png` });
 await click('#offBtn'); await click('#hwBtn'); await page.waitForTimeout(3000); await shot('5-highway');
 await click('#hwBtn');
 // close-up of the front wheel and headlight
