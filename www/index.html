@@ -330,7 +330,7 @@ h2 .badge{margin-left:4px}
       <div class="snapm" id="snapM" role="dialog" aria-modal="true" aria-label="AI-снимок" hidden>
         <div class="snapc">
           <div class="snapv"><img id="snapImg" alt="Снимок машины с боксом на фоне сгенерированного пейзажа"><div class="snapw glass" id="snapWait" role="status"><i class="spin"></i><span id="snapWaitTx">Kandinsky рисует пейзаж…</span></div></div>
-          <div class="snapbar"><button class="mini pri" id="snapShare" disabled>Поделиться</button><button class="mini" id="snapAgain" disabled>Ещё вариант</button><button class="mini" id="snapClose">Закрыть</button></div>
+          <div class="snapbar"><div class="seg" id="snapVar" role="group" aria-label="Вариант" hidden style="margin:0 auto 0 0"><button data-v="whole" aria-pressed="true">Цельное фото</button><button data-v="exact" aria-pressed="false">Точная модель</button></div><button class="mini pri" id="snapShare" disabled>Поделиться</button><button class="mini" id="snapAgain" disabled>Ещё вариант</button><button class="mini" id="snapClose">Закрыть</button></div>
           <details><summary>Промт для нейросети</summary><p class="fine" id="snapPrompt"></p></details>
         </div>
       </div>
@@ -1910,8 +1910,21 @@ function camWordsEn(){
   const k=Math.tan(pitch*Math.PI/180)/Math.tan(camera.fov*Math.PI/360), fromTop=Math.round(Math.max(0,Math.min(1,(1-k)/2))*100);
   return 'shot from '+hgt.toFixed(1)+' m height, camera tilted down about '+Math.max(0,Math.round(pitch))+' degrees, horizon line at about '+fromTop+'% from the top of the frame';
 }
+function sunWordsEn(){
+  const f=new THREE.Vector3().subVectors(controls.target,camera.position).setY(0).normalize(), r=new THREE.Vector3().crossVectors(f,new THREE.Vector3(0,1,0)).normalize();
+  const v=sun.position.clone().setY(0).normalize(), sr=v.dot(r), sf=v.dot(f);
+  const from=sr>0.35?'from the right':sr<-0.35?'from the left':(sf<0?'from behind the camera':'from the background, backlit');
+  const to=sr>0.35?'to the left':sr<-0.35?'to the right':(sf<0?'away from the camera':'towards the camera');
+  return {from,to,text:'sunlight comes '+from+', shadows fall '+to};
+}
+function carWordsEn(){
+  const cn=(COLORS.find(c=>c[1]===S.color)||['',''])[0].toLowerCase();
+  const col=/бел/.test(cn)?'white':/черн|чёрн/.test(cn)?'black':/красн/.test(cn)?'dark red':/син/.test(cn)?'dark blue':/серебр/.test(cn)?'silver':/сер/.test(cn)?'grey':'';
+  const b=A(), fin=(boxFinish(b).name||'').toLowerCase(), bc=/бел/.test(fin)?'white':/сер|титан/.test(fin)?'grey':'black';
+  return (col?col+' ':'')+CARDEF.name+' SUV with a '+bc+' roof cargo box on roof bars';
+}
 function snapPromptEn(){
-  return 'Photorealistic landscape photograph: '+SNAP_EN[S.snapScn]+'. '+SNAP_EN_L[S.snapLight]+'. An empty level patch of ground in the center foreground where a car will be placed, the patch itself is empty. '+camWordsEn()+'. 35mm lens, professional automotive magazine photo, highly detailed, natural colors. No cars, no vehicles, no people, no text.';
+  return 'Photorealistic landscape photograph: '+SNAP_EN[S.snapScn]+'. '+SNAP_EN_L[S.snapLight]+', '+sunWordsEn().text+'. A wide, flat, empty stretch of ground fills the lower half of the frame, ready for a car to be parked on it. '+camWordsEn()+'. 35mm lens, professional automotive magazine photo, natural colors, sharp. No cars, no vehicles, no people, no text.';
 }
 function snapPrompt(w,h){
   const sc=SNAP_SCN[S.snapScn][1], li=SNAP_LIGHT[S.snapLight][1];
@@ -1973,6 +1986,22 @@ async function fbCall(path,opt){
 }
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 let snapJob=0;
+async function cfHarmonize(montageUrl,w,h){
+  // klein accepts reference images up to 512 px: send a scaled copy of the montage as image 0
+  const im=await loadImg(montageUrl), k=Math.min(1,511/Math.max(im.width,im.height)), c=document.createElement('canvas');
+  c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+  const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',0.92));
+  const sw=sunWordsEn();
+  const prompt='Image 0 is a rough photomontage of a '+carWordsEn()+' placed into a landscape. Recreate it as one coherent, realistic professional photograph with exactly the same composition, camera angle and framing. Keep the car, the roof box and the bars in the same position, size and shape, keep the landscape. Light the car with the same sun as the scene ('+sw.text+'), add soft contact shadows under the tyres and a shadow on the ground '+sw.to+', reflections of the surroundings in the paint and windows, matching colour grading, depth and atmosphere. Do not add other cars, people or text.';
+  const fd=new FormData(); fd.append('prompt',prompt); fd.append('input_image_0',new File([blob],'montage.jpg',{type:'image/jpeg'})); fd.append('width',String(w)); fd.append('height',String(h));
+  const acc=await cfAccount();
+  const d=await cfJson('https://api.cloudflare.com/client/v4/accounts/'+encodeURIComponent(acc)+'/ai/run/@cf/black-forest-labs/flux-2-klein-4b',{method:'POST',headers:{'Authorization':'Bearer '+cfTok()},body:fd});
+  const img=(d.result&&d.result.image)||d.image; if(!img) throw new Error('Пустой ответ FLUX.2');
+  return {url:img.startsWith('data:')?img:'data:image/jpeg;base64,'+img, prompt};
+}
+let snapVariants=null;
+function showVariant(k){ if(!snapVariants||!snapVariants[k]) return; lastSnap=snapVariants[k]; $('snapImg').src=lastSnap;
+  document.querySelectorAll('#snapVar button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===k))); }
 // a token can be baked into the Android build from a GitHub secret; the user's own token, if entered, wins
 const CF_BUILTIN={acc:'__CF_ACC__',tok:'__CF_TOK__'};
 const cfB=k=>/^__CF_/.test(CF_BUILTIN[k])?'':CF_BUILTIN[k].trim();
@@ -2064,7 +2093,7 @@ async function takeSnap(){
   const camSnap=camera.clone(); camSnap.aspect=w/h; camSnap.updateProjectionMatrix();
   const layer=renderCarLayer(w,h,{cam:camSnap});
   $('snapPrompt').textContent=prompt;
-  $('snapImg').src=composite(null,layer,w,h); lastSnap=null;
+  $('snapImg').src=composite(null,layer,w,h); lastSnap=null; snapVariants=null; $('snapVar').hidden=true;
   if(!isNative){ snapUI('preview'); return; }
   snapUI('wait',cf?'FLUX рисует пейзаж, несколько секунд…':'Kandinsky рисует пейзаж, обычно 20–60 секунд…');
   try{
@@ -2073,7 +2102,14 @@ async function takeSnap(){
     const img=await loadImg(bg);
     const env=envFromImage(img);
     const lit=renderCarLayer(w,h,{cam:camSnap,env,sky:avgColor(img,0,0.4),gnd:avgColor(img,0.6,1)}); env.dispose();
-    lastSnap=composite(img,lit,w,h); $('snapImg').src=lastSnap; snapUI('done');
+    const montage=composite(img,lit,w,h); snapVariants={exact:montage}; lastSnap=montage; $('snapImg').src=montage; $('snapVar').hidden=true;
+    if(cf){
+      snapUI('wait','Вписываю машину в кадр: свет, тени, отражения…');
+      try{ const hm=await cfHarmonize(montage,w,h); if(job!==snapJob) return;
+        snapVariants.whole=hm.url; $('snapPrompt').textContent=prompt+'\n\nВторой шаг (FLUX.2): '+hm.prompt; $('snapVar').hidden=false; showVariant('whole');
+      }catch(e2){ if(job!==snapJob) return; toast('<b>Цельное фото не получилось</b>Показана точная модель. '+String(e2.message||e2).replace(/</g,'&lt;').slice(0,140)); }
+    }
+    snapUI('done');
   }catch(e){
     if(job!==snapJob||e.message==='cancel') return;
     let m=e.message||String(e);
@@ -2089,7 +2125,7 @@ async function shareSnap(){
     const Fs=nativePlugin('Filesystem'), Sh=nativePlugin('Share');
     if(isNative&&Fs&&Sh){
       const f=await Fs.writeFile({path:'f7-box-'+Date.now()+'.jpg',data:lastSnap.split(',')[1],directory:'CACHE'});
-      await Sh.share({title:'Бокс на Haval F7',files:[f.uri],dialogTitle:'Поделиться снимком'});
+      await Sh.share({title:'Бокс на '+CARDEF.name,files:[f.uri],dialogTitle:'Поделиться снимком'});
     } else { const a=document.createElement('a'); a.href=lastSnap; a.download='f7-box.jpg'; document.body.appendChild(a); a.click(); a.remove(); }
   }catch(e){ if(!/cancel/i.test(String(e&&e.message))) toast('<b>Не удалось поделиться</b>'+String(e.message||e).replace(/</g,'&lt;')); }
 }
@@ -2106,6 +2142,7 @@ document.addEventListener('pointerdown',e=>{ if(!e.target.closest('#snapSw')&&!e
 $('snapGo').addEventListener('click',takeSnap);
 $('snapAgain').addEventListener('click',takeSnap);
 $('snapShare').addEventListener('click',shareSnap);
+$('snapVar').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) showVariant(b.dataset.v); });
 $('snapClose').addEventListener('click',closeSnap);
 $('snapM').addEventListener('click',e=>{ if(e.target.id==='snapM') closeSnap(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('snapM').hidden) closeSnap(); });
