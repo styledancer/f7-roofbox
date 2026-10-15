@@ -975,7 +975,7 @@ let ghost=false;
 function boxFinish(box){ const id=S.boxColor[box.id]; return box.colors.find(c=>c.id===id)||box.colors[0]; }
 function applyBoxMat(mat, box, wire, accent){
   if(wire){ mat.transparent=true; mat.opacity=0.2; mat.depthWrite=false; mat.side=THREE.DoubleSide; mat.color.set(accent); mat.metalness=0; mat.roughness=0.6; mat.clearcoat=0; }
-  else { const p=boxFinish(box); mat.transparent=false; mat.opacity=1; mat.depthWrite=true; mat.side=THREE.FrontSide; mat.color.set(p.hex); mat.metalness=p.metal||0.05; mat.roughness=p.rough; mat.clearcoat=p.gloss?1:0; mat.clearcoatRoughness=0.06; }
+  else { const p=boxFinish(box); mat.transparent=false; mat.opacity=1; mat.depthWrite=true; mat.side=box.mesh?THREE.DoubleSide:THREE.FrontSide; mat.color.set(p.hex); mat.metalness=p.metal||0.05; mat.roughness=p.rough; mat.clearcoat=p.gloss?1:0; mat.clearcoatRoughness=0.06; }
   mat.needsUpdate=true;
 }
 function paintFinish(m){ m.color.set(S.color); m.metalness=0.55; m.roughness=0.3; if('clearcoat' in m){ m.clearcoat=1; m.clearcoatRoughness=0.05; } m.needsUpdate=true; }
@@ -2145,7 +2145,7 @@ function setBoxOnly(on){
     const bb=new THREE.Box3(); [boxGroup,cmpGroup].forEach(g=>{ if(g.children.length) bb.expandByObject(g); });
     const c=bb.getCenter(new THREE.Vector3()), sz=bb.getSize(new THREE.Vector3()), dir=camera.position.clone().sub(controls.target).normalize();
     controls.minDistance=0.6; drive.userCam=true;
-    camAnim={from:camera.position.clone(), to:c.clone().addScaledVector(dir,(Math.max(sz.x,sz.z)*1.1+0.5)/Math.max(0.45,Math.min(1,camera.aspect*1.4))), tf:controls.target.clone(), tt:c, t:0};
+    camAnim={from:camera.position.clone(), to:c.clone().addScaledVector(dir,(()=>{ const hf=2*Math.atan(Math.tan(camera.fov*Math.PI/360)*camera.aspect); const w=Math.max(sz.x,sz.z)*0.9+0.3; return Math.max(1.6,(w/2)/Math.tan(Math.min(hf,camera.fov*Math.PI/180)/2)); })()), tf:controls.target.clone(), tt:c, t:0};
     toast('<b>Только бокс</b>Вращайте и приближайте двумя пальцами. Крышку можно открыть кнопкой справа.');
   } else {
     boxOnly=false; controls.minDistance=boxSaved?boxSaved.min:2.5;
