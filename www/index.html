@@ -351,18 +351,18 @@ body[data-tab="info"] #pgSet, body[data-tab="set"] #pgInfo, body[data-tab="set"]
 @media (min-width:900px){ body[data-tab="scene"] .app{grid-template-columns:minmax(0,1fr)} body{padding-bottom:96px} }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .itemsDrop{--lg-base:rgba(16,20,26,.78);--lg-hi:rgba(255,255,255,.07)} }
 :root[data-theme="dark"] .itemsDrop{--lg-base:rgba(16,20,26,.78);--lg-hi:rgba(255,255,255,.07)}
-.devp{position:absolute;z-index:7;left:calc(10px + var(--il));right:calc(96px + var(--ir));bottom:calc(10px + var(--ib));max-height:46%;overflow:auto;border-radius:var(--rl);padding:8px 10px;
+.devp{position:absolute;z-index:7;left:calc(10px + var(--il));right:calc(96px + var(--ir));bottom:calc(6px + var(--ib));max-height:30%;overflow:auto;border-radius:var(--rl);padding:0 10px 8px;
   --lg-base:rgba(16,20,26,.66);--lg-hi:rgba(255,255,255,.08);color:#eef2f7;font:500 .72rem var(--body);overscroll-behavior:contain;touch-action:pan-y}
 .devp[hidden]{display:none}
-.devp .hd{display:flex;gap:6px;align-items:center;justify-content:space-between;position:sticky;top:-8px;padding:4px 0 6px;background:inherit}
+.devp .hd{display:flex;gap:6px;align-items:center;justify-content:space-between;flex-wrap:wrap;position:sticky;top:0;z-index:1;margin:0 -10px;padding:8px 10px 6px;background:rgba(16,20,26,.94);border-radius:var(--rl) var(--rl) 0 0}
 .devp .hd b{font:700 .72rem var(--mono);letter-spacing:.06em}
 .devp .hd button{font:600 .68rem var(--body);border:1px solid rgba(255,255,255,.25);background:transparent;color:inherit;border-radius:8px;padding:4px 7px}
 .devp .g{font:700 .62rem var(--mono);color:#9fb3ff;text-transform:uppercase;letter-spacing:.08em;margin:8px 0 2px}
-.devp .r{display:grid;grid-template-columns:96px 1fr 44px;align-items:center;gap:6px;min-height:26px}
+.devp .r{display:grid;grid-template-columns:104px 1fr 40px;align-items:center;gap:6px;min-height:24px;line-height:1.15}
 .devp .r input[type=range]{width:100%;accent-color:#86a2ff}
 .devp .r output{font:500 .68rem var(--mono);text-align:right}
 .devp select{font:inherit;background:rgba(255,255,255,.1);color:inherit;border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:2px 4px}
-.stage.devOpen #picks,.stage.devOpen .ov.tl,.stage.devOpen .ov.bo,.stage.devOpen .ov.orbp{visibility:hidden}
+.stage.devOpen #picks,.stage.devOpen .ov.tl,.stage.devOpen .ov.bo,.stage.devOpen .ov.orbp,.stage.devOpen .ov.hs,.stage.devOpen .toast{visibility:hidden}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}.spin{animation-duration:3s}}
 </style>
 
@@ -2053,7 +2053,7 @@ function devApply(){
   if(terMat.normalScale) terMat.normalScale.set(DEV.sandN,DEV.sandN); terMat.color.setScalar(DEV.sandB);
   paintMats.forEach(paintFinish); applyWeatherScene(); resize(); kick(); }
 function devRender(){
-  devP.innerHTML='<div class="hd"><b>DEV · графика</b><span><button data-a="copy">Скопировать</button> <button data-a="share">Отправить</button> <button data-a="reset">Сброс</button> <button data-a="hide">✕</button></span></div>'+
+  devP.innerHTML='<div class="hd"><b>DEV</b><span><button data-a="copy">Скопировать</button> <button data-a="share">Отправить</button> <button data-a="reset">Сброс</button> <button data-a="hide">✕</button></span></div>'+
     DEV_UI.map(([g,rows])=>'<div class="g">'+g+'</div>'+rows.map(([k,l,a,b,st])=>Array.isArray(a)?`<div class="r"><span>${l}</span><select data-k="${k}">${a.map(o=>`<option ${DEV[k]===o?'selected':''}>${o}</option>`).join('')}</select><output></output></div>`
       :`<div class="r"><span>${l}</span><input type="range" data-k="${k}" min="${a}" max="${b}" step="${st}" value="${DEV[k]}"><output>${(+DEV[k]).toFixed(st<0.01?3:2)}</output></div>`).join('')).join(''); }
 devP.addEventListener('input',e=>{ const k=e.target.dataset.k; if(!k) return; DEV[k]=e.target.tagName==='SELECT'?e.target.value:+e.target.value;
