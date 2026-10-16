@@ -48,6 +48,9 @@ await click('#wireBtn'); await view('top'); await shot('21-pack-top'); await vie
 await view('rear'); await shot('23-tg-button');
 await page.evaluate(() => document.querySelector('#laySw [data-lay="gate"]').click()); await page.waitForTimeout(40000); await shot("24-gate-pass");
 await page.evaluate(() => { for (let i=0;i<3;i++) document.querySelector('#gateMinus').click(); document.querySelector('#gateAgain').click(); }); await page.waitForTimeout(40000); await shot("25-gate-stop");
+await page.evaluate(() => { localStorage.setItem('f7box.items','["ski","snow","tent"]'); localStorage.setItem('f7box.wxMode','"off"'); }); await page.reload(); await page.waitForTimeout(9000);
+await page.evaluate(() => document.querySelectorAll('.boxui')[0].click()); await shot('26-items-drop');
+await page.evaluate(() => { document.body.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true})); document.querySelectorAll('.boxui')[1].click(); }); await shot('27-move-arrows');
 require_fs: {
   const fs = await import('fs'); fs.writeFileSync(`${out}/console.txt`, logs.join('\n'));
 }

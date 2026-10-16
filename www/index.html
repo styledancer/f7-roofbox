@@ -54,6 +54,24 @@ body.lock{overflow:hidden}
 .ov{position:absolute;z-index:4;display:flex;gap:6px;pointer-events:none}
 .ov>*{pointer-events:auto}
 .ov[hidden]{display:none}
+.boxui{position:absolute;z-index:3;width:38px;height:38px;border-radius:50%;transform:translate(-50%,-50%);display:grid;place-items:center;padding:0;cursor:pointer;opacity:.82;border-color:rgba(255,255,255,.5);color:var(--ink)}
+.boxui[hidden]{display:none}
+.boxui svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.boxui[aria-pressed="true"],.boxui[aria-expanded="true"]{background:var(--accent);color:#fff;opacity:.92}
+.boxui .cnt{position:absolute;right:-4px;top:-4px;min-width:16px;height:16px;border-radius:8px;background:var(--ink);color:var(--panel);font:600 .62rem/16px var(--body);padding:0 4px}
+.arrow3d{position:absolute;z-index:3;width:44px;height:44px;border-radius:50%;transform:translate(-50%,-50%);display:grid;place-items:center;padding:0;cursor:grab;touch-action:none;opacity:.85;border-color:rgba(255,255,255,.55)}
+.arrow3d[hidden]{display:none}
+.arrow3d svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .05s}
+.arrow3d.lat{color:var(--accent)}
+.itemsDrop{position:absolute;z-index:6;width:min(250px,calc(100% - 24px));max-height:min(52vh,420px);overflow:auto;border-radius:14px;padding:6px;display:flex;flex-direction:column;gap:1px}
+.itemsDrop[hidden]{display:none}
+.itemsDrop .ih{font:600 .68rem var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:6px 8px 4px}
+.itemsDrop button{display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;gap:8px;border:0;background:transparent;color:var(--ink);border-radius:9px;padding:6px 8px;cursor:pointer;text-align:left;font:500 .8rem var(--body)}
+.itemsDrop button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.itemsDrop button .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.itemsDrop button .st{width:8px;height:8px;border-radius:50%;background:transparent}
+.itemsDrop button[aria-pressed="true"]{background:var(--accent-soft)}
+.itemsDrop button[aria-pressed="true"] .st.good{background:var(--good)} .itemsDrop button[aria-pressed="true"] .st.warn{background:var(--warn)} .itemsDrop button[aria-pressed="true"] .st.bad{background:var(--bad)}
 .gateui{position:absolute;z-index:5;left:calc(10px + var(--il));right:calc(10px + var(--ir));bottom:calc(10px + var(--ib));border-radius:16px;padding:10px 12px;display:grid;gap:8px}
 .gateui[hidden]{display:none}
 .gateui .res{font:600 .9rem var(--body);display:flex;align-items:center;gap:8px}
@@ -1097,6 +1115,7 @@ const drive={mode:'idle', t:0, userCam:false};
 const SUS={K:85, C:11, vy:0, vp:0, vr:0, lastV:0, travel:0.07};
 const DRV_SPEED=6;
 function stepDrive(dt){
+  if(drive.mode!=='idle'){ if(S.lid){ const t=document.querySelector('#lidSw [data-lid="0"]'); if(t) t.click(); } if(S.open){ S.open=false; tgLimit=OPEN_ANG; setTgBtn(); } }
   let ts=0, ta=0;
   if(drive.mode==='intro'){ drive.t+=dt; const t=drive.t;
     ts=t<0.8?0:(t<10.5?DRV_SPEED:0); ta=t<3.2?0:(t<9?1:0);
@@ -1308,7 +1327,7 @@ let running=false;
 function kick(){ if(!running){running=true; requestAnimationFrame(loop);} }
 let boxOnly=false;
 function render(){
-  if(typeof placeSideBtns==='function') try{ placeSideBtns(); placeTgBtn(); }catch(e){}
+  if(typeof placeSideBtns==='function') try{ placeSideBtns(); placeTgBtn(); placeBoxUI(); }catch(e){}
   if(!boxOnly){ renderer.render(scene,camera); return; }
   // show the roof box(es) alone on a plain studio background
   const hid=[], hide=o=>{ if(o.visible){ o.visible=false; hid.push(o); } };
@@ -2464,6 +2483,85 @@ function placeTgBtn(){
   tgSide.hidden=!vis; if(!vis) return;
   const rc=stage.getBoundingClientRect(); tgSide.style.left=((p.x+1)/2*rc.width)+'px'; tgSide.style.top=((1-p.y)/2*rc.height)+'px';
   tgSide.setAttribute('aria-pressed',String(!!S.open));
+}
+
+/* ---------- 3D controls on the box: "what fits" list and position guides ---------- */
+const ICONS={
+  stroller:'<path d="M4 6h8a5 5 0 0 1 5 5H4z"/><path d="M17 11l2.5-6"/><circle cx="7" cy="18.5" r="2"/><circle cx="15" cy="18.5" r="2"/><path d="M7 16.5V11M15 16.5V11"/>',
+  bike:'<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h6l2 7M10 9l3 7h5M15 6h3"/>',
+  suitcase:'<rect x="5" y="7" width="14" height="13" rx="2"/><path d="M9 7V4h6v3M5 12h14"/>',
+  cabin:'<rect x="7" y="8" width="10" height="11" rx="2"/><path d="M12 8V3M10 3h4M9 21v-2M15 21v-2"/>',
+  duffel:'<path d="M4 10h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 10a4 4 0 0 1 8 0"/>',
+  tent:'<path d="M3 20L12 4l9 16z"/><path d="M12 4v16M9 20l3-6 3 6"/>',
+  ski:'<path d="M5 21L17 3M9 21L21 3"/><path d="M8 15l3 1M12 9l3 1"/>',
+  snow:'<rect x="10" y="2" width="5" height="20" rx="2.5" transform="rotate(35 12 12)"/><path d="M9 9l4 2M7 14l4 2"/>',
+  boots:'<path d="M7 3h6v9l5 3v5H5V9z"/><path d="M5 17h13"/>',
+  sleep:'<rect x="3" y="8" width="18" height="9" rx="4.5"/><path d="M8 8v9M13 8v9"/>',
+  chair:'<path d="M6 4l12 16M18 4L6 20M5 11h14"/>',
+  cooler:'<rect x="4" y="9" width="16" height="11" rx="2"/><path d="M4 13h16M9 9V6h6v3"/>',
+  carton:'<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>',
+};
+function iconKind(it){ if(it.custom) return 'carton';
+  return ({yoyo:'stroller',airz:'stroller',bike16:'bike',bike14:'bike',suitL:'suitcase',suitM:'suitcase',cabin:'cabin',duffel:'duffel',tent:'tent',ski:'ski',snow:'snow',boots:'boots',sleep:'sleep',chair:'chair',cooler:'cooler'})[it.id]||'carton'; }
+const svg=(p,extra)=>`<svg viewBox="0 0 24 24" aria-hidden="true"${extra||''}>${p}</svg>`;
+const itemsBtn=document.createElement('button'); itemsBtn.className='boxui glass'; itemsBtn.setAttribute('aria-label','Что влезет'); itemsBtn.setAttribute('aria-expanded','false');
+stage.appendChild(itemsBtn);
+const moveBtn=document.createElement('button'); moveBtn.className='boxui glass'; moveBtn.setAttribute('aria-label','Двигать бокс'); moveBtn.setAttribute('aria-pressed','false');
+moveBtn.innerHTML=svg('<path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>'); stage.appendChild(moveBtn);
+const drop=document.createElement('div'); drop.className='itemsDrop glass'; drop.hidden=true; drop.setAttribute('role','group'); drop.setAttribute('aria-label','Что положить в бокс'); stage.appendChild(drop);
+function renderItemsBtn(){ const n=S.items.length; itemsBtn.innerHTML=svg(ICONS.suitcase)+(n?`<span class="cnt">${n}</span>`:''); }
+function renderDrop(){
+  const box=A(), res=pack(box,selItems()), fail=new Set(res.filter(r=>r.fail).map(r=>r.it.id));
+  drop.innerHTML='<div class="ih">Что положить в '+box.model+'</div>'+allItems().map(it=>{ const on=S.items.includes(it.id); const st=on?(fail.has(it.id)?'bad':'good'):'';
+    return `<button data-id="${it.id}" aria-pressed="${on}" title="${it.name}">${svg(ICONS[iconKind(it)])}<span class="nm">${it.name}</span><span class="st ${st}"></span></button>`; }).join('');
+}
+drop.addEventListener('click',e=>{ const b=e.target.closest('button[data-id]'); if(!b) return; const id=b.dataset.id;
+  S.items=S.items.includes(id)?S.items.filter(i=>i!==id):S.items.concat(id); store.set('items',S.items); renderItemChips(); update(); renderDrop(); renderItemsBtn(); kick(); });
+itemsBtn.addEventListener('click',()=>{ const o=drop.hidden; drop.hidden=!o; itemsBtn.setAttribute('aria-expanded',String(o)); if(o){ renderDrop(); placeBoxUI(); } });
+document.addEventListener('pointerdown',e=>{ if(!drop.hidden&&!e.target.closest('.itemsDrop')&&e.target!==itemsBtn&&!itemsBtn.contains(e.target)){ drop.hidden=true; itemsBtn.setAttribute('aria-expanded','false'); } });
+renderItemsBtn();
+// position guides: drag an arrow along its axis, or tap it for a 20 mm step
+let moveMode=false;
+moveBtn.addEventListener('click',()=>{ moveMode=!moveMode; moveBtn.setAttribute('aria-pressed',String(moveMode)); kick(); });
+const ARR='<path d="M5 12h14M13 6l6 6-6 6"/>';
+const arrows=[{ax:'x',sg:-1},{ax:'x',sg:1},{ax:'z',sg:1},{ax:'z',sg:-1}].map(a=>{ const b=document.createElement('button'); b.className='arrow3d glass'+(a.ax==='z'?' lat':''); b.innerHTML=svg(ARR);
+  b.setAttribute('aria-label',a.ax==='x'?(a.sg<0?'Бокс вперёд':'Бокс назад'):(a.sg>0?'Бокс к водителю':'Бокс к пассажиру')); stage.appendChild(b); a.el=b; return a; });
+function axisPx(a){ // screen pixels per metre along the arrow's axis
+  const box=A(), p0=new THREE.Vector3(M(box.L)/2,M(box.H)/2,0), p1=p0.clone(); if(a.ax==='x') p1.x+=a.sg; else p1.z+=a.sg;
+  boxGroup.localToWorld(p0); boxGroup.localToWorld(p1); const r=stage.getBoundingClientRect(), q0=p0.project(camera), q1=p1.project(camera);
+  return {x:(q1.x-q0.x)/2*r.width, y:-(q1.y-q0.y)/2*r.height};
+}
+function nudge(a,mm){
+  if(a.ax==='x'){ S.front=Math.round((S.front+a.sg*mm)/10)*10; update(); }
+  else { S.boxZ=Math.round((S.boxZ+a.sg*mm)/10)*10; store.set('boxZ',S.boxZ); renderBoxZ(); update(); }
+  kick();
+}
+arrows.forEach(a=>{
+  let drag=null;
+  a.el.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); a.el.setPointerCapture(e.pointerId); const v=axisPx(a); drag={x:e.clientX,y:e.clientY,v,moved:0,front:S.front,z:S.boxZ}; controls.enabled=false; });
+  a.el.addEventListener('pointermove',e=>{ if(!drag) return; const dx=e.clientX-drag.x, dy=e.clientY-drag.y, L2=drag.v.x*drag.v.x+drag.v.y*drag.v.y||1;
+    const m=(dx*drag.v.x+dy*drag.v.y)/L2; drag.moved=Math.max(drag.moved,Math.hypot(dx,dy));
+    if(drag.moved>6){ if(a.ax==='x'){ S.front=Math.round((drag.front+a.sg*m*1000)/10)*10; update(); } else { S.boxZ=Math.round((drag.z+a.sg*m*1000)/10)*10; store.set('boxZ',S.boxZ); renderBoxZ(); update(); } kick(); } });
+  const end=()=>{ if(!drag) return; if(drag.moved<=6) nudge(a,20); drag=null; controls.enabled=true; };
+  a.el.addEventListener('pointerup',end); a.el.addEventListener('pointercancel',end);
+});
+const _p=new THREE.Vector3();
+function scr(v){ const p=v.clone().project(camera), r=stage.getBoundingClientRect(); return {x:(p.x+1)/2*r.width, y:(1-p.y)/2*r.height, ok:p.z<1&&Math.abs(p.x)<0.97&&Math.abs(p.y)<0.97}; }
+function placeBoxUI(){
+  const a=A(), idle=drive.mode==='idle'&&speed<0.05&&!!a;
+  [itemsBtn,moveBtn].forEach(b=>b.hidden=!idle);
+  if(!idle){ drop.hidden=true; arrows.forEach(x=>x.el.hidden=true); return; }
+  const top=boxGroup.localToWorld(new THREE.Vector3(M(a.L)*0.5,M(a.H)+0.22,0)), sp=scr(top);
+  itemsBtn.hidden=!sp.ok; moveBtn.hidden=!sp.ok;
+  itemsBtn.style.left=(sp.x-24)+'px'; itemsBtn.style.top=sp.y+'px'; moveBtn.style.left=(sp.x+24)+'px'; moveBtn.style.top=sp.y+'px';
+  if(!drop.hidden){ const r=stage.getBoundingClientRect(), dw=drop.offsetWidth||240, dh=drop.offsetHeight||300;
+    drop.style.left=Math.max(10,Math.min(r.width-dw-10,sp.x-24-dw/2))+'px'; drop.style.top=Math.max(10,Math.min(r.height-dh-10,sp.y+26))+'px'; }
+  arrows.forEach(x=>{
+    if(!moveMode){ x.el.hidden=true; return; }
+    const pos=x.ax==='x'?new THREE.Vector3(x.sg<0?-0.18:M(a.L)+0.18, M(a.H)*0.5, 0):new THREE.Vector3(M(a.L)*0.22, M(a.H)*0.5, x.sg*(M(a.W)/2+0.16));
+    const q=scr(boxGroup.localToWorld(pos)); x.el.hidden=!q.ok; if(!q.ok) return;
+    x.el.style.left=q.x+'px'; x.el.style.top=q.y+'px'; const v=axisPx(x); x.el.firstChild.style.transform=`rotate(${Math.atan2(v.y,v.x)}rad)`;
+  });
 }
 
 renderItemChips();
