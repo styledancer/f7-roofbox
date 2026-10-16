@@ -1,0 +1,57 @@
+// Renders the app in headless Chrome and saves phone-sized screenshots for visual review.
+import { chromium } from 'playwright-core';
+const url = process.argv[2] || 'http://127.0.0.1:8080/index.html';
+const out = process.argv[3] || 'shots';
+const browser = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const page = await browser.newPage({ viewport: { width: 412, height: 860 }, deviceScaleFactor: 2, reducedMotion: 'reduce' });
+const logs = [];
+page.on('console', m => logs.push(m.type() + ': ' + m.text()));
+page.on('pageerror', e => logs.push('PAGEERROR: ' + e.message));
+await page.goto(url);
+await page.waitForTimeout(9000);
+const shot = async (n) => { await page.waitForTimeout(2500); await page.screenshot({ path: `${out}/${n}.png` }); };
+const click = (sel) => page.evaluate(s => document.querySelector(s)?.click(), sel);
+const view = (v) => click(`.views button[data-view="${v}"]`);
+await shot('1-q');
+await view('side'); await shot('2-side');
+await page.evaluate(() => { const b=document.querySelector('#lidSw [data-lid="1"]'); b&&b.click(); }); await view('q'); await shot('3-lid-person');
+await page.evaluate(() => { const b=document.querySelector('#lidSw [data-lid="0"]'); b&&b.click(); });
+await click('#offBtn'); await view('side'); await page.waitForTimeout(5000); await shot('4-offroad'); await page.screenshot({ path: `${out}/4b-offroad.png` }); await page.waitForTimeout(400); await page.screenshot({ path: `${out}/4c-offroad.png` });
+await click('#offBtn'); await click('#hwBtn'); await page.waitForTimeout(3000); await shot('5-highway');
+await click('#hwBtn');
+// close-up of the front wheel and headlight
+await page.evaluate(() => { const c = window.__cam; });
+await page.mouse.move(206, 400); for (let i = 0; i < 6; i++) { await page.mouse.wheel(0, -300); await page.waitForTimeout(150); }
+await shot('6-close');
+await page.evaluate(() => { document.querySelector('#snapGo')?.click(); }); await page.waitForTimeout(3000);
+await page.screenshot({ path: `${out}/7-snap-preview.png` });
+// steel rims on the Haval, then the Outlander
+await page.evaluate(() => { localStorage.setItem('f7box.rim','"steel"'); }); await page.reload(); await page.waitForTimeout(9000);
+await view('side'); await shot('8-haval-steel');
+await page.evaluate(() => { localStorage.setItem('f7box.car','"outlander"'); localStorage.setItem('f7box.rim','"stock"'); }); await page.reload(); await page.waitForTimeout(12000);
+await shot('9-outlander-q'); await view('side'); await shot('10-outlander-side');
+await click('#tgBtn'); await view('rear'); await shot('11-outlander-rear');
+await page.evaluate(() => { localStorage.setItem('f7box.rim','"steel"'); }); await page.reload(); await page.waitForTimeout(12000); await view('side'); await shot('12-outlander-steel');
+await click('#paintBtn'); await shot('13-popover');
+await page.evaluate(() => { localStorage.setItem('f7box.car','"haval"'); localStorage.setItem('f7box.sel','"t-100"'); localStorage.setItem('f7box.rim','"old"'); }); await page.reload(); await page.waitForTimeout(9000); await view('side'); await shot('14-touring');
+for (const m of ['night','fog']) {
+  await page.evaluate((m) => { localStorage.setItem('f7box.wxMode', JSON.stringify(m)); localStorage.setItem('f7box.rim','"stock"'); localStorage.setItem('f7box.sel','"m3-l"'); }, m);
+  await page.reload(); await page.waitForTimeout(9000); await shot('15-wx-'+m); await view('side'); await shot('16-wx-side-'+m);
+}
+await page.evaluate(() => { localStorage.setItem('f7box.wxMode','"off"'); localStorage.setItem('f7box.showLimit','false'); localStorage.setItem('f7box.sel','"t-100"'); }); await page.reload(); await page.waitForTimeout(9000);
+await shot('17-no-limit-no-wx');
+await click('#layBtn'); await page.waitForTimeout(400); await page.screenshot({ path: `${out}/18-layers.png` });
+await page.evaluate(() => document.querySelector('#laySw [data-lay="box"]').click()); await page.waitForTimeout(3000); await shot('19-box-only');
+await page.evaluate(() => { const b=document.querySelector('#lidSw [data-lid="1"]'); b&&b.click(); }); await shot('20-box-open');
+await page.evaluate(() => { localStorage.setItem('f7box.sel','"m3-l"'); localStorage.setItem('f7box.items','["ski","snow","tent","bike16t"]'); localStorage.setItem('f7box.boxZ','0'); localStorage.setItem('f7box.wxMode','"off"'); localStorage.setItem('f7box.garage','2200'); }); await page.reload(); await page.waitForTimeout(9000);
+await click('#wireBtn'); await view('top'); await shot('21-pack-top'); await view('side'); await shot('22-pack-side'); await click('#wireBtn');
+await view('rear'); await shot('23-tg-button');
+await page.evaluate(() => document.querySelector('#laySw [data-lay="gate"]').click()); await page.waitForTimeout(40000); await shot("24-gate-pass");
+await page.evaluate(() => { for (let i=0;i<3;i++) document.querySelector('#gateMinus').click(); document.querySelector('#gateAgain').click(); }); await page.waitForTimeout(40000); await shot("25-gate-stop");
+await page.evaluate(() => { localStorage.setItem('f7box.items','["ski","snow","tent"]'); localStorage.setItem('f7box.wxMode','"off"'); }); await page.reload(); await page.waitForTimeout(9000);
+await page.evaluate(() => document.querySelectorAll('.boxui')[0].click()); await shot('26-items-drop');
+await page.evaluate(() => { document.body.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true})); document.querySelectorAll('.boxui')[1].click(); }); await shot('27-move-arrows');
+require_fs: {
+  const fs = await import('fs'); fs.writeFileSync(`${out}/console.txt`, logs.join('\n'));
+}
+await browser.close();

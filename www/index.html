@@ -452,9 +452,9 @@ h2 .badge{margin-left:4px}
         <summary>Настройки</summary>
         <div class="settings">
           <div class="row"><label for="garage">Ограничение по высоте (гараж, паркинг), мм</label><input type="number" id="garage" value="2200" step="10"></div>
-          <div class="row"><label for="barTop">Верх поперечин от земли, мм</label><input type="number" id="barTop" value="1760" step="5"></div>
-          <div class="row"><label for="barFront">Передняя поперечина от бампера, мм</label><input type="number" id="barFront" value="2500" step="10"></div>
-          <div class="row"><label for="spacing">Расстояние между дугами, мм</label><input type="number" id="spacing" value="800" step="10"></div>
+          <div class="row"><label for="barTop">Верх поперечин от земли, мм</label><input type="number" id="barTop" value="1700" step="5"></div>
+          <div class="row"><label for="barFront">Передняя поперечина от бампера, мм</label><input type="number" id="barFront" value="2456" step="10"></div>
+          <div class="row"><label for="spacing">Расстояние между дугами, мм</label><input type="number" id="spacing" value="661" step="10"></div>
           <div class="row"><label>Цвет машины</label><div class="colors" id="colors"></div></div>
         </div>
       </details>
@@ -473,7 +473,7 @@ h2 .badge{margin-left:4px}
 const CARS={
   haval:{name:'Haval F7', sub:'2022', model:'haval_f7.json', kind:'haval', rimR:0.2286,
     dims:{L:4691, W:1866, WB:2725, FO:950, track:1585, wheelR:365, roofFront:2150, hinge:[3980,1635], railFrom:2250, railTo:3950}, H:1690,
-    bars:{top:1760, front:2500, spacing:800},
+    bars:{top:1700, front:2456, spacing:661},
     colors:[['Белый металлик','#EDEEEC'],['Красный','#A11D21'],['Синий','#1E3C6E'],['Серый','#7A7F86'],['Чёрный','#121316']]},
   outlander:{name:'Mitsubishi Outlander', sub:'III, 2015–2021', model:'outlander.json', kind:'norm', rimR:0.2286,
     dims:{L:4670, W:1810, WB:2666, FO:973, track:1535, wheelR:359, roofFront:2060, hinge:[4045,1658], railFrom:2016, railTo:4054}, H:1710,
@@ -536,6 +536,8 @@ BOXES.forEach(b=>{ b.colors=b.id==='t-100'?FINISH.touring:(b.brand==='Thule'?FIN
 
 const store = {get(k,d){try{const v=localStorage.getItem('f7box.'+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
                set(k,v){try{localStorage.setItem('f7box.'+k,JSON.stringify(v))}catch(e){}}};
+// rack v2: the crossbars moved to the user's own placement, so older saved bar positions are dropped once
+if(store.get('rackv',0)<2){ try{ ['barTop','barFront','spacing'].forEach(k=>localStorage.removeItem('f7box.'+k)); }catch(e){} store.set('rackv',2); }
 const S = {
   sel: store.get('sel','m3-l'), cmp: store.get('cmp',''), align: store.get('align','own'), itemsIn:'A',
   items: store.get('items',['yoyo','bike16']), custom: store.get('custom',[]),
@@ -1432,10 +1434,11 @@ function packRaw(box,items){
   const order=items.map((it,i)=>({it,i})).sort((a,b)=>Math.max(...b.it.d)-Math.max(...a.it.d)||(b.it.d[0]*b.it.d[1]*b.it.d[2])-(a.it.d[0]*a.it.d[1]*a.it.d[2]));
   let pts=[{x:0,y:0,z:-half}];
   const inHull=(x0,y0,z0,l,w,h)=>{
-    // items have rounded corners and long things (skis, boards) have thin ends, so the extreme corners may touch the curved shell
-    const ins=Math.min(220,l*0.12), yb=y0<=1?1:y0, zi=Math.min(25,w*0.12);
-    for(const x of [x0+ins,x0+l/2,x0+l-ins]){ for(const z of [z0,z0+w]) if(!insideHull(box,x,yb,z)) return false; for(const z of [z0+zi,z0+w-zi]) if(!insideHull(box,x,y0+h,z)) return false; }
-    for(const x of [x0+1,x0+l-1]) for(const z of [z0+w*0.25,z0+w*0.75]) if(!insideHull(box,x,y0+h*0.5,z)) return false;
+    // strict: the item's corners are checked along its whole length, top and bottom, so nothing pokes through the lid or the walls
+    const yb=y0<=1?1:y0, e=Math.min(12,w*0.05,h*0.05), n=Math.max(2,Math.ceil(l/60)), zs=[z0+e,z0+w-e];
+    for(let i=0;i<=n;i++){ const x=x0+e+(l-2*e)*i/n;
+      for(const z of zs){ if(!insideHull(box,x,yb,z)) return false; if(!insideHull(box,x,y0+h,z)) return false; if(!insideHull(box,x,y0+h*0.5,z)) return false; }
+      if(!insideHull(box,x,y0+h,z0+w/2)) return false; }
     return true; };
   const hits=(x0,y0,z0,l,w,h)=>placed.some(p=>x0<p.x0+p.l+G-1&&x0+l+G-1>p.x0&&y0<p.y0+p.h-1&&y0+h>p.y0+1&&z0<p.z0+p.w+G-1&&z0+w+G-1>p.z0);
   const supported=(x0,y0,z0,l,w)=>{ if(y0<=1) return true; let a=0;
@@ -2608,31 +2611,32 @@ function placeBoxUI(){
 }
 
 /* ---------- Thule WingBar Edge crossbars and a ProRide bike carrier, from the purchased model ---------- */
-const RACK={bars:[], bike:null, ready:false, BAR_LEN:0.7849, FOOT_IN:0.045, BIKE_HALF:0.15, clash:false};
+const RACK={bars:[], bike:null, ready:false, bikeZ:[0.201,0.523], clash:false};
 loadModel('thule_rack.json', g=>{
-  const src={}; g.scene.traverse(o=>{ if(['bar','footL','footR','bike'].includes(o.name)) src[o.name]=o; });
-  const prep=o=>{ o.traverse(m=>{ if(m.isMesh){ const k=m.material&&m.material.name; m.material=CM[k]||CM.matte; m.castShadow=true; m.receiveShadow=true; } }); return o; };
-  ['bar','footL','footR','bike'].forEach(k=>{ if(src[k]){ src[k].parent&&src[k].parent.remove(src[k]); src[k].position.set(0,0,0); prep(src[k]); } });
-  if(!src.bar) return;
-  for(let i=0;i<2;i++){ const grp=new THREE.Group(); const bar=src.bar.clone(); grp.add(bar); grp.userData.bar=bar;
-    const fl=src.footL.clone(), fr=src.footR.clone(); grp.add(fl); grp.add(fr); grp.userData.feet=[fl,fr]; car.add(grp); RACK.bars.push(grp); }
+  const src={}; g.scene.traverse(o=>{ if(['bar1','bar2','bike'].includes(o.name)) src[o.name]=o; });
+  if(!src.bar1||!src.bar2) return;
+  ['bar1','bar2','bike'].forEach(k=>{ const o=src[k]; if(!o) return; o.parent&&o.parent.remove(o); o.position.set(0,0,0);
+    o.traverse(m=>{ if(m.isMesh){ const n=m.material&&m.material.name; m.material=CM[n]||CM.matte; m.castShadow=true; m.receiveShadow=true; } }); });
+  RACK.bars=[src.bar1,src.bar2]; RACK.bars.forEach(o=>car.add(o));
   if(src.bike){ RACK.bike=src.bike; car.add(RACK.bike); }
   barMeshes.forEach(b=>b.visible=false); footMeshes.forEach(f=>f.visible=false);
   RACK.ready=true; placeBars(); kick();
 });
-function bikeSide(){ return S.boxZ>0?-1:1; } // the carrier goes on the other side from where the box is shifted (passenger side if centred)
 function placeRack(b1,b2,top){
   if(!RACK.ready) return;
-  const half=RAIL_Z-RACK.FOOT_IN;
-  [b1,b2].forEach((bx,i)=>{ const g=RACK.bars[i]; g.position.set(X(bx),top,0); g.userData.bar.scale.z=(2*half)/RACK.BAR_LEN;
-    g.userData.feet[0].position.z=-RAIL_Z; g.userData.feet[1].position.z=RAIL_Z; });
-  if(RACK.bike){ RACK.bike.visible=!!S.bike; RACK.bike.position.set(X((b1+b2)/2),top,bikeSide()*(RAIL_Z-0.19)); }
+  RACK.bars[0].position.set(X(b1),top,0); RACK.bars[1].position.set(X(b2),top,0);
+  if(RACK.bike){ RACK.bike.visible=!!S.bike; RACK.bike.position.set(X((b1+b2)/2),top,0); }
 }
+// the bike carrier is fixed on the left (driver's) side; the box has to leave room for it
+function bikeGap(boxZmm){ const a=A(); return RACK.bikeZ[0]-(M(boxZmm)+M(a.W)/2); }
 function checkBikeClash(say){
   if(!S.bike){ RACK.clash=false; return; }
-  const a=A(), bz=M(S.boxZ), hw=M(a.W)/2, cz=bikeSide()*(RAIL_Z-0.19);
-  const gap=Math.abs(cz-bz)-hw-RACK.BIKE_HALF; const clash=gap<0.02;
-  if(say||clash!==RACK.clash) toast(clash?'<b>Велокрепление не помещается рядом с боксом</b>Сдвиньте бокс к другому краю поперечин или выберите бокс уже.':`<b>Велокрепление встаёт рядом</b>Зазор до бокса ${Math.round(gap*1000)} мм. Учтите руль велосипеда: он шире самого крепления.`);
+  let gap=bikeGap(S.boxZ), moved=false;
+  if(gap<0.02 && say){ const lim=boxZLimit(); if(lim>=10 && bikeGap(-lim)>=0.02){ S.boxZ=-lim; store.set('boxZ',S.boxZ); renderBoxZ(); update(); gap=bikeGap(S.boxZ); moved=true;
+      toast(`<b>Бокс сдвинут к пассажиру</b>Слева стоит велокрепление. Зазор до него ${Math.round(gap*1000)} мм.`); } }
+  const clash=gap<0.02;
+  if(clash&&(say||clash!==RACK.clash)) toast('<b>Велокрепление не помещается рядом с боксом</b>Оно стоит слева. Сдвиньте бокс к пассажиру или выберите бокс уже.');
+  else if(say&&!clash&&gap>=0.02&&!moved) toast(`<b>Велокрепление встаёт рядом</b>Зазор до бокса ${Math.round(gap*1000)} мм. Учтите руль велосипеда: он шире самого крепления.`);
   RACK.clash=clash;
   if(RACK.bike) RACK.bike.traverse(m=>{ if(m.isMesh){ if(!m.userData.m0) m.userData.m0=m.material; m.material=clash?failMat:m.userData.m0; } });
 }
