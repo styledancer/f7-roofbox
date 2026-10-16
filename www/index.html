@@ -1353,6 +1353,7 @@ function loop(now){
   [boxGroup,cmpGroup].forEach(g=>{ const p=g.userData.pivot; if(!p) return; const sd=lidSide||1;
     p.position.set(0,p.userData.hy,-sd*p.userData.hz); p.userData.inner.position.set(0,-p.userData.hy,sd*p.userData.hz); p.rotation.x=-sd*lidAng; });
   if(stepPerson(dt)) busy=true;
+  if(stepFails()) busy=true;
   if(stepWeather(dt)) busy=true;
   if(camAnim){
     camAnim.t=Math.min(1,camAnim.t+0.06); const e=1-Math.pow(1-camAnim.t,3);
@@ -1478,6 +1479,14 @@ const itemMats={
   tape:new THREE.MeshStandardMaterial({color:0xE9DCC3,roughness:0.6}),
 };
 const colorMats={};
+const FAILS={}, FAIL_SHOW=3, FAIL_FADE=0.8;
+function stepFails(){
+  let busy=false; const idle=drive.mode==='idle';
+  itemsGroup.children.forEach(g=>{ if(!g.userData.fail) return; const f=FAILS[g.userData.fail]; const age=f?(performance.now()-f.t0)/1000:99;
+    const op=age<FAIL_SHOW?1:Math.max(0,1-(age-FAIL_SHOW)/FAIL_FADE);
+    g.userData.mats[0].opacity=0.32*op; g.userData.mats[1].opacity=0.9*op; g.visible=idle&&op>0.01; if(op>0) busy=true; });
+  return busy;
+}
 const failMat=new THREE.MeshBasicMaterial({color:0xe0302a, transparent:true, opacity:0.32, depthTest:false, depthWrite:false});
 const failEdge=new THREE.LineBasicMaterial({color:0xff3b30, transparent:true, opacity:0.9, depthTest:false});
 function cMat(c){ return colorMats[c]||(colorMats[c]=new THREE.MeshStandardMaterial({color:c,roughness:0.55,metalness:0.05})); }
@@ -1578,16 +1587,22 @@ function renderItems(){
   itemsGroup.children.slice().forEach(c=>{itemsGroup.remove(c); disposeTree(c);});
   const inB=S.itemsIn==='B'&&B(); const box=inB?B():A();
   (inB?cmpGroup:boxGroup).add(itemsGroup);
-  const res=pack(box,selItems());
+  const res=pack(box,selItems()), failNow=new Set(), newFails=[];
   let end=0; res.forEach(r=>{ if(!r.fail) end=Math.max(end,r.x0+r.o[0]); });
   res.forEach(r=>{
     if(r.fail){
       const [l,w,h]=r.o||r.it.d, x0=r.x0!==undefined?r.x0:end+10;
       const pos=new THREE.Vector3(M((box.L-box.Li)/2+x0+l/2), M((box.H-box.Hi)/2+(r.y0||0)+h/2), M((r.z0!==undefined?r.z0:-w/2)+w/2));
+      const key=box.id+'|'+r.it.id; failNow.add(key);
+      if(!FAILS[key]){ FAILS[key]={t0:performance.now()}; newFails.push(r.it.name); }
+      if((performance.now()-FAILS[key].t0)/1000>FAIL_SHOW+FAIL_FADE) return;
+      const fg=new THREE.Group(); fg.userData.fail=key;
+      const mm=failMat.clone(), em=failEdge.clone(); fg.userData.mats=[mm,em];
       const model=itemModel(r.it); orientModel(model, r.it.d, [l,w,h]); model.position.copy(pos);
-      model.traverse(o=>{ if(o.isMesh){ o.material=failMat; o.castShadow=false; o.renderOrder=8; } }); itemsGroup.add(model);
+      model.traverse(o=>{ if(o.isMesh){ o.material=mm; o.castShadow=false; o.renderOrder=8; } }); fg.add(model);
       const g=new THREE.BoxGeometry(M(l),M(h),M(w));
-      const e=new THREE.LineSegments(new THREE.EdgesGeometry(g), failEdge); g.dispose(); e.position.copy(pos); e.renderOrder=9; itemsGroup.add(e);
+      const e=new THREE.LineSegments(new THREE.EdgesGeometry(g), em); g.dispose(); e.position.copy(pos); e.renderOrder=9; fg.add(e);
+      itemsGroup.add(fg); stepFails(); kick();
       return;
     }
     const [l,w,h]=r.o;
@@ -1597,6 +1612,8 @@ function renderItems(){
     const e=new THREE.LineSegments(new THREE.EdgesGeometry(g), new THREE.LineBasicMaterial({color:r.it.color,transparent:true,opacity:0.55}));
     g.dispose(); e.position.copy(pos); itemsGroup.add(e);
   });
+  Object.keys(FAILS).forEach(k=>{ if(!failNow.has(k)) delete FAILS[k]; });
+  if(newFails.length) toast('<b>Не влезает</b>'+newFails.join(', ')+'. Подсвечено красным, через пару секунд исчезнет.');
   return {res,box};
 }
 
@@ -2379,9 +2396,10 @@ wxReady=true; wxApply(true); renderLayers(); fetchWeather(true); setInterval(fet
 
 // ---- sideways position: keep both mounting clamps on the 1320 mm crossbars
 function boxZLimit(){ const w=Math.max(A().W,(B()||A()).W); return Math.max(0,Math.floor((1320-w*0.82)/2/10)*10); }
-function renderBoxZ(){ const lim=boxZLimit(); S.boxZ=Math.max(-lim,Math.min(lim,S.boxZ)); const el=$('posZ'); el.min=-lim; el.max=lim; el.value=-S.boxZ;
-  $('posZVal').textContent=S.boxZ===0?'по центру':`${Math.abs(S.boxZ)} мм ${S.boxZ>0?'к водителю':'к пассажиру'}`; }
-$('posZ').addEventListener('input',e=>{ S.boxZ=-(+e.target.value); store.set('boxZ',S.boxZ); renderBoxZ(); kick(); });
+function renderBoxZ(){ const lim=boxZLimit(); const pos=lim<10?0:Math.round(Math.max(-1,Math.min(1,S.boxZ/Math.max(1,lim)))); S.boxZ=pos*lim;
+  const el=$('posZ'); el.min=-1; el.max=1; el.step=1; el.value=-pos;
+  $('posZVal').textContent=pos===0?'по центру':`${pos>0?'к водителю':'к пассажиру'}, ${lim} мм`; }
+$('posZ').addEventListener('input',e=>{ S.boxZ=-(+e.target.value)*boxZLimit(); store.set('boxZ',S.boxZ); renderBoxZ(); update(); kick(); });
 renderBoxZ();
 
 // ---- lid buttons on the sides of the box, drawn over the 3D view and following the box
@@ -2523,6 +2541,9 @@ renderItemsBtn();
 // position guides: drag an arrow along its axis, or tap it for a 20 mm step
 let moveMode=false;
 moveBtn.addEventListener('click',()=>{ moveMode=!moveMode; moveBtn.setAttribute('aria-pressed',String(moveMode)); kick(); });
+const resetBtn=document.createElement('button'); resetBtn.className='boxui glass'; resetBtn.setAttribute('aria-label','Вернуть бокс на место'); resetBtn.title='Вернуть на место';
+resetBtn.innerHTML=svg('<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/>'); stage.appendChild(resetBtn);
+resetBtn.addEventListener('click',()=>{ S.front=autoFront(A()); S.boxZ=0; store.set('boxZ',0); renderBoxZ(); update(); kick(); toast('<b>Бокс на месте</b>Лучшее положение вдоль крыши, по центру поперечин.'); });
 const ARR='<path d="M5 12h14M13 6l6 6-6 6"/>';
 const arrows=[{ax:'x',sg:-1},{ax:'x',sg:1},{ax:'z',sg:1},{ax:'z',sg:-1}].map(a=>{ const b=document.createElement('button'); b.className='arrow3d glass'+(a.ax==='z'?' lat':''); b.innerHTML=svg(ARR);
   b.setAttribute('aria-label',a.ax==='x'?(a.sg<0?'Бокс вперёд':'Бокс назад'):(a.sg>0?'Бокс к водителю':'Бокс к пассажиру')); stage.appendChild(b); a.el=b; return a; });
@@ -2532,6 +2553,7 @@ function axisPx(a){ // screen pixels per metre along the arrow's axis
   return {x:(q1.x-q0.x)/2*r.width, y:-(q1.y-q0.y)/2*r.height};
 }
 function nudge(a,mm){
+  if(a.ax==='z') mm=Math.max(10,boxZLimit());
   if(a.ax==='x'){ S.front=Math.round((S.front+a.sg*mm)/10)*10; update(); }
   else { S.boxZ=Math.round((S.boxZ+a.sg*mm)/10)*10; store.set('boxZ',S.boxZ); renderBoxZ(); update(); }
   kick();
@@ -2541,7 +2563,7 @@ arrows.forEach(a=>{
   a.el.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); a.el.setPointerCapture(e.pointerId); const v=axisPx(a); drag={x:e.clientX,y:e.clientY,v,moved:0,front:S.front,z:S.boxZ}; controls.enabled=false; });
   a.el.addEventListener('pointermove',e=>{ if(!drag) return; const dx=e.clientX-drag.x, dy=e.clientY-drag.y, L2=drag.v.x*drag.v.x+drag.v.y*drag.v.y||1;
     const m=(dx*drag.v.x+dy*drag.v.y)/L2; drag.moved=Math.max(drag.moved,Math.hypot(dx,dy));
-    if(drag.moved>6){ if(a.ax==='x'){ S.front=Math.round((drag.front+a.sg*m*1000)/10)*10; update(); } else { S.boxZ=Math.round((drag.z+a.sg*m*1000)/10)*10; store.set('boxZ',S.boxZ); renderBoxZ(); update(); } kick(); } });
+    if(drag.moved>6){ if(a.ax==='z'&&Math.abs(m*1000)<boxZLimit()*0.5) return; if(a.ax==='x'){ S.front=Math.round((drag.front+a.sg*m*1000)/10)*10; update(); } else { S.boxZ=Math.round((drag.z+a.sg*m*1000)/10)*10; store.set('boxZ',S.boxZ); renderBoxZ(); update(); } kick(); } });
   const end=()=>{ if(!drag) return; if(drag.moved<=6) nudge(a,20); drag=null; controls.enabled=true; };
   a.el.addEventListener('pointerup',end); a.el.addEventListener('pointercancel',end);
 });
@@ -2549,10 +2571,10 @@ const _p=new THREE.Vector3();
 function scr(v){ const p=v.clone().project(camera), r=stage.getBoundingClientRect(); return {x:(p.x+1)/2*r.width, y:(1-p.y)/2*r.height, ok:p.z<1&&Math.abs(p.x)<0.97&&Math.abs(p.y)<0.97}; }
 function placeBoxUI(){
   const a=A(), idle=drive.mode==='idle'&&speed<0.05&&!!a;
-  [itemsBtn,moveBtn].forEach(b=>b.hidden=!idle);
+  [itemsBtn,moveBtn].forEach(b=>b.hidden=!idle); resetBtn.hidden=!(idle&&moveMode);
   if(!idle){ drop.hidden=true; arrows.forEach(x=>x.el.hidden=true); return; }
   const top=boxGroup.localToWorld(new THREE.Vector3(M(a.L)*0.5,M(a.H)+0.22,0)), sp=scr(top);
-  itemsBtn.hidden=!sp.ok; moveBtn.hidden=!sp.ok;
+  itemsBtn.hidden=!sp.ok; moveBtn.hidden=!sp.ok; resetBtn.hidden=!(sp.ok&&moveMode); resetBtn.style.left=(sp.x+72)+'px'; resetBtn.style.top=sp.y+'px';
   itemsBtn.style.left=(sp.x-24)+'px'; itemsBtn.style.top=sp.y+'px'; moveBtn.style.left=(sp.x+24)+'px'; moveBtn.style.top=sp.y+'px';
   if(!drop.hidden){ const r=stage.getBoundingClientRect(), dw=drop.offsetWidth||240, dh=drop.offsetHeight||300;
     drop.style.left=Math.max(10,Math.min(r.width-dw-10,sp.x-24-dw/2))+'px'; drop.style.top=Math.max(10,Math.min(r.height-dh-10,sp.y+26))+'px'; }
