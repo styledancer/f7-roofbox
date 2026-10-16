@@ -321,6 +321,7 @@ h2 .badge{margin-left:4px}
           <button class="opt2" data-lay="wx" aria-pressed="true">Погода</button>
           <button class="opt2" data-lay="box" aria-pressed="false">Только бокс</button>
           <button class="opt2" data-lay="gate" aria-pressed="false">Проверка проезда</button>
+          <button class="opt2" data-lay="bike" aria-pressed="false">Велокрепление ProRide</button>
         </div></div>
         <button class="ib glass more" id="moreBtn" aria-label="К настройкам и проверкам ниже" title="Подробнее"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
       </div>
@@ -539,7 +540,7 @@ const S = {
   items: store.get('items',['yoyo','bike16']), custom: store.get('custom',[]),
   garage: store.get('garage',2200), barTop: store.get(CK('barTop'),CARDEF.bars.top),
   barFront: store.get(CK('barFront'),CARDEF.bars.front), spacing: store.get(CK('spacing'),CARDEF.bars.spacing),
-  color: store.get(CK('color'),CARDEF.colors[0][1]), rim: store.get('rim','stock'), showLimit: store.get('showLimit',true), boxZ: store.get('boxZ',0), front: null, open:false, lid:0, boxColor: store.get('boxColor',{}), wire:null,
+  color: store.get(CK('color'),CARDEF.colors[0][1]), rim: store.get('rim','stock'), showLimit: store.get('showLimit',true), bike: store.get('bike',false), boxZ: store.get('boxZ',0), front: null, open:false, lid:0, boxColor: store.get('boxColor',{}), wire:null,
   hwSpeed: store.get('hwSpeed',110), baseFuel: store.get('baseFuel',7.5), fuelPrice: store.get('fuelPrice',62)
 };
 const byId = id => BOXES.find(b=>b.id===id);
@@ -655,6 +656,9 @@ const CM={
   red:new THREE.MeshPhysicalMaterial({color:0x8a0b10,roughness:0.12,metalness:0.1,clearcoat:1,clearcoatRoughness:0.05,emissive:0x3a0204}),
   plate:new THREE.MeshStandardMaterial({color:0xf2f2ee,roughness:0.5,metalness:0}),
   rimSteel:new THREE.MeshPhysicalMaterial({color:0xc3c8ce,roughness:0.32,metalness:0.75,clearcoat:0.5,clearcoatRoughness:0.2}),
+  alu:new THREE.MeshStandardMaterial({color:0xbcc1c6,roughness:0.36,metalness:0.85}),
+  tgrey:new THREE.MeshStandardMaterial({color:0x6d7176,roughness:0.6,metalness:0.05}),
+  rubber:new THREE.MeshStandardMaterial({color:0x1c1d1f,roughness:0.95,metalness:0}),
   amber:new THREE.MeshPhysicalMaterial({color:0xd27a12,roughness:0.15,metalness:0.1,clearcoat:1,emissive:0x2a1200}),
   under:new THREE.MeshStandardMaterial({color:0x1b1c1e,roughness:0.92,metalness:0}),
   cabin:new THREE.MeshStandardMaterial({color:0x2a2b2e,roughness:0.85,metalness:0}),
@@ -918,6 +922,7 @@ const footMeshes=[];
 for(let i=0;i<4;i++){const f=new THREE.Mesh(new THREE.BoxGeometry(0.07,1,0.05), railMat); car.add(f); footMeshes.push(f);}
 function placeBars(){
   const [b1,b2]=bars(); const top=M(S.barTop);
+  if(typeof placeRack==='function') try{ placeRack(b1,b2,top); }catch(e){}
   [b1,b2].forEach((bx,i)=>{
     barMeshes[i].position.set(X(bx), top-0.014, 0);
     [-1,1].forEach((side,j)=>{
@@ -1722,6 +1727,7 @@ function renderItemChips(){
 
 function update(){
   if(typeof renderBoxZ==='function') try{ renderBoxZ(); }catch(e){}
+  if(typeof checkBikeClash==='function'&&S.bike) try{ checkBikeClash(false); }catch(e){}
   const a=A(), b=B(); const [lo,hi]=frontLimits(a);
   const pos=$('pos'); pos.min=lo; pos.max=Math.max(lo,hi); S.front=Math.max(lo,Math.min(Math.max(lo,hi),S.front)); pos.value=S.front;
   targetFront=S.front;
@@ -2381,7 +2387,7 @@ function setBoxOnly(on){
   wxApply(); renderLayers(); kick();
 }
 function renderLayers(){
-  const st={limit:S.showLimit, wx:WX.mode!=='off', box:boxOnly, gate:drive.mode==='gate'};
+  const st={limit:S.showLimit, wx:WX.mode!=='off', box:boxOnly, gate:drive.mode==='gate', bike:S.bike};
   document.querySelectorAll('#laySw [data-lay]').forEach(b=>b.setAttribute('aria-pressed',String(!!st[b.dataset.lay])));
   document.querySelector('.ov.wx').hidden=WX.mode==='off'||boxOnly;
 }
@@ -2391,6 +2397,7 @@ $('laySw').addEventListener('click',e=>{ const b=e.target.closest('[data-lay]');
   if(k==='limit'){ S.showLimit=!S.showLimit; store.set('showLimit',S.showLimit); limitPlane.visible=limitEdge.visible=false; }
   if(k==='wx'){ if(WX.mode==='off'){ WX.mode=store.get('wxLast','live'); } else { store.set('wxLast',WX.mode); WX.mode='off'; } store.set('wxMode',WX.mode); wxApply(); fetchWeather(); }
   if(k==='box') setBoxOnly(!boxOnly);
+  if(k==='bike'){ S.bike=!S.bike; store.set('bike',S.bike); update(); checkBikeClash(true); }
   renderLayers(); kick(); });
 wxReady=true; wxApply(true); renderLayers(); fetchWeather(true); setInterval(fetchWeather,15*60*1000);
 
@@ -2584,6 +2591,36 @@ function placeBoxUI(){
     const q=scr(boxGroup.localToWorld(pos)); x.el.hidden=!q.ok; if(!q.ok) return;
     x.el.style.left=q.x+'px'; x.el.style.top=q.y+'px'; const v=axisPx(x); x.el.firstChild.style.transform=`rotate(${Math.atan2(v.y,v.x)}rad)`;
   });
+}
+
+/* ---------- Thule WingBar Edge crossbars and a ProRide bike carrier, from the purchased model ---------- */
+const RACK={bars:[], bike:null, ready:false, BAR_LEN:0.7849, FOOT_IN:0.045, BIKE_HALF:0.15, clash:false};
+loadModel('thule_rack.json', g=>{
+  const src={}; g.scene.traverse(o=>{ if(['bar','footL','footR','bike'].includes(o.name)) src[o.name]=o; });
+  const prep=o=>{ o.traverse(m=>{ if(m.isMesh){ const k=m.material&&m.material.name; m.material=CM[k]||CM.matte; m.castShadow=true; m.receiveShadow=true; } }); return o; };
+  ['bar','footL','footR','bike'].forEach(k=>{ if(src[k]){ src[k].parent&&src[k].parent.remove(src[k]); src[k].position.set(0,0,0); prep(src[k]); } });
+  if(!src.bar) return;
+  for(let i=0;i<2;i++){ const grp=new THREE.Group(); const bar=src.bar.clone(); grp.add(bar); grp.userData.bar=bar;
+    const fl=src.footL.clone(), fr=src.footR.clone(); grp.add(fl); grp.add(fr); grp.userData.feet=[fl,fr]; car.add(grp); RACK.bars.push(grp); }
+  if(src.bike){ RACK.bike=src.bike; car.add(RACK.bike); }
+  barMeshes.forEach(b=>b.visible=false); footMeshes.forEach(f=>f.visible=false);
+  RACK.ready=true; placeBars(); kick();
+});
+function bikeSide(){ return S.boxZ>0?-1:1; } // the carrier goes on the other side from where the box is shifted (passenger side if centred)
+function placeRack(b1,b2,top){
+  if(!RACK.ready) return;
+  const half=RAIL_Z-RACK.FOOT_IN;
+  [b1,b2].forEach((bx,i)=>{ const g=RACK.bars[i]; g.position.set(X(bx),top,0); g.userData.bar.scale.z=(2*half)/RACK.BAR_LEN;
+    g.userData.feet[0].position.z=-RAIL_Z; g.userData.feet[1].position.z=RAIL_Z; });
+  if(RACK.bike){ RACK.bike.visible=!!S.bike; RACK.bike.position.set(X((b1+b2)/2),top,bikeSide()*(RAIL_Z-0.19)); }
+}
+function checkBikeClash(say){
+  if(!S.bike){ RACK.clash=false; return; }
+  const a=A(), bz=M(S.boxZ), hw=M(a.W)/2, cz=bikeSide()*(RAIL_Z-0.19);
+  const gap=Math.abs(cz-bz)-hw-RACK.BIKE_HALF; const clash=gap<0.02;
+  if(say||clash!==RACK.clash) toast(clash?'<b>Велокрепление не помещается рядом с боксом</b>Сдвиньте бокс к другому краю поперечин или выберите бокс уже.':`<b>Велокрепление встаёт рядом</b>Зазор до бокса ${Math.round(gap*1000)} мм. Учтите руль велосипеда: он шире самого крепления.`);
+  RACK.clash=clash;
+  if(RACK.bike) RACK.bike.traverse(m=>{ if(m.isMesh){ if(!m.userData.m0) m.userData.m0=m.material; m.material=clash?failMat:m.userData.m0; } });
 }
 
 renderItemChips();
