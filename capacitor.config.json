@@ -1,6 +1,6 @@
 {
-  "appId": "ru.f7box.app",
-  "appName": "Бокс на F7",
+  "appId": "ru.f7box.gfx",
+  "appName": "Бокс F7 · GFX",
   "webDir": "www",
   "android": {
     "backgroundColor": "#E2E7ED"
