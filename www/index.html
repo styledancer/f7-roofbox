@@ -1467,6 +1467,7 @@ function loop(now){
     if(camAnim.t>=1) camAnim=null; busy=true;
   }
   if(stepOrbit(dt)) busy=true;
+  if(stepPivot(dt)) busy=true;
   if(controls.update()) busy=true;
   render();
   if(busy) requestAnimationFrame(loop); else { running=false; lastT=0; }
@@ -1478,6 +1479,15 @@ function orbitAllowed(){
   return drive.mode==='idle'&&speed===0&&!camAnim&&!moveMode&&document.body.dataset.tab==='scene'&&!document.hidden
     &&!matchMedia('(prefers-reduced-motion: reduce)').matches&&!document.querySelector('.snapm:not([hidden])')
     &&performance.now()-ORB.last>(drop.hidden?ORB.IDLE:2500);
+}
+// the orbit centre glides from the middle of the car (far away) to the middle of the box (close in), so zooming in turns around the box
+const _pc=new THREE.Vector3(), _pb=new THREE.Vector3(), _pd=new THREE.Vector3();
+function stepPivot(dt){
+  const a=A(); if(!a||boxOnly||camAnim||drive.mode!=='idle'||speed>0.05) return false;
+  _pb.set(M(a.L)/2,M(a.H)*0.45,0); boxGroup.localToWorld(_pb); _pc.set(0,1.0,0); car.localToWorld(_pc);
+  const d=camera.position.distanceTo(_pb), u=Math.max(0,Math.min(1,(10-d)/(10-4))), k=u*u*(3-2*u);
+  _pd.copy(_pc).lerp(_pb,k).sub(controls.target); if(_pd.lengthSq()<1e-6) return false;
+  _pd.multiplyScalar(Math.min(1,dt*5)); controls.target.add(_pd); camera.position.add(_pd); return true;
 }
 function stepOrbit(dt){
   // when a drive or the overpass check ends, glide back to the 3/4 view first, then start circling
