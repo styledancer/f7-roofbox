@@ -71,6 +71,7 @@ body.lock{overflow:hidden}
 .itemsDrop button .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .itemsDrop button .st{width:8px;height:8px;border-radius:50%;background:transparent}
 .itemsDrop button[aria-pressed="true"]{background:var(--accent-soft)}
+.itemsDrop .autofill{color:var(--accent);font-weight:600;border:1px dashed var(--accent);margin:2px 0 4px}
 .itemsDrop button[aria-pressed="true"] .st.good{background:var(--good)} .itemsDrop button[aria-pressed="true"] .st.warn{background:var(--warn)} .itemsDrop button[aria-pressed="true"] .st.bad{background:var(--bad)}
 .gateui{position:absolute;z-index:5;left:calc(10px + var(--il));right:calc(10px + var(--ir));bottom:calc(10px + var(--ib));border-radius:16px;padding:10px 12px;display:grid;gap:8px}
 .gateui[hidden]{display:none}
@@ -363,7 +364,7 @@ h2 .badge{margin-left:4px}
   </div>
 
   <div class="panel">
-    <section>
+    <section hidden>
       <div class="row"><label for="pos">Положение бокса A на дугах</label><button class="mini" id="autoBtn">Подобрать автоматически</button></div>
       <input type="range" id="pos" min="1200" max="2800" step="10" value="2000">
       <div class="row"><span class="fine" style="margin:0">← к лобовому</span><span class="fine" style="margin:0" id="posVal"></span><span class="fine" style="margin:0">к багажнику →</span></div>
@@ -378,7 +379,7 @@ h2 .badge{margin-left:4px}
       <p class="fine" id="cmpNote"></p>
     </section>
 
-    <section>
+    <section hidden>
       <h2>Что влезет</h2>
       <div class="items" id="items"></div>
       <div class="custom">
@@ -1599,7 +1600,8 @@ function renderItems(){
       const [l,w,h]=r.o||r.it.d, x0=r.x0!==undefined?r.x0:end+10;
       const pos=new THREE.Vector3(M((box.L-box.Li)/2+x0+l/2), M((box.H-box.Hi)/2+(r.y0||0)+h/2), M((r.z0!==undefined?r.z0:-w/2)+w/2));
       const key=box.id+'|'+r.it.id; failNow.add(key);
-      if(!FAILS[key]){ FAILS[key]={t0:performance.now()}; newFails.push(r.it.name); }
+      if(!FAILS[key]){ FAILS[key]={t0:performance.now()}; newFails.push(r.it.name); const id=r.it.id;
+        setTimeout(()=>{ if(!FAILS[key]||!S.items.includes(id)) return; S.items=S.items.filter(i=>i!==id); store.set('items',S.items); renderItemChips(); update(); if(typeof renderDrop==='function'){ renderDrop(); renderItemsBtn(); } kick(); },(FAIL_SHOW+FAIL_FADE)*1000); }
       if((performance.now()-FAILS[key].t0)/1000>FAIL_SHOW+FAIL_FADE) return;
       const fg=new THREE.Group(); fg.userData.fail=key;
       const mm=failMat.clone(), em=failEdge.clone(); fg.userData.mats=[mm,em];
@@ -1618,7 +1620,7 @@ function renderItems(){
     g.dispose(); e.position.copy(pos); itemsGroup.add(e);
   });
   Object.keys(FAILS).forEach(k=>{ if(!failNow.has(k)) delete FAILS[k]; });
-  if(newFails.length) toast('<b>Не влезает</b>'+newFails.join(', ')+'. Подсвечено красным, через пару секунд исчезнет.');
+  if(newFails.length) toast('<b>Не влезает</b>'+newFails.join(', ')+'. Подсвечено красным, через пару секунд исчезнет и снимется с выбора.');
   return {res,box};
 }
 
@@ -2537,10 +2539,22 @@ const drop=document.createElement('div'); drop.className='itemsDrop glass'; drop
 function renderItemsBtn(){ const n=S.items.length; itemsBtn.innerHTML=svg(ICONS.suitcase)+(n?`<span class="cnt">${n}</span>`:''); }
 function renderDrop(){
   const box=A(), res=pack(box,selItems()), fail=new Set(res.filter(r=>r.fail).map(r=>r.it.id));
-  drop.innerHTML='<div class="ih">Что положить в '+box.model+'</div>'+allItems().map(it=>{ const on=S.items.includes(it.id); const st=on?(fail.has(it.id)?'bad':'good'):'';
+  drop.innerHTML='<div class="ih">Что положить в '+box.model+'</div><button class="autofill" data-auto="1">'+svg('<path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4zM5 16l.9 2.1L8 19l-2.1.9L5 22l-.9-2.1L2 19l2.1-.9zM18 15l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z"/>')+'<span class="nm">Подобрать набор, который влезет</span><span></span></button>'+allItems().map(it=>{ const on=S.items.includes(it.id); const st=on?(fail.has(it.id)?'bad':'good'):'';
     return `<button data-id="${it.id}" aria-pressed="${on}" title="${it.name}">${svg(ICONS[iconKind(it)])}<span class="nm">${it.name}</span><span class="st ${st}"></span></button>`; }).join('');
 }
-drop.addEventListener('click',e=>{ const b=e.target.closest('button[data-id]'); if(!b) return; const id=b.dataset.id;
+let fillSeed=Math.floor(Math.random()*1e9);
+function rng(seed){ let a=seed>>>0; return ()=>{ a=(a+0x6D2B79F5)>>>0; let t=a; t=Math.imul(t^t>>>15,t|1); t^=t+Math.imul(t^t>>>7,t|61); return ((t^t>>>14)>>>0)/4294967296; }; }
+function autoFill(){
+  const box=A(), r=rng(fillSeed++), pool=allItems().slice();
+  for(let i=pool.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+  const pick=[];
+  for(const it of pool){ const next=pick.concat(it); if(pack(box,next).every(x=>!x.fail)) pick.push(it); }
+  S.items=pick.map(i=>i.id); store.set('items',S.items); Object.keys(FAILS).forEach(k=>delete FAILS[k]);
+  renderItemChips(); update(); renderDrop(); renderItemsBtn(); kick();
+  const vol=pick.reduce((s,i)=>s+i.d[0]*i.d[1]*i.d[2]/1e6,0), cav=cavityLitres(box);
+  toast(`<b>Подобрал ${pick.length} ${pick.length===1?'вещь':pick.length<5?'вещи':'вещей'}</b>Занято примерно ${Math.round(vol/cav*100)}% полезного объёма. Нажмите ещё раз, будет другой набор.`);
+}
+drop.addEventListener('click',e=>{ if(e.target.closest('[data-auto]')){ autoFill(); return; } const b=e.target.closest('button[data-id]'); if(!b) return; const id=b.dataset.id;
   S.items=S.items.includes(id)?S.items.filter(i=>i!==id):S.items.concat(id); store.set('items',S.items); renderItemChips(); update(); renderDrop(); renderItemsBtn(); kick(); });
 itemsBtn.addEventListener('click',()=>{ const o=drop.hidden; drop.hidden=!o; itemsBtn.setAttribute('aria-expanded',String(o)); if(o){ renderDrop(); placeBoxUI(); } });
 document.addEventListener('pointerdown',e=>{ if(!drop.hidden&&!e.target.closest('.itemsDrop')&&e.target!==itemsBtn&&!itemsBtn.contains(e.target)){ drop.hidden=true; itemsBtn.setAttribute('aria-expanded','false'); } });
