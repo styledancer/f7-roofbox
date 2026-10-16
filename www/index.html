@@ -7,7 +7,7 @@
 /* Layout: sticky 3D stage on top (phone) or left (desktop); tool panel of selectors, verdicts and a comparison table */
 :root{
   --bg:#EDF0F3; --panel:#FFFFFF; --ink:#16202B; --muted:#5E6B78; --line:#D6DCE3;
-  --accent:#2B59E0; --accent-soft:#E3EAFD; --stage:#E2E7ED; --grid:#C3CCD6; --soil:#C9A86E; --grass:#BC9A62; --rock:#857B6E; --asphalt:#3C3F44; --lane:#F2F2EE; --glass:rgba(250,251,253,.66); --glass-line:rgba(22,32,43,.12); --glass-shadow:rgba(22,32,43,.10);
+  --accent:#2B59E0; --accent-soft:#E3EAFD; --stage:#E2E7ED; --grid:#C3CCD6; --soil:#C9A86E; --grass:#BC9A62; --rock:#857B6E; --asphalt:#3C3F44; --lane:#F2F2EE; --glass:rgba(250,251,253,.66); --lg-base:rgba(255,255,255,.38); --lg-hi:rgba(255,255,255,.62); --lg-mid:rgba(255,255,255,.14); --lg-edge:rgba(255,255,255,.75); --lg-in:rgba(255,255,255,.95); --lg-shadow:rgba(20,30,45,.16); --tab-on-hi:rgba(255,255,255,.7); --glass-line:rgba(22,32,43,.12); --glass-shadow:rgba(22,32,43,.10);
   --good:#1D8A57; --warn:#A86C12; --bad:#C2362B;
   --a:#2B59E0; --b:#C96A12;
   --good-bg:#E2F3EA; --warn-bg:#FBF0DC; --bad-bg:#FBE4E1; --tabbar-bg:rgba(250,250,252,.9); --tab-on:rgba(20,24,30,.09);
@@ -17,12 +17,12 @@
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#0F1318; --panel:#171C23; --ink:#E6EBF1; --muted:#95A2B0; --line:#29313B;
-  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#5C4E36; --grass:#544732; --rock:#5A554D; --asphalt:#222428; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
+  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#5C4E36; --grass:#544732; --rock:#5A554D; --asphalt:#222428; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --lg-base:rgba(28,33,40,.42); --lg-hi:rgba(255,255,255,.16); --lg-mid:rgba(255,255,255,.03); --lg-edge:rgba(255,255,255,.2); --lg-in:rgba(255,255,255,.28); --lg-shadow:rgba(0,0,0,.4); --tab-on-hi:rgba(255,255,255,.2); --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
   --good:#4CC38A; --warn:#E3A642; --bad:#F27367;
   --a:#86A2FF; --b:#F0A04B; --good-bg:#13291F; --warn-bg:#2E2412; --bad-bg:#331816; --tabbar-bg:rgba(30,33,38,.9); --tab-on:rgba(255,255,255,.12); color-scheme:dark } }
 :root[data-theme="dark"]{
   --bg:#0F1318; --panel:#171C23; --ink:#E6EBF1; --muted:#95A2B0; --line:#29313B;
-  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#5C4E36; --grass:#544732; --rock:#5A554D; --asphalt:#222428; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
+  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#5C4E36; --grass:#544732; --rock:#5A554D; --asphalt:#222428; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --lg-base:rgba(28,33,40,.42); --lg-hi:rgba(255,255,255,.16); --lg-mid:rgba(255,255,255,.03); --lg-edge:rgba(255,255,255,.2); --lg-in:rgba(255,255,255,.28); --lg-shadow:rgba(0,0,0,.4); --tab-on-hi:rgba(255,255,255,.2); --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
   --good:#4CC38A; --warn:#E3A642; --bad:#F27367;
   --a:#86A2FF; --b:#F0A04B; --good-bg:#13291F; --warn-bg:#2E2412; --bad-bg:#331816; --tabbar-bg:rgba(30,33,38,.9); --tab-on:rgba(255,255,255,.12); color-scheme:dark }
 
@@ -50,7 +50,9 @@ h1 span{color:var(--accent)}
 .stage.full{position:fixed;inset:0;z-index:50;height:auto;min-height:0;border-radius:0;border:0;margin:0;
   --it:env(safe-area-inset-top,0px);--ir:env(safe-area-inset-right,0px);--ib:env(safe-area-inset-bottom,0px);--il:env(safe-area-inset-left,0px)}
 body.lock{overflow:hidden}
-.glass{background:var(--glass);border:1px solid var(--glass-line);color:var(--ink);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);box-shadow:0 2px 12px var(--glass-shadow)}
+.glass,.tabbar{background:linear-gradient(180deg,var(--lg-hi) 0%,var(--lg-mid) 48%,var(--lg-mid) 70%,var(--lg-hi) 130%),var(--lg-base);border:1px solid var(--lg-edge);color:var(--ink);
+  -webkit-backdrop-filter:blur(24px) saturate(1.25) brightness(1.08);backdrop-filter:blur(24px) saturate(1.25) brightness(1.08);
+  box-shadow:inset 0 1px .5px var(--lg-in),inset 0 -1px 1px var(--lg-mid),inset 0 0 14px var(--lg-mid),0 6px 22px var(--lg-shadow)}
 .ov{position:absolute;z-index:4;display:flex;gap:6px;pointer-events:none}
 .ov>*{pointer-events:auto}
 .ov[hidden]{display:none}
@@ -285,12 +287,11 @@ h2 .badge{margin-left:4px}
 .keyin{font:400 .82rem var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;width:100%;min-width:0}
 .keyrow{display:grid;gap:4px}
 /* bottom tab bar: the 3D scene, info about the fit, settings */
-.tabbar{position:fixed;z-index:45;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));width:min(400px,calc(100% - 32px));
-  display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:6px;border-radius:28px;background:var(--tabbar-bg);border:1px solid var(--glass-line);
-  -webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 4px 18px var(--glass-shadow)}
-.tabbar button{display:grid;justify-items:center;gap:2px;padding:7px 4px 6px;border:0;border-radius:22px;background:transparent;color:var(--ink);font:500 .76rem var(--body);cursor:pointer}
-.tabbar svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.tabbar button[aria-selected="true"]{background:var(--tab-on);font-weight:700}
+.tabbar{position:fixed;z-index:45;left:50%;transform:translateX(-50%);bottom:calc(8px + env(safe-area-inset-bottom,0px));width:auto;
+  display:grid;grid-template-columns:repeat(3,auto);gap:2px;padding:4px;border-radius:26px}
+.tabbar button{display:grid;justify-items:center;gap:1px;min-width:78px;padding:5px 12px 4px;border:0;border-radius:22px;background:transparent;color:var(--ink);font:500 .7rem var(--body);cursor:pointer}
+.tabbar svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tabbar button[aria-selected="true"]{background:linear-gradient(180deg,var(--tab-on-hi),var(--tab-on));box-shadow:inset 0 1px .5px var(--lg-in),0 1px 4px var(--lg-shadow);font-weight:700}
 .stage.full~.tabbar,body.lock .tabbar{display:none}
 .pghead{font-family:var(--display);font-weight:700;font-size:1.5rem;margin:4px 0 2px}
 .tabpage{display:flex;flex-direction:column;gap:14px}
@@ -298,7 +299,7 @@ body[data-tab="scene"] .panel{display:none}
 body[data-tab="info"] #pgSet, body[data-tab="set"] #pgInfo, body[data-tab="set"] #pgInfo2{display:none}
 .more{display:none!important}
 @media (max-width:899px){
-  .stage{--ib:76px}
+  .stage{--ib:64px}
   .panel{position:fixed;inset:0;z-index:40;overflow:auto;background:var(--bg);padding:calc(14px + env(safe-area-inset-top,0px)) max(16px, env(safe-area-inset-right,0px)) calc(110px + env(safe-area-inset-bottom,0px)) max(16px, env(safe-area-inset-left,0px));overscroll-behavior:contain}
 }
 @media (min-width:900px){ body[data-tab="scene"] .app{grid-template-columns:minmax(0,1fr)} body{padding-bottom:96px} }
@@ -1902,6 +1903,11 @@ $('cAdd').addEventListener('click',()=>{
 let toastTimer=0, tgLimit=OPEN_ANG, tgBounce=0;
 const TOAST_IC={bad:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>', good:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/>', info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>'};
 function hideToast(){ const t=$('toast'); t.classList.remove('show','drag'); t.style.transform=''; t.style.opacity=''; }
+function placeViewBtn(){ const tl=document.querySelector('.ov.tl'), pk=$('picks'); if(!tl||!pk) return;
+  const sr=stage.getBoundingClientRect(), pr=pk.getBoundingClientRect(); if(!pr.height) return;
+  let top=pr.top; pk.querySelectorAll('*').forEach(e=>{ const r=e.getBoundingClientRect(); if(r.height&&r.left<sr.left+120) top=Math.min(top,r.top); });
+  tl.style.bottom=Math.round(sr.bottom-top+8)+'px'; }
+new ResizeObserver(placeViewBtn).observe($('picks')); addEventListener('resize',placeViewBtn); setTimeout(placeViewBtn,300);
 function setTab(t){ document.body.dataset.tab=t; document.querySelectorAll('#tabbar [data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===t)));
   if(t!=='scene'){ $('panel').scrollTop=0; closePops&&closePops(); } else { ORB.last=performance.now()-ORB.IDLE+4000; kick(); } }
 document.querySelectorAll('#tabbar [data-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
