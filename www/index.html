@@ -796,7 +796,8 @@ tl.position.set(M(4692-HX), M(1010-HY), 0); tgPivot.add(tl);
 // everything above is the simplified body; it is hidden once the detailed model has loaded
 const procParts=car.children.slice();
 const RAIL_Z=0.54;
-// roof rails
+// roof rails of the simplified body (the detailed models have their own, so these go with procParts)
+const n0=car.children.length;
 [-1,1].forEach(side=>{
   const rail=new THREE.Mesh(new THREE.BoxGeometry(M(CAR.railTo-CAR.railFrom),0.035,0.035), railMat);
   rail.position.set(X((CAR.railFrom+CAR.railTo)/2), M(1672), side*RAIL_Z); rail.castShadow=true; car.add(rail);
@@ -804,6 +805,7 @@ const RAIL_Z=0.54;
     const leg=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.06,0.04), railMat); leg.position.set(X(px), M(1640), side*RAIL_Z); car.add(leg);
   });
 });
+procParts.push(...car.children.slice(n0));
 
 /* detailed body: Haval F7 by MattDoesBlender (Sketchfab, CC BY 4.0).
    The source is a game asset: about 12% oversize, front towards -Z, one loose wheel.
