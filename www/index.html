@@ -7,7 +7,7 @@
 /* Layout: sticky 3D stage on top (phone) or left (desktop); tool panel of selectors, verdicts and a comparison table */
 :root{
   --bg:#EDF0F3; --panel:#FFFFFF; --ink:#16202B; --muted:#5E6B78; --line:#D6DCE3;
-  --accent:#2B59E0; --accent-soft:#E3EAFD; --stage:#E2E7ED; --grid:#C3CCD6; --soil:#C9A86E; --grass:#BC9A62; --rock:#857B6E; --asphalt:#3C3F44; --lane:#F2F2EE; --glass:rgba(250,251,253,.66); --lg-base:rgba(255,255,255,.38); --lg-hi:rgba(255,255,255,.62); --lg-mid:rgba(255,255,255,.14); --lg-edge:rgba(255,255,255,.75); --lg-in:rgba(255,255,255,.95); --lg-shadow:rgba(20,30,45,.16); --tab-on-hi:rgba(255,255,255,.7); --tabbar-knob:#F4F6F9; --glass-line:rgba(22,32,43,.12); --glass-shadow:rgba(22,32,43,.10);
+  --accent:#2B59E0; --accent-soft:#E3EAFD; --stage:#E2E7ED; --grid:#C3CCD6; --soil:#C9A86E; --grass:#BC9A62; --rock:#857B6E; --asphalt:#3C3F44; --lane:#F2F2EE; --glass:rgba(250,251,253,.66); --lg-base:rgba(255,255,255,.38); --lg-hi:rgba(255,255,255,.62); --lg-mid:rgba(255,255,255,.14); --lg-edge:rgba(255,255,255,.75); --lg-in:rgba(255,255,255,.95); --lg-shadow:rgba(20,30,45,.16); --tab-on-hi:rgba(255,255,255,.7); --tabbar-knob:#F4F6F9; --press-glass:rgba(255,255,255,.58); --press-tab:rgba(255,255,255,.4); --press-soft:rgba(140,155,175,.16); --glass-line:rgba(22,32,43,.12); --glass-shadow:rgba(22,32,43,.10);
   --good:#1D8A57; --warn:#A86C12; --bad:#C2362B;
   --a:#2B59E0; --b:#C96A12;
   --good-bg:#E2F3EA; --warn-bg:#FBF0DC; --bad-bg:#FBE4E1; --tabbar-bg:rgba(250,250,252,.9); --tab-on:rgba(20,24,30,.09);
@@ -17,20 +17,20 @@
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#0F1318; --panel:#171C23; --ink:#E6EBF1; --muted:#95A2B0; --line:#29313B;
-  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#5C4E36; --grass:#544732; --rock:#5A554D; --asphalt:#222428; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --lg-base:rgba(28,33,40,.42); --lg-hi:rgba(255,255,255,.16); --lg-mid:rgba(255,255,255,.03); --lg-edge:rgba(255,255,255,.2); --lg-in:rgba(255,255,255,.28); --lg-shadow:rgba(0,0,0,.4); --tab-on-hi:rgba(255,255,255,.2); --tabbar-knob:#2A2F37; --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
+  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#5C4E36; --grass:#544732; --rock:#5A554D; --asphalt:#222428; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --lg-base:rgba(28,33,40,.42); --lg-hi:rgba(255,255,255,.16); --lg-mid:rgba(255,255,255,.03); --lg-edge:rgba(255,255,255,.2); --lg-in:rgba(255,255,255,.28); --lg-shadow:rgba(0,0,0,.4); --tab-on-hi:rgba(255,255,255,.2); --tabbar-knob:#2A2F37; --press-glass:rgba(70,78,90,.62); --press-tab:rgba(255,255,255,.08); --press-soft:rgba(255,255,255,.07); --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
   --good:#4CC38A; --warn:#E3A642; --bad:#F27367;
   --a:#86A2FF; --b:#F0A04B; --good-bg:#13291F; --warn-bg:#2E2412; --bad-bg:#331816; --tabbar-bg:rgba(30,33,38,.9); --tab-on:rgba(255,255,255,.12); color-scheme:dark } }
 :root[data-theme="dark"]{
   --bg:#0F1318; --panel:#171C23; --ink:#E6EBF1; --muted:#95A2B0; --line:#29313B;
-  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#5C4E36; --grass:#544732; --rock:#5A554D; --asphalt:#222428; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --lg-base:rgba(28,33,40,.42); --lg-hi:rgba(255,255,255,.16); --lg-mid:rgba(255,255,255,.03); --lg-edge:rgba(255,255,255,.2); --lg-in:rgba(255,255,255,.28); --lg-shadow:rgba(0,0,0,.4); --tab-on-hi:rgba(255,255,255,.2); --tabbar-knob:#2A2F37; --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
+  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#5C4E36; --grass:#544732; --rock:#5A554D; --asphalt:#222428; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --lg-base:rgba(28,33,40,.42); --lg-hi:rgba(255,255,255,.16); --lg-mid:rgba(255,255,255,.03); --lg-edge:rgba(255,255,255,.2); --lg-in:rgba(255,255,255,.28); --lg-shadow:rgba(0,0,0,.4); --tab-on-hi:rgba(255,255,255,.2); --tabbar-knob:#2A2F37; --press-glass:rgba(70,78,90,.62); --press-tab:rgba(255,255,255,.08); --press-soft:rgba(255,255,255,.07); --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
   --good:#4CC38A; --warn:#E3A642; --bad:#F27367;
   --a:#86A2FF; --b:#F0A04B; --good-bg:#13291F; --warn-bg:#2E2412; --bad-bg:#331816; --tabbar-bg:rgba(30,33,38,.9); --tab-on:rgba(255,255,255,.12); color-scheme:dark }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 button:focus:not(:focus-visible),a:focus:not(:focus-visible){outline:none}
-.glass:active{--lg-base:rgba(255,255,255,.58)}
-:is(button,a,.opt2):not(.glass):not([aria-pressed="true"]):not([aria-selected="true"]):active{background-color:rgba(140,155,175,.16)}
-.tabbar button:not([aria-selected="true"]):active{background:rgba(255,255,255,.4)}
+:is(button,a).glass:not([aria-pressed="true"]):not([aria-expanded="true"]):active{--lg-base:var(--press-glass)}
+:is(button,a,.opt2):not(.glass):not([aria-pressed="true"]):not([aria-selected="true"]):active{background-color:var(--press-soft)}
+.tabbar button:not([aria-selected="true"]):active{background:var(--press-tab)}
 :root{--r:14px;--ri:10px;--rl:18px;--rli:14px}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;
   padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:12px 32px}
@@ -1413,6 +1413,7 @@ let running=false;
 function kick(){ if(!running){running=true; requestAnimationFrame(loop);} }
 let boxOnly=false;
 function render(){
+  STARS.p.position.copy(camera.position);
   scene.updateMatrixWorld(); camera.updateMatrixWorld();   // project overlays with this frame's camera, not the previous one
   if(typeof placeSideBtns==='function') try{ placeSideBtns(); placeTgBtn(); placeBoxUI(); }catch(e){}
   if(!boxOnly){ renderer.render(scene,camera); return; }
@@ -1473,7 +1474,7 @@ function stepOrbit(dt){
 let tapP=null;
 renderer.domElement.addEventListener('pointerdown',e=>{ tapP={x:e.clientX,y:e.clientY,t:performance.now()}; },{passive:true});
 renderer.domElement.addEventListener('pointerup',e=>{ if(!tapP) return; const m=Math.hypot(e.clientX-tapP.x,e.clientY-tapP.y), d=performance.now()-tapP.t; tapP=null;
-  if(m<10&&d<350&&typeof setDrop==='function'&&!drop.hidden) setDrop(false); },{passive:true});
+  if(m<10&&d<350){ if(typeof setDrop==='function'&&!drop.hidden) setDrop(false); if(moveMode){ moveMode=false; moveBtn.setAttribute('aria-pressed','false'); kick(); } } },{passive:true});
 setInterval(()=>{ if(orbitAllowed()) kick(); },1000);
 
 /* ---------- UI ---------- */
@@ -2411,7 +2412,7 @@ const sst=(a,b,x)=>{ const t=Math.max(0,Math.min(1,(x-a)/(b-a))); return t*t*(3-
 function todNow(){ const p=sunPos(Date.now(),WX_CITY.lat,WX_CITY.lon);
   return {night:1-sst(-7,-1,p.el), golden:sst(-6,1,p.el)*(1-sst(5,16,p.el)), el:p.el, az:p.az}; }
 const WX={mode:store.get('wxMode','live'), data:store.get('wxData',null), err:false,
-  k:{cloud:0, rain:0, snow:0, fog:0, night:0, wind:0, windDir:0}, cur:{cloud:0, rain:0, snow:0, fog:0, night:0, golden:0, sx:-4, sy:8, sz:5}};
+  k:{cloud:0, rain:0, snow:0, fog:0, night:0, wind:0, windDir:0}, cur:{cloud:0, rain:0, snow:0, fog:0, night:0, golden:0, stars:0, sx:-4, sy:8, sz:5}};
 function wmo(c){ // WMO weather code -> what to draw
   if(c===0||c===1) return {cloud:c*0.2};
   if(c===2) return {cloud:0.5}; if(c===3) return {cloud:0.9};
@@ -2424,15 +2425,15 @@ function wmo(c){ // WMO weather code -> what to draw
 }
 const WMO_RU=c=>c===0?'ясно':c<=2?'малооблачно':c===3?'пасмурно':(c===45||c===48)?'туман':c<=57?'морось':c<=67?'дождь':c<=77?'снег':c<=82?'ливень':c<=86?'снегопад':'гроза';
 function wxTargets(){
-  const m=WX.mode, z={cloud:0, rain:0, snow:0, fog:0, night:0, golden:0, sx:-4, sy:8, sz:5, wind:0, windDir:0};
+  const m=WX.mode, z={cloud:0, rain:0, snow:0, fog:0, night:0, golden:0, stars:0, sx:-4, sy:8, sz:5, wind:0, windDir:0};
   // low sun from the front-left of the 3/4 view at dawn, from the rear-right at dusk
   const lowSun=(dusk,el)=>{ const h=Math.max(1.4,Math.min(8,1.4+el*0.35)); return dusk?{sx:9,sy:h,sz:-5}:{sx:-9,sy:h,sz:6}; };
   if(m==='off'||boxOnly) return z;
   if(m==='live'){ const d=WX.data&&WX.data.current, t=todNow(), dusk=new Date().getHours()>=12;
     const base=d?Object.assign(z, wmo(d.weather_code), {wind:d.wind_speed_10m||0, windDir:d.wind_direction_10m||0}):z;
-    return Object.assign(base, {night:t.night, golden:t.golden*(1-0.7*(base.cloud||0))}, t.golden>0.02?lowSun(dusk,t.el):{}); }
-  return Object.assign(z,{clear:{}, dawn:Object.assign({golden:1, night:0.12, cloud:0.15},lowSun(false,2)), dusk:Object.assign({golden:1, night:0.18, cloud:0.2},lowSun(true,1)),
-    cloudy:{cloud:0.95}, rain:{cloud:0.95, rain:0.8, wind:4}, snow:{cloud:0.9, snow:0.8, wind:2}, fog:{cloud:0.8, fog:1}, night:{night:1, cloud:0.2}}[m]);
+    return Object.assign(base, {night:t.night, stars:sst(-3,-16,t.el), golden:t.golden*(1-0.7*(base.cloud||0))}, t.golden>0.02?lowSun(dusk,t.el):{}); }
+  return Object.assign(z,{clear:{}, dawn:Object.assign({golden:1, night:0.12, cloud:0.15},lowSun(false,2)), dusk:Object.assign({golden:1, night:0.18, stars:0.12, cloud:0.2},lowSun(true,1)),
+    cloudy:{cloud:0.95}, rain:{cloud:0.95, rain:0.8, wind:4}, snow:{cloud:0.9, snow:0.8, wind:2}, fog:{cloud:0.8, fog:1}, night:{night:1, stars:1, cloud:0.1}}[m]);
 }
 async function fetchWeather(first){
   if(WX.mode!=='live') return;
@@ -2455,7 +2456,7 @@ const snowPts=new THREE.Points(snowGeo,snowMat); snowPts.frustumCulled=false; sn
 let wxT=0;
 function stepWeather(dt){
   const t=wxTargets(), c=WX.cur, k=Math.min(1,dt*3); let moving=false;
-  ['cloud','rain','snow','fog','night','golden','sx','sy','sz'].forEach(n=>{ const d=t[n]-c[n]; if(Math.abs(d)>0.002){ c[n]+=d*k; moving=true; } else c[n]=t[n]; });
+  ['cloud','rain','snow','fog','night','golden','stars','sx','sy','sz'].forEach(n=>{ const d=t[n]-c[n]; if(Math.abs(d)>0.002){ c[n]+=d*k; moving=true; } else c[n]=t[n]; });
   WX.k=Object.assign({},c,{wind:t.wind, windDir:t.windDir});
   if(moving) applyWeatherScene();
   wxT+=dt; const wx=-(t.wind||0)*0.35+speed; // wind and our own driving push the drops backwards
@@ -2489,6 +2490,14 @@ const headlights=[1,-1].map(sd=>{
   return {L,b};
 });
 const BASE={sun:sun.intensity, hemi:hemi.intensity, fill:fill.intensity, exp:renderer.toneMappingExposure};
+// stars: a dome of points that follows the camera; they appear in twilight and get brighter the darker it is
+const STARS=(()=>{ const n=1600, pos=new Float32Array(n*3), col=new Float32Array(n*3); let a=987654321; const r=()=>{ a=(a*16807)%2147483647; return a/2147483647; };
+  for(let i=0;i<n;i++){ const u=r(), v=0.03+0.97*Math.pow(r(),0.8), th=u*Math.PI*2, ph=Math.asin(v), R=85;
+    pos[i*3]=R*Math.cos(ph)*Math.cos(th); pos[i*3+1]=R*Math.sin(ph); pos[i*3+2]=R*Math.cos(ph)*Math.sin(th);
+    const b=0.35+0.65*Math.pow(r(),3), t=r(); col[i*3]=b*(t<0.15?0.8:1); col[i*3+1]=b*0.95; col[i*3+2]=b*(t>0.85?0.8:1); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  const m=new THREE.PointsMaterial({size:2.1, sizeAttenuation:false, vertexColors:true, transparent:true, opacity:0, depthWrite:false, fog:false});
+  const p=new THREE.Points(g,m); p.frustumCulled=false; p.renderOrder=-1; p.visible=false; scene.add(p); return {p,m}; })();
 const skyCv=document.createElement('canvas'); skyCv.width=2; skyCv.height=256; const skyCtx=skyCv.getContext('2d'), skyTex=new THREE.CanvasTexture(skyCv);
 function applyWeatherScene(){
   const c=WX.cur, stage=new THREE.Color(css('--stage'));
@@ -2505,6 +2514,7 @@ function applyWeatherScene(){
   if(gd>0.01) hemi.color.lerp(new THREE.Color(0xffd2b0),gd*0.45);
   sun.shadow.radius=1+6*c.cloud;
   renderer.toneMappingExposure=BASE.exp*(1-0.3*c.night)*(1-0.06*gd);
+  const st=(c.stars||0)*(1-c.cloud*0.9)*(1-c.fog)*(1-Math.max(c.rain,c.snow)*0.9); STARS.m.opacity=st; STARS.p.visible=st>0.01;
   // the studio reflections would keep everything lit at night: dim them with the light
   const envK=(1-0.88*c.night)*(1-0.35*c.cloud);
   scene.traverse(o=>{ if(!o.isMesh) return; (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{ if(m&&'envMapIntensity' in m){ if(m.userData.envBase===undefined) m.userData.envBase=m.envMapIntensity; m.envMapIntensity=m.userData.envBase*envK; } }); });
@@ -2770,7 +2780,8 @@ function fadeEl(el,al){ el.style.opacity=al.toFixed(3); el.style.pointerEvents=a
 function placeBoxUI(){
   stage.classList.toggle('dropOpen',!drop.hidden);
   const a=A(), idle=drive.mode==='idle'&&speed<0.05&&!!a, al=boxUIAlpha();
-  fadeEl(itemsBtn,Math.max(al,0.85)); [moveBtn,resetBtn].forEach(b=>fadeEl(b,itemsOpen?0:al)); arrows.forEach(x=>fadeEl(x.el,al)); sideBtns.forEach(b=>fadeEl(b,al));
+  if(boxOnly&&moveMode){ moveMode=false; moveBtn.setAttribute('aria-pressed','false'); }
+  fadeEl(itemsBtn,moveMode?0:Math.max(al,0.85)); [moveBtn,resetBtn].forEach(b=>fadeEl(b,(itemsOpen||boxOnly)?0:al)); arrows.forEach(x=>fadeEl(x.el,al)); sideBtns.forEach(b=>fadeEl(b,moveMode?0:al)); fadeEl(tgSide,moveMode?0:0.85);
   [itemsBtn,moveBtn].forEach(b=>b.hidden=!idle); resetBtn.hidden=!(idle&&moveMode);
   if(!idle){ if(!drop.hidden) setTimeout(()=>setDrop(false)); arrows.forEach(x=>x.el.hidden=true); return; }
   const top=boxGroup.localToWorld(new THREE.Vector3(M(a.L)*0.5,M(a.H)+0.22,0)), sp=scr(top);
