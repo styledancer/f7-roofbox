@@ -1096,7 +1096,7 @@ const matB=new THREE.MeshPhysicalMaterial({color:0x141619, metalness:0.1, roughn
 const edgeA=new THREE.LineBasicMaterial({color:0x2B59E0}), edgeB=new THREE.LineBasicMaterial({color:0xD9822B});
 const boxGroup=new THREE.Group(), cmpGroup=new THREE.Group(), itemsGroup=new THREE.Group();
 car.add(boxGroup); car.add(cmpGroup);
-let ghost=false;
+let ghost=false, itemsOpen=false;   // the items menu forces the see-through box so you watch things go in
 // boxes are drawn in their factory finish; the wireframe ("каркас") view is optional and turns on by itself when two boxes are compared
 function boxFinish(box){ const id=S.boxColor[box.id]; return box.colors.find(c=>c.id===id)||box.colors[0]; }
 function applyBoxMat(mat, box, wire, accent){
@@ -1849,7 +1849,7 @@ function update(){
   const bf=b?bFront():0, eB=b?evaluate(b,bf):null;
   if(b) cmpGroup.position.set(X(bf), M(S.barTop)+0.002, M(S.boxZ));
   cmpGroup.visible=!!b;
-  setGhost(S.wire===null?!!b:S.wire);
+  setGhost(itemsOpen||(S.wire===null?!!b:S.wire));
 
   $('alignWrap').hidden=!b; $('cmpSec').hidden=!b; $('showIn').hidden=!b;
   document.querySelectorAll('#alignWrap button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.align===S.align)));
@@ -2690,8 +2690,10 @@ function autoFill(){
 }
 drop.addEventListener('click',e=>{ ORB.last=performance.now(); ORB.v=0; if(e.target.closest('[data-clear]')){ S.items=[]; store.set('items',S.items); Object.keys(FAILS).forEach(k=>delete FAILS[k]); renderItemChips(); update(); renderDrop(); renderItemsBtn(); kick(); return; } if(e.target.closest('[data-auto]')){ autoFill(); return; } const b=e.target.closest('button[data-id]'); if(!b) return; const id=b.dataset.id;
   S.items=S.items.includes(id)?S.items.filter(i=>i!==id):S.items.concat(id); store.set('items',S.items); renderItemChips(); update(); renderDrop(); renderItemsBtn(); kick(); });
-itemsBtn.addEventListener('click',()=>{ ORB.last=performance.now(); ORB.v=0; const o=drop.hidden; drop.hidden=!o; itemsBtn.setAttribute('aria-expanded',String(o)); if(o){ renderDrop(); placeBoxUI(); } });
-document.addEventListener('pointerdown',e=>{ if(!drop.hidden&&!e.target.closest('.itemsDrop')&&e.target!==itemsBtn&&!itemsBtn.contains(e.target)&&e.target!==renderer.domElement){ drop.hidden=true; itemsBtn.setAttribute('aria-expanded','false'); kick(); } });
+function setDrop(open){ if(drop.hidden===!open&&itemsOpen===open) return; drop.hidden=!open; itemsBtn.setAttribute('aria-expanded',String(open)); itemsOpen=open;
+  if(open) renderDrop(); setGhost(open||(S.wire===null?!!B():S.wire)); placeBoxUI(); kick(); }
+itemsBtn.addEventListener('click',()=>{ ORB.last=performance.now(); ORB.v=0; setDrop(drop.hidden); });
+document.addEventListener('pointerdown',e=>{ if(!drop.hidden&&!e.target.closest('.itemsDrop')&&e.target!==itemsBtn&&!itemsBtn.contains(e.target)&&e.target!==renderer.domElement){ setDrop(false); } });
 renderItemsBtn();
 // position guides: drag an arrow along its axis, or tap it for a 20 mm step
 let moveMode=false;
@@ -2736,7 +2738,7 @@ function placeBoxUI(){
   const a=A(), idle=drive.mode==='idle'&&speed<0.05&&!!a, al=boxUIAlpha();
   fadeEl(itemsBtn,Math.max(al,0.85)); [moveBtn,resetBtn].forEach(b=>fadeEl(b,al)); arrows.forEach(x=>fadeEl(x.el,al)); sideBtns.forEach(b=>fadeEl(b,al));
   [itemsBtn,moveBtn].forEach(b=>b.hidden=!idle); resetBtn.hidden=!(idle&&moveMode);
-  if(!idle){ drop.hidden=true; arrows.forEach(x=>x.el.hidden=true); return; }
+  if(!idle){ if(!drop.hidden) setTimeout(()=>setDrop(false)); arrows.forEach(x=>x.el.hidden=true); return; }
   const top=boxGroup.localToWorld(new THREE.Vector3(M(a.L)*0.5,M(a.H)+0.22,0)), sp=scr(top);
   itemsBtn.hidden=!sp.ok; moveBtn.hidden=!sp.ok; resetBtn.hidden=!(sp.ok&&moveMode); resetBtn.style.left=(sp.x+72)+'px'; resetBtn.style.top=sp.y+'px';
   itemsBtn.style.left=(sp.x-24)+'px'; itemsBtn.style.top=sp.y+'px'; moveBtn.style.left=(sp.x+24)+'px'; moveBtn.style.top=sp.y+'px';
