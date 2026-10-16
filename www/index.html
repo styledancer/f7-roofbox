@@ -55,6 +55,9 @@ h1 span{color:var(--accent)}
 .stage.full{position:fixed;inset:0;z-index:50;height:auto;min-height:0;border-radius:0;border:0;margin:0;
   --it:env(safe-area-inset-top,0px);--ir:env(safe-area-inset-right,0px);--ib:env(safe-area-inset-bottom,0px);--il:env(safe-area-inset-left,0px)}
 body.lock{overflow:hidden}
+html,body{overscroll-behavior:none}
+.itemsDrop,.pop,.panel{overscroll-behavior:contain}
+@media (max-width:899px){ html:has(body[data-tab="scene"]),body[data-tab="scene"]{overflow:hidden;height:100%} body[data-tab="scene"]{padding-bottom:0} }
 .glass,.tabbar{background:linear-gradient(180deg,var(--lg-hi) 0%,var(--lg-mid) 48%,var(--lg-mid) 70%,var(--lg-hi) 130%),var(--lg-base);border:1px solid var(--lg-edge);color:var(--ink);
   -webkit-backdrop-filter:blur(24px) saturate(1.25) brightness(1.08);backdrop-filter:blur(24px) saturate(1.25) brightness(1.08);
   box-shadow:inset 0 1px .5px var(--lg-in),inset 0 -1px 1px var(--lg-mid),inset 0 0 14px var(--lg-mid),0 6px 22px var(--lg-shadow)}
@@ -332,6 +335,8 @@ body[data-tab="info"] #pgSet, body[data-tab="set"] #pgInfo, body[data-tab="set"]
 @keyframes tk1{0%{transform:none}45%{transform:translateX(-6px)}100%{transform:none}}
 @keyframes tk2{0%{transform:none}45%{transform:translateX(6px)}100%{transform:none}}
 @media (min-width:900px){ body[data-tab="scene"] .app{grid-template-columns:minmax(0,1fr)} body{padding-bottom:96px} }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .itemsDrop{--lg-base:rgba(16,20,26,.78);--lg-hi:rgba(255,255,255,.07)} }
+:root[data-theme="dark"] .itemsDrop{--lg-base:rgba(16,20,26,.78);--lg-hi:rgba(255,255,255,.07)}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}.spin{animation-duration:3s}}
 </style>
 
@@ -549,7 +554,7 @@ const CARDEF=CARS[CAR_ID];
 const CAR=Object.assign({},CARDEF.dims);
 const HFIX=CARDEF.hFix||0; // S.barTop is in the 3D model's frame; real heights add HFIX
 const CK=k=>(CAR_ID==='haval'||!['barTop','barFront','spacing','color'].includes(k))?k:CAR_ID+'.'+k;
-const OPEN_ANG = 92*Math.PI/180;
+const OPEN_ANG = 84*Math.PI/180;   // from a photo of the real F7: the lid ends a little above horizontal
 const BOXES = [
   {id:'m3-m',   brand:'Thule', model:'Motion 3 M',       L:1750, W:840, H:440, V:400, Li:1640, Wi:690, Hi:390, shop:'https://www.thule.com/ru-ru/cargo-carrier/car-top-carrier/thule-motion-3-m-_-639200'},
   {id:'m3-l',   brand:'Thule', model:'Motion 3 L',       L:1940, W:870, H:420, V:440, prof:'l', shop:'https://www.thule.com/ru-ru/cargo-carrier/car-top-carrier/thule-motion-3-l-_-639701'},
@@ -1941,11 +1946,14 @@ $('cAdd').addEventListener('click',()=>{
 let toastTimer=0, tgLimit=OPEN_ANG, tgBounce=0;
 const TOAST_IC={bad:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>', good:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/>', info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>'};
 function hideToast(){ const t=$('toast'); t.classList.remove('show','drag'); t.style.transform=''; t.style.opacity=''; }
-function placeViewBtn(){ const tl=document.querySelector('.ov.tl'), pk=$('picks'); if(!tl||!pk) return;
+function fitBottomInset(){ if(stage.classList.contains('full')||document.fullscreenElement){ stage.style.removeProperty('--ib'); return; }
+  const tb=$('tabbar'); if(!tb||getComputedStyle(tb).display==='none') return; const sr=stage.getBoundingClientRect(), tr=tb.getBoundingClientRect();
+  stage.style.setProperty('--ib',Math.max(0,Math.round(sr.bottom-tr.top+2))+'px'); }
+function placeViewBtn(){ fitBottomInset(); const tl=document.querySelector('.ov.tl'), pk=$('picks'); if(!tl||!pk) return;
   const sr=stage.getBoundingClientRect(), pr=pk.getBoundingClientRect(); if(!pr.height) return;
   let top=pr.top; pk.querySelectorAll('*').forEach(e=>{ const r=e.getBoundingClientRect(); if(r.height&&r.left<sr.left+120) top=Math.min(top,r.top); });
   tl.style.bottom=Math.round(sr.bottom-top+8)+'px'; document.querySelector('.ov.bo').style.bottom=Math.round(sr.bottom-top+8+50)+'px'; }
-new ResizeObserver(placeViewBtn).observe($('picks')); addEventListener('resize',placeViewBtn); setTimeout(placeViewBtn,300);
+new ResizeObserver(placeViewBtn).observe($("picks")); new ResizeObserver(placeViewBtn).observe(stage); addEventListener('resize',placeViewBtn); setTimeout(placeViewBtn,300);
 function setTab(t){ document.body.dataset.tab=t; document.querySelectorAll('#tabbar [data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===t)));
   if(t!=='scene'){ $('panel').scrollTop=0; closePops&&closePops(); } else { ORB.last=performance.now()-ORB.IDLE+4000; kick(); } }
 document.querySelectorAll('#tabbar [data-tab]').forEach(b=>b.addEventListener('click',()=>{ b.classList.remove('anim'); void b.offsetWidth; b.classList.add('anim'); setTimeout(()=>b.classList.remove('anim'),700); setTab(b.dataset.tab); }));
@@ -2489,6 +2497,12 @@ const headlights=[1,-1].map(sd=>{
   const b=new THREE.Mesh(beamGeo,beamMat); b.position.set(HL.x,HL.y,sd*HL.z); b.rotation.y=sd*0.04; b.renderOrder=6; b.visible=false; car.add(b);
   return {L,b};
 });
+// a soft halo over each headlight, so a lit lamp reads as glowing
+const hlGlowTex=(()=>{ const c=document.createElement('canvas'); c.width=c.height=128; const g=c.getContext('2d'), r=g.createRadialGradient(64,64,0,64,64,64);
+  r.addColorStop(0,'rgba(255,250,235,1)'); r.addColorStop(0.18,'rgba(255,244,220,.85)'); r.addColorStop(0.5,'rgba(255,236,200,.22)'); r.addColorStop(1,'rgba(255,236,200,0)');
+  g.fillStyle=r; g.fillRect(0,0,128,128); return new THREE.CanvasTexture(c); })();
+const hlGlow=[1,-1].map(sd=>{ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:hlGlowTex, color:0xfff2dc, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending, fog:false}));
+  sp.scale.set(0.5,0.3,1); sp.position.set(X(250),0.88,sd*(M(CAR.W)/2-0.26)); sp.visible=false; sp.renderOrder=7; car.add(sp); return sp; });
 const BASE={sun:sun.intensity, hemi:hemi.intensity, fill:fill.intensity, exp:renderer.toneMappingExposure};
 // stars: a dome of points that follows the camera; they appear in twilight and get brighter the darker it is
 const STARS=(()=>{ const n=1600, pos=new Float32Array(n*3), col=new Float32Array(n*3); let a=987654321; const r=()=>{ a=(a*16807)%2147483647; return a/2147483647; };
@@ -2528,7 +2542,8 @@ function applyWeatherScene(){
   const hk=Math.max(c.night,c.fog*0.9);
   headlights.forEach(h=>{ h.L.intensity=9*hk; h.b.visible=hk>0.02; }); beamMat.uniforms.op.value=0.5*c.night+0.6*c.fog;
   // lights glow at night
-  CM.reflector.emissive.setRGB(1,0.97,0.9).multiplyScalar(0.7*hk); CM.red.emissive.setHex(0x3a0204).lerp(new THREE.Color(0xd01010),0.7*c.night); CM.amber.emissive.setHex(0x2a1200);
+  CM.reflector.emissive.setRGB(1,0.97,0.9).multiplyScalar(2.2*hk); CM.lens.emissive&&CM.lens.emissive.setRGB(1,0.96,0.88).multiplyScalar(0.55*hk);
+  hlGlow.forEach(g=>{ g.visible=hk>0.02; g.material.opacity=Math.min(0.85,hk); }); CM.red.emissive.setHex(0x3a0204).lerp(new THREE.Color(0xd01010),0.7*c.night); CM.amber.emissive.setHex(0x2a1200);
   kick();
 }
 function wxRender(){
@@ -2773,7 +2788,7 @@ function scr(v){ const p=v.clone().project(camera), r=stage.getBoundingClientRec
 // 0 from mid distance out, up to semi-transparent close in; kept visible while a menu or the move mode is open
 function boxUIAlpha(){
   const a=A(); if(!a) return 0; const c=boxGroup.localToWorld(new THREE.Vector3(M(a.L)/2,M(a.H)/2,0));
-  const d=camera.position.distanceTo(c), FAR=6.5, NEAR=3.0, k=Math.max(0,Math.min(1,(FAR-d)/(FAR-NEAR)));
+  const d=camera.position.distanceTo(c), FAR=9.5, NEAR=5.5, k=Math.max(0,Math.min(1,(FAR-d)/(FAR-NEAR)));
   return moveMode?0.85:0.8*k*k*(3-2*k);
 }
 function fadeEl(el,al){ el.style.opacity=al.toFixed(3); el.style.pointerEvents=al<0.06?'none':''; }
