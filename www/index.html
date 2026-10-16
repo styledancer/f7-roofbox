@@ -161,10 +161,12 @@ body.lock{overflow:hidden}
 .swr.col{flex-direction:column;align-items:stretch;gap:2px;padding:4px}
 .swr .opt2{font:500 .78rem var(--body);border:0;background:transparent;color:var(--ink);border-radius:9px;padding:8px 10px;cursor:pointer;white-space:nowrap;text-align:left}
 .swr .opt2[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
-.toast{position:absolute;z-index:6;left:50%;bottom:calc(64px + var(--ib));transform:translate(-50%,8px);width:min(380px,calc(100% - 32px));border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;font-size:.84rem;line-height:1.35;opacity:0;visibility:hidden;transition:opacity .2s,transform .25s,visibility 0s linear .25s;border-color:var(--bad)}
+.toast{position:absolute;z-index:6;left:50%;bottom:calc(196px + var(--ib));touch-action:none;transform:translate(-50%,8px);width:min(380px,calc(100% - 32px));border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;font-size:.84rem;line-height:1.35;opacity:0;visibility:hidden;transition:opacity .2s,transform .25s,visibility 0s linear .25s;border-color:var(--bad)}
 .toast.show{opacity:1;visibility:visible;transform:translate(-50%,0);transition:opacity .2s,transform .25s}
-.toast svg{width:20px;height:20px;flex:none;stroke:var(--bad);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-top:1px}
-.toast b{display:block;color:var(--bad);font-weight:600}
+.toast svg{width:20px;height:20px;flex:none;stroke:var(--tc,var(--bad));fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-top:1px}
+.toast b{display:block;color:var(--tc,var(--bad));font-weight:600}
+.toast.good{--tc:var(--good);border-color:var(--good)} .toast.info{--tc:var(--ink,currentColor);border-color:var(--line)} .toast.bad{--tc:var(--bad);border-color:var(--bad)}
+.toast.drag{transition:none}
 
 .tw{position:relative}
 .swr{position:absolute;right:46px;top:0;display:flex;gap:6px;align-items:center;padding:6px 8px;border-radius:12px;opacity:0;visibility:hidden;transform:translateX(10px);transition:opacity .18s,transform .22s,visibility 0s linear .22s;pointer-events:none}
@@ -359,7 +361,7 @@ h2 .badge{margin-left:4px}
         <div class="hrow"><button class="pm" id="gateMinus" aria-label="Ниже">−</button><input type="range" id="gateH" min="1600" max="3000" step="10" aria-label="Высота проезда"><button class="pm" id="gatePlus" aria-label="Выше">+</button><span class="hv" id="gateHv"></span></div>
         <div class="acts"><button class="mini" id="gateAgain">Ещё раз</button><button class="mini" id="gateExit">Выйти</button></div>
       </div>
-      <div class="toast glass" id="toast" role="alert"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg><div id="toastTx"></div></div>
+      <div class="toast glass" id="toast" role="alert"><svg id="toastIc" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg><div id="toastTx"></div></div>
     </div>
   </div>
 
@@ -590,11 +592,12 @@ function bars(){ const f=Math.max(CAR.railFrom+50, Math.min(S.barFront, CAR.rail
 function mountOk(front, box){ const [b1,b2]=bars(); return front<=b1-100 && front+box.L>=b2+100; }
 function frontLimits(box){ return [1200, Math.min(4300-box.L, bars()[0]-100)]; }
 function autoFront(box){
-  const [lo,hi]=frontLimits(box);
-  for(let f=Math.round(hi/10)*10; f>=lo; f-=10){
-    if(tailgateClearance(f,box)>=40 && mountOk(f,box)) return f;
-  }
-  return Math.max(lo, Math.min(hi, 3100-box.L/2));
+  // ideal: the box centred over the crossbars, as the rack and box makers fit it; then the nearest spot to that
+  // which keeps the tailgate clear and leaves the box mounted with some overhang past both bars
+  const [lo,hi]=frontLimits(box), [b1,b2]=bars(), ideal=Math.round(((b1+b2)/2-box.L/2)/10)*10;
+  const ok=f=>f>=lo&&f<=hi&&tailgateClearance(f,box)>=40&&mountOk(f,box);
+  for(let d=0; d<=3000; d+=10){ if(ok(ideal-d)) return ideal-d; if(d&&ok(ideal+d)) return ideal+d; }
+  return Math.max(lo, Math.min(hi, ideal));
 }
 function evaluate(box, front){
   const total=S.barTop+HFIX+box.H;
@@ -1844,7 +1847,21 @@ $('cAdd').addEventListener('click',()=>{
   ['cName','cL','cW','cH'].forEach(k=>$(k).value=''); renderItemChips(); update();
 });
 let toastTimer=0, tgLimit=OPEN_ANG, tgBounce=0;
-function toast(html){ $('toastTx').innerHTML=html; $('toast').classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>$('toast').classList.remove('show'),5500); }
+const TOAST_IC={bad:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>', good:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/>', info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>'};
+function hideToast(){ const t=$('toast'); t.classList.remove('show','drag'); t.style.transform=''; t.style.opacity=''; }
+function toast(html,kind='bad'){ const t=$('toast'); $('toastTx').innerHTML=html; $('toastIc').innerHTML=TOAST_IC[kind]||TOAST_IC.bad;
+  t.classList.remove('good','bad','info','drag'); t.classList.add(kind,'show'); t.style.transform=''; t.style.opacity='';
+  clearTimeout(toastTimer); toastTimer=setTimeout(hideToast,5500); }
+// swipe the message away sideways or down
+(()=>{ const t=$('toast'); let p0=null;
+  t.addEventListener('pointerdown',e=>{ p0={x:e.clientX,y:e.clientY,id:e.pointerId}; t.setPointerCapture(e.pointerId); t.classList.add('drag'); clearTimeout(toastTimer); });
+  t.addEventListener('pointermove',e=>{ if(!p0) return; const dx=e.clientX-p0.x, dy=Math.max(0,e.clientY-p0.y);
+    t.style.transform=`translate(calc(-50% + ${dx}px), ${dy}px)`; t.style.opacity=String(Math.max(0.2,1-Math.max(Math.abs(dx)/220,dy/120))); });
+  const end=e=>{ if(!p0) return; const dx=e.clientX-p0.x, dy=e.clientY-p0.y; p0=null; t.classList.remove('drag');
+    if(Math.abs(dx)>70||dy>45){ t.style.transition='transform .2s, opacity .2s'; t.style.transform=`translate(calc(-50% + ${dx>0?420:dx<-0?-420:0}px), ${dy>45?140:0}px)`; t.style.opacity='0';
+      setTimeout(()=>{ t.style.transition=''; hideToast(); },200); }
+    else { t.style.transform=''; t.style.opacity=''; toastTimer=setTimeout(hideToast,3500); } };
+  t.addEventListener('pointerup',end); t.addEventListener('pointercancel',end); })();
 function setTgBtn(){ const t=$('tgBtn'), l=S.open?'Закрыть багажник':'Открыть багажник'; t.setAttribute('aria-pressed',String(S.open)); t.setAttribute('aria-label',l); t.title=l; }
 $('tgBtn').addEventListener('click',()=>{
   if(S.open){ S.open=false; tgLimit=OPEN_ANG; setTgBtn(); kick(); return; }
@@ -2201,8 +2218,8 @@ function snapUI(state,msg){
 }
 async function takeSnap(){
   setSnapSheet(false);
-  if(!isNative){ toast('<b>AI-снимок работает в приложении для Android</b>В браузере внешние запросы к нейросетям закрыты. Ниже показан кадр без пейзажа.'); }
-  else if(!useCF()&&!(S.fbKey.trim()&&S.fbSecret.trim())){ toast('<b>Нужен ключ Cloudflare</b>Впишите токен Workers AI (Account ID найдётся сам) в блок «AI-снимок» ниже, там же инструкция.'); $('cfAcc').closest('section').scrollIntoView({behavior:'smooth'}); return; }
+  if(!isNative){ toast('<b>AI-снимок работает в приложении для Android</b>В браузере внешние запросы к нейросетям закрыты. Ниже показан кадр без пейзажа.','info'); }
+  else if(!useCF()&&!(S.fbKey.trim()&&S.fbSecret.trim())){ toast('<b>Нужен ключ Cloudflare</b>Впишите токен Workers AI (Account ID найдётся сам) в блок «AI-снимок» ниже, там же инструкция.','info'); $('cfAcc').closest('section').scrollIntoView({behavior:'smooth'}); return; }
   const cf=useCF(), job=++snapJob, [w,h]=snapSize(), prompt=cf?snapPromptEn():snapPrompt(w,h);
   // eye-level camera for the photo: same side of the car as in the app, but from 1.35 m like the generated landscape
   const SQ=Math.max(w,h), camSnap=camera.clone(); camSnap.aspect=1; camSnap.fov=40; camSnap.updateProjectionMatrix();
@@ -2409,7 +2426,7 @@ function setBoxOnly(on){
     const c=bb.getCenter(new THREE.Vector3()), sz=bb.getSize(new THREE.Vector3()), dir=camera.position.clone().sub(controls.target).normalize();
     controls.minDistance=0.6; drive.userCam=true;
     camAnim={from:camera.position.clone(), to:c.clone().addScaledVector(dir,(()=>{ const hf=2*Math.atan(Math.tan(camera.fov*Math.PI/360)*camera.aspect); const w=Math.max(sz.x,sz.z)*0.9+0.3; return Math.max(1.6,(w/2)/Math.tan(Math.min(hf,camera.fov*Math.PI/180)/2)); })()), tf:controls.target.clone(), tt:c, t:0};
-    toast('<b>Только бокс</b>Вращайте и приближайте двумя пальцами. Крышку можно открыть кнопкой справа.');
+    toast('<b>Только бокс</b>Вращайте и приближайте двумя пальцами. Крышку можно открыть кнопкой справа.','info');
   } else {
     boxOnly=false; controls.minDistance=boxSaved?boxSaved.min:2.5;
     if(boxSaved) camAnim={from:camera.position.clone(), to:boxSaved.p, tf:controls.target.clone(), tt:boxSaved.t, t:0};
@@ -2580,7 +2597,7 @@ function autoFill(){
   S.items=pick.map(i=>i.id); store.set('items',S.items); Object.keys(FAILS).forEach(k=>delete FAILS[k]);
   renderItemChips(); update(); renderDrop(); renderItemsBtn(); kick();
   const vol=pick.reduce((s,i)=>s+i.d[0]*i.d[1]*i.d[2]/1e6,0), cav=cavityLitres(box);
-  toast(`<b>Подобрал ${pick.length} ${pick.length===1?'вещь':pick.length<5?'вещи':'вещей'}</b>Занято примерно ${Math.round(vol/cav*100)}% полезного объёма. Нажмите ещё раз, будет другой набор.`);
+  toast(`<b>Подобрал ${pick.length} ${pick.length===1?'вещь':pick.length<5?'вещи':'вещей'}</b>Занято примерно ${Math.round(vol/cav*100)}% полезного объёма. Нажмите ещё раз, будет другой набор.`,'good');
 }
 drop.addEventListener('click',e=>{ if(e.target.closest('[data-auto]')){ autoFill(); return; } const b=e.target.closest('button[data-id]'); if(!b) return; const id=b.dataset.id;
   S.items=S.items.includes(id)?S.items.filter(i=>i!==id):S.items.concat(id); store.set('items',S.items); renderItemChips(); update(); renderDrop(); renderItemsBtn(); kick(); });
@@ -2592,7 +2609,7 @@ let moveMode=false;
 moveBtn.addEventListener('click',()=>{ moveMode=!moveMode; moveBtn.setAttribute('aria-pressed',String(moveMode)); kick(); });
 const resetBtn=document.createElement('button'); resetBtn.className='boxui glass'; resetBtn.setAttribute('aria-label','Вернуть бокс на место'); resetBtn.title='Вернуть на место';
 resetBtn.innerHTML=svg('<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/>'); stage.appendChild(resetBtn);
-resetBtn.addEventListener('click',()=>{ S.front=autoFront(A()); S.boxZ=0; store.set('boxZ',0); renderBoxZ(); update(); kick(); toast('<b>Бокс на месте</b>Лучшее положение вдоль крыши, по центру поперечин.'); });
+resetBtn.addEventListener('click',()=>{ S.front=autoFront(A()); S.boxZ=0; store.set('boxZ',0); renderBoxZ(); update(); kick(); toast('<b>Бокс на месте</b>Лучшее положение вдоль крыши, по центру поперечин.','good'); });
 const ARR='<path d="M5 12h14M13 6l6 6-6 6"/>';
 const arrows=[{ax:'x',sg:-1},{ax:'x',sg:1},{ax:'z',sg:1},{ax:'z',sg:-1}].map(a=>{ const b=document.createElement('button'); b.className='arrow3d glass'+(a.ax==='z'?' lat':''); b.innerHTML=svg(ARR);
   b.setAttribute('aria-label',a.ax==='x'?(a.sg<0?'Бокс вперёд':'Бокс назад'):(a.sg>0?'Бокс к водителю':'Бокс к пассажиру')); stage.appendChild(b); a.el=b; return a; });
@@ -2658,10 +2675,10 @@ function checkBikeClash(say){
   if(!S.bike){ RACK.clash=false; return; }
   let gap=bikeGap(S.boxZ), moved=false;
   if(gap<0.02 && say){ const lim=boxZLimit(); if(lim>=10 && bikeGap(-lim)>=0.02){ S.boxZ=-lim; store.set('boxZ',S.boxZ); renderBoxZ(); update(); gap=bikeGap(S.boxZ); moved=true;
-      toast(`<b>Бокс сдвинут к пассажиру</b>Слева стоит велокрепление. Зазор до него ${Math.round(gap*1000)} мм.`); } }
+      toast(`<b>Бокс сдвинут к пассажиру</b>Слева стоит велокрепление. Зазор до него ${Math.round(gap*1000)} мм.`,'good'); } }
   const clash=gap<0.02;
   if(clash&&(say||clash!==RACK.clash)) toast('<b>Велокрепление не помещается рядом с боксом</b>Оно стоит слева. Сдвиньте бокс к пассажиру или выберите бокс уже.');
-  else if(say&&!clash&&gap>=0.02&&!moved) toast(`<b>Велокрепление встаёт рядом</b>Зазор до бокса ${Math.round(gap*1000)} мм. Учтите руль велосипеда: он шире самого крепления.`);
+  else if(say&&!clash&&gap>=0.02&&!moved) toast(`<b>Велокрепление встаёт рядом</b>Зазор до бокса ${Math.round(gap*1000)} мм. Учтите руль велосипеда: он шире самого крепления.`,'good');
   RACK.clash=clash;
   if(RACK.bike) RACK.bike.traverse(m=>{ if(m.isMesh){ if(!m.userData.m0) m.userData.m0=m.material; m.material=clash?failMat:m.userData.m0; } });
 }
