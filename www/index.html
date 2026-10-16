@@ -1101,10 +1101,11 @@ let ghost=false, itemsOpen=false;   // the items menu forces the see-through box
 function boxFinish(box){ const id=S.boxColor[box.id]; return box.colors.find(c=>c.id===id)||box.colors[0]; }
 function applyBoxMat(mat, box, wire, accent){
   if(wire){ mat.transparent=true; mat.opacity=0.2; mat.depthWrite=false; mat.side=THREE.DoubleSide; mat.color.set(accent); mat.metalness=0; mat.roughness=0.6; mat.clearcoat=0; }
-  else { const p=boxFinish(box); mat.transparent=false; mat.opacity=1; mat.depthWrite=true; mat.side=box.mesh?THREE.DoubleSide:THREE.FrontSide; mat.color.set(p.hex); mat.metalness=p.metal||0.05; mat.roughness=p.rough; mat.clearcoat=p.gloss?1:0; mat.clearcoatRoughness=0.06; }
+  else { const p=boxFinish(box); mat.transparent=false; mat.opacity=1; mat.depthWrite=true; mat.side=box.mesh?THREE.DoubleSide:THREE.FrontSide; mat.color.set(p.hex); satBoost(mat.color); mat.metalness=p.metal||0.05; mat.roughness=p.rough; mat.clearcoat=p.gloss?1:0; mat.clearcoatRoughness=0.06; }
   mat.needsUpdate=true;
 }
-function paintFinish(m){ m.color.set(S.color); m.metalness=0.55; m.roughness=0.3; if('clearcoat' in m){ m.clearcoat=1; m.clearcoatRoughness=0.05; } m.needsUpdate=true; }
+function satBoost(c,k=1.35){ const h={}; c.getHSL(h); if(h.s>0.08) c.setHSL(h.h,Math.min(1,h.s*k),h.l*0.9); return c; }  // TEST: richer colours
+function paintFinish(m){ m.color.set(S.color); satBoost(m.color); m.metalness=0.55; m.roughness=0.3; if('clearcoat' in m){ m.clearcoat=1; m.clearcoatRoughness=0.05; } m.needsUpdate=true; }
 function setGhost(on){
   ghost=on;
   const a=byId(S.sel), b=S.cmp?byId(S.cmp):null;
@@ -1132,8 +1133,27 @@ const terBX=new Float32Array(terN), terBZ=new Float32Array(terN);
 for(let i=0;i<terN;i++){ terBX[i]=terPos.getX(i); terBZ[i]=terPos.getZ(i); }
 const terCol=new Float32Array(terN*3); terGeo.setAttribute('color',new THREE.BufferAttribute(terCol,3));
 const terMat=new THREE.MeshStandardMaterial({vertexColors:true, roughness:1, metalness:0, flatShading:true});
+var WX_SUN;
+const CLOUD=(()=>{ const N=256, cv=document.createElement('canvas'); cv.width=cv.height=N; const g=cv.getContext('2d'), img=g.createImageData(N,N), val=new Float32Array(N*N);
+  const rnd=(()=>{ let a=1234567; return ()=>{ a=(a*16807)%2147483647; return a/2147483647; }; })();
+  const oct=[[8,0.5],[16,0.27],[32,0.15],[64,0.08]].map(([n,w])=>{ const g2=new Float32Array(n*n); for(let i=0;i<n*n;i++) g2[i]=rnd(); return {n,w,g:g2}; });
+  const sm=t=>t*t*(3-2*t);
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++){ let v=0;
+    for(const o of oct){ const fx=x/N*o.n, fy=y/N*o.n, x0=Math.floor(fx), y0=Math.floor(fy), tx=sm(fx-x0), ty=sm(fy-y0), G=(i,j)=>o.g[((j+o.n)%o.n)*o.n+((i+o.n)%o.n)];
+      v+=o.w*((G(x0,y0)*(1-tx)+G(x0+1,y0)*tx)*(1-ty)+(G(x0,y0+1)*(1-tx)+G(x0+1,y0+1)*tx)*ty); }
+    const c=Math.max(0,Math.min(1,(v-0.46)/0.14)), sh=c*c*(3-2*c); val[y*N+x]=sh; const k=y*N*4+x*4; img.data[k]=img.data[k+1]=img.data[k+2]=Math.round(sh*255); img.data[k+3]=255; }
+  g.putImageData(img,0,0); const tex=new THREE.CanvasTexture(cv); tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
+  const U={uCloud:{value:tex}, uCOff:{value:new THREE.Vector2()}, uCStr:{value:0.42}, uCDist:{value:0}};
+  return {N,val,tex,U,SIZE:70,off:new THREE.Vector2(0.13,0.41),shade:0,str:0.42,
+    at(x,z){ const u=((x/this.SIZE+this.off.x)%1+1)%1, v=((z/this.SIZE+this.off.y)%1+1)%1; return this.val[Math.floor(v*N)*N+Math.floor(u*N)]; }};
+})();
+function addCloudShadow(mat){ mat.onBeforeCompile=sh=>{ Object.assign(sh.uniforms,CLOUD.U);
+  sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vCW;').replace('#include <begin_vertex>','#include <begin_vertex>\nvCW=(modelMatrix*vec4(transformed,1.0)).xz;');
+  sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 vCW; uniform sampler2D uCloud; uniform vec2 uCOff; uniform float uCStr; uniform float uCDist;')
+    .replace('#include <fog_fragment>','float cl=texture2D(uCloud,(vCW-vec2(uCDist,0.0))/'+CLOUD.SIZE.toFixed(1)+'+uCOff).r; gl_FragColor.rgb*=1.0-uCStr*cl;\n#include <fog_fragment>'); }; mat.needsUpdate=true; }
+addCloudShadow(terMat);
 const terrain=new THREE.Mesh(terGeo,terMat); terrain.receiveShadow=true; scene.add(terrain);
-const sandFar=new THREE.Mesh(new THREE.PlaneGeometry(260,260),new THREE.MeshStandardMaterial({roughness:1})); sandFar.rotation.x=-Math.PI/2; sandFar.position.y=-0.6; sandFar.receiveShadow=false; scene.add(sandFar);
+const sandFar=new THREE.Mesh(new THREE.PlaneGeometry(260,260),new THREE.MeshStandardMaterial({roughness:1})); addCloudShadow(sandFar.material); sandFar.rotation.x=-Math.PI/2; sandFar.position.y=-0.6; sandFar.receiveShadow=false; scene.add(sandFar);
 ground.visible=false;
 const sstep=(a,b,x)=>{ const t=Math.min(1,Math.max(0,(x-a)/(b-a))); return t*t*(3-2*t); };
 function hgt(u,z,amp){
@@ -1275,7 +1295,7 @@ function stepPerson(dt){
 /* ---------- highway mode: road, airflow over the roof, fuel estimate ---------- */
 const HW_SPEED=24;            // visual ground speed in m/s; the fuel estimate uses the speed picked in the panel
 let roadMix=0, flowMix=0;
-const roadMat=new THREE.MeshStandardMaterial({roughness:0.9,metalness:0,transparent:true,opacity:0});
+const roadMat=new THREE.MeshStandardMaterial({roughness:0.9,metalness:0,transparent:true,opacity:0}); addCloudShadow(roadMat);
 const road=new THREE.Mesh(new THREE.PlaneGeometry(TER.W,7.4),roadMat); road.rotation.x=-Math.PI/2; road.position.y=0.006; road.receiveShadow=true; scene.add(road);
 const laneMat=new THREE.MeshBasicMaterial({transparent:true,opacity:0});
 const edges=[-3.5,3.5].map(z=>{ const m=new THREE.Mesh(new THREE.PlaneGeometry(TER.W,0.14),laneMat); m.rotation.x=-Math.PI/2; m.position.set(0,0.008,z); scene.add(m); return m; });
@@ -1436,6 +1456,11 @@ function loop(now){
   if(stepPerson(dt)) busy=true;
   if(stepFails()) busy=true;
   if(stepWeather(dt)) busy=true;
+  { const c=WX.cur||{cloud:0,night:0,fog:0}, str=0.42*(1-0.7*(c.cloud||0))*(1-(c.night||0))*(1-(c.fog||0));
+    CLOUD.off.x+=dt*1.6/CLOUD.SIZE; CLOUD.off.y+=dt*0.7/CLOUD.SIZE; CLOUD.U.uCOff.value.copy(CLOUD.off); CLOUD.U.uCDist.value=dist; CLOUD.U.uCStr.value=str;
+    const sh=CLOUD.at(-dist,0)*str; CLOUD.shade+=(sh-CLOUD.shade)*Math.min(1,dt*2.5);
+    if(typeof WX_SUN==='number') sun.intensity=WX_SUN*(1-1.15*CLOUD.shade);
+    if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&str>0.02) busy=true; }
   if(camAnim){
     camAnim.t=Math.min(1,camAnim.t+0.06); const e=1-Math.pow(1-camAnim.t,3);
     camera.position.lerpVectors(camAnim.from,camAnim.to,e); controls.target.lerpVectors(camAnim.tf,camAnim.tt,e);
@@ -2466,7 +2491,7 @@ function applyWeatherScene(){
   const c=WX.cur, stage=new THREE.Color(css('--stage'));
   const sky=stage.clone().lerp(new THREE.Color(0x9aa3ad),c.cloud*0.55).lerp(new THREE.Color(0xb9bec4),c.fog*0.6).lerp(new THREE.Color(0x0d1420),c.night*0.92);
   scene.background=sky; scene.fog=new THREE.Fog(sky, 20-14*c.fog-6*(c.rain+c.snow)*0.5, 46-30*c.fog-12*(c.rain+c.snow)*0.5);
-  sun.intensity=BASE.sun*(1-0.75*c.cloud)*(1-0.9*c.night); fill.intensity=BASE.fill*(1-0.6*c.night);
+  sun.intensity=BASE.sun*(1-0.75*c.cloud)*(1-0.9*c.night); fill.intensity=BASE.fill*(1-0.6*c.night); WX_SUN=sun.intensity;
   hemi.intensity=BASE.hemi*(1+0.6*c.cloud)*(1-0.55*c.night); hemi.color.setHex(0xeef3ff).lerp(new THREE.Color(0x4a5a80),c.night);
   sun.color.setHex(0xfff4e6).lerp(new THREE.Color(0xdfe6ee),c.cloud).lerp(new THREE.Color(0x8ea2d6),c.night);
   sun.shadow.radius=1+6*c.cloud;
