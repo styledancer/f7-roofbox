@@ -2404,7 +2404,21 @@ $('fbSecret').addEventListener('change',e=>{ S.fbSecret=e.target.value.trim(); s
 renderSnapSheet();
 
 /* ---------- weather: live conditions for a city (Open-Meteo, no key) or a chosen preset ---------- */
-const WX_CITY={name:'Донецк', lat:48.0159, lon:37.8029};
+// weather place: the phone's location (coarse); the last known place is kept, Donetsk until a fix arrives or if location is refused
+const WX_CITY=Object.assign({name:'Донецк', lat:48.0159, lon:37.8029, geo:false}, store.get('wxGeo',{}));
+async function placeName(lat,lon){
+  try{ const r=await fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude='+lat+'&longitude='+lon+'&localityLanguage=ru'); if(!r.ok) throw 0; const d=await r.json();
+    return d.city||d.locality||d.principalSubdivision||null; }catch(e){ return null; } }
+function locate(){
+  if(!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(async p=>{
+    const lat=+p.coords.latitude.toFixed(3), lon=+p.coords.longitude.toFixed(3);
+    const moved=!WX_CITY.geo||Math.abs(lat-WX_CITY.lat)>0.05||Math.abs(lon-WX_CITY.lon)>0.05;
+    Object.assign(WX_CITY,{lat,lon,geo:true}); if(moved||!WX_CITY.name){ const n=await placeName(lat,lon); WX_CITY.name=n||(lat.toFixed(2)+', '+lon.toFixed(2)); }
+    store.set('wxGeo',{name:WX_CITY.name,lat,lon,geo:true}); WX_PRESETS.live='Реальная погода: '+WX_CITY.name;
+    if(moved) fetchWeather(); else wxRender();
+  },()=>{},{enableHighAccuracy:false,timeout:15000,maximumAge:30*60*1000});
+}
 const WX_PRESETS={live:'Реальная погода: '+WX_CITY.name, off:'Без погоды', clear:'Ясно', dawn:'Рассвет', dusk:'Закат', cloudy:'Пасмурно', rain:'Дождь', snow:'Снег', fog:'Туман', night:'Ночь'};
 // sun elevation and azimuth (degrees) for a place and moment, NOAA-style approximation
 function sunPos(date,lat,lon){
@@ -2594,7 +2608,7 @@ $('laySw').addEventListener('click',e=>{ const b=e.target.closest('[data-lay]');
   if(k==='box') setBoxOnly(!boxOnly);
   if(k==='bike'){ S.bike=!S.bike; store.set('bike',S.bike); update(); checkBikeClash(true); renderFuel(); }
   renderLayers(); kick(); });
-wxReady=true; wxApply(true); renderLayers(); fetchWeather(true); setInterval(fetchWeather,15*60*1000);
+wxReady=true; wxApply(true); renderLayers(); fetchWeather(true); locate(); setInterval(()=>{ locate(); fetchWeather(); },15*60*1000);
 
 // ---- sideways position: keep both mounting clamps on the 1320 mm crossbars
 function boxZLimit(){ const w=Math.max(A().W,(B()||A()).W); return Math.max(0,Math.floor((1320-w*0.82)/2/10)*10); }

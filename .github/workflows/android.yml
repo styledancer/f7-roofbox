@@ -45,6 +45,14 @@ jobs:
         run: |
           npx cap add android
           npx cap sync android
+      - name: Allow location (weather for where the phone is)
+        run: |
+          python3 - <<'PY'
+          p='android/app/src/main/AndroidManifest.xml'; s=open(p).read()
+          add='<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n'
+          if 'ACCESS_COARSE_LOCATION' not in s: s=s.replace('<application', add+'    <application',1)
+          open(p,'w').write(s); print('location permission added')
+          PY
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
