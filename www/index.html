@@ -7,7 +7,7 @@
 /* Layout: sticky 3D stage on top (phone) or left (desktop); tool panel of selectors, verdicts and a comparison table */
 :root{
   --bg:#EDF0F3; --panel:#FFFFFF; --ink:#16202B; --muted:#5E6B78; --line:#D6DCE3;
-  --accent:#2B59E0; --accent-soft:#E3EAFD; --stage:#E2E7ED; --grid:#C3CCD6; --soil:#C9A86E; --grass:#BC9A62; --rock:#857B6E; --asphalt:#3C3F44; --lane:#F2F2EE; --glass:rgba(250,251,253,.66); --lg-base:rgba(255,255,255,.38); --lg-hi:rgba(255,255,255,.62); --lg-mid:rgba(255,255,255,.14); --lg-edge:rgba(255,255,255,.75); --lg-in:rgba(255,255,255,.95); --lg-shadow:rgba(20,30,45,.16); --tab-on-hi:rgba(255,255,255,.7); --glass-line:rgba(22,32,43,.12); --glass-shadow:rgba(22,32,43,.10);
+  --accent:#2B59E0; --accent-soft:#E3EAFD; --stage:#E2E7ED; --grid:#C3CCD6; --soil:#C9A86E; --grass:#BC9A62; --rock:#857B6E; --asphalt:#3C3F44; --lane:#F2F2EE; --glass:rgba(250,251,253,.66); --lg-base:rgba(255,255,255,.38); --lg-hi:rgba(255,255,255,.62); --lg-mid:rgba(255,255,255,.14); --lg-edge:rgba(255,255,255,.75); --lg-in:rgba(255,255,255,.95); --lg-shadow:rgba(20,30,45,.16); --tab-on-hi:rgba(255,255,255,.7); --tabbar-knob:#F4F6F9; --glass-line:rgba(22,32,43,.12); --glass-shadow:rgba(22,32,43,.10);
   --good:#1D8A57; --warn:#A86C12; --bad:#C2362B;
   --a:#2B59E0; --b:#C96A12;
   --good-bg:#E2F3EA; --warn-bg:#FBF0DC; --bad-bg:#FBE4E1; --tabbar-bg:rgba(250,250,252,.9); --tab-on:rgba(20,24,30,.09);
@@ -17,16 +17,20 @@
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#0F1318; --panel:#171C23; --ink:#E6EBF1; --muted:#95A2B0; --line:#29313B;
-  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#5C4E36; --grass:#544732; --rock:#5A554D; --asphalt:#222428; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --lg-base:rgba(28,33,40,.42); --lg-hi:rgba(255,255,255,.16); --lg-mid:rgba(255,255,255,.03); --lg-edge:rgba(255,255,255,.2); --lg-in:rgba(255,255,255,.28); --lg-shadow:rgba(0,0,0,.4); --tab-on-hi:rgba(255,255,255,.2); --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
+  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#5C4E36; --grass:#544732; --rock:#5A554D; --asphalt:#222428; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --lg-base:rgba(28,33,40,.42); --lg-hi:rgba(255,255,255,.16); --lg-mid:rgba(255,255,255,.03); --lg-edge:rgba(255,255,255,.2); --lg-in:rgba(255,255,255,.28); --lg-shadow:rgba(0,0,0,.4); --tab-on-hi:rgba(255,255,255,.2); --tabbar-knob:#2A2F37; --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
   --good:#4CC38A; --warn:#E3A642; --bad:#F27367;
   --a:#86A2FF; --b:#F0A04B; --good-bg:#13291F; --warn-bg:#2E2412; --bad-bg:#331816; --tabbar-bg:rgba(30,33,38,.9); --tab-on:rgba(255,255,255,.12); color-scheme:dark } }
 :root[data-theme="dark"]{
   --bg:#0F1318; --panel:#171C23; --ink:#E6EBF1; --muted:#95A2B0; --line:#29313B;
-  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#5C4E36; --grass:#544732; --rock:#5A554D; --asphalt:#222428; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --lg-base:rgba(28,33,40,.42); --lg-hi:rgba(255,255,255,.16); --lg-mid:rgba(255,255,255,.03); --lg-edge:rgba(255,255,255,.2); --lg-in:rgba(255,255,255,.28); --lg-shadow:rgba(0,0,0,.4); --tab-on-hi:rgba(255,255,255,.2); --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
+  --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#5C4E36; --grass:#544732; --rock:#5A554D; --asphalt:#222428; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --lg-base:rgba(28,33,40,.42); --lg-hi:rgba(255,255,255,.16); --lg-mid:rgba(255,255,255,.03); --lg-edge:rgba(255,255,255,.2); --lg-in:rgba(255,255,255,.28); --lg-shadow:rgba(0,0,0,.4); --tab-on-hi:rgba(255,255,255,.2); --tabbar-knob:#2A2F37; --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
   --good:#4CC38A; --warn:#E3A642; --bad:#F27367;
   --a:#86A2FF; --b:#F0A04B; --good-bg:#13291F; --warn-bg:#2E2412; --bad-bg:#331816; --tabbar-bg:rgba(30,33,38,.9); --tab-on:rgba(255,255,255,.12); color-scheme:dark }
 
-*{box-sizing:border-box}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+button:focus:not(:focus-visible),a:focus:not(:focus-visible){outline:none}
+.glass:active{--lg-base:rgba(255,255,255,.58)}
+:is(button,a,.opt2):not(.glass):not([aria-pressed="true"]):not([aria-selected="true"]):active{background-color:rgba(140,155,175,.16)}
+.tabbar button:not([aria-selected="true"]):active{background:rgba(255,255,255,.4)}
 :root{--r:14px;--ri:10px}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;
   padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:12px 32px}
@@ -291,7 +295,8 @@ h2 .badge{margin-left:4px}
 .tabbar{position:fixed;z-index:45;left:50%;transform:translateX(-50%);bottom:calc(8px + env(safe-area-inset-bottom,0px));width:auto;
   display:grid;grid-template-columns:repeat(3,auto);gap:2px;padding:4px;border-radius:var(--r)}
 .tabbar button{display:grid;justify-items:center;gap:1px;min-width:78px;padding:5px 12px 4px;border:0;border-radius:var(--ri);background:transparent;color:var(--ink);font:500 .7rem var(--body);cursor:pointer}
-.tabbar svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tabbar svg *{transform-box:fill-box;transform-origin:center}
+.tabbar svg{overflow:visible;width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .tabbar button[aria-selected="true"]{background:linear-gradient(180deg,var(--tab-on-hi),var(--tab-on));box-shadow:inset 0 1px .5px var(--lg-in),0 1px 4px var(--lg-shadow);font-weight:700}
 .stage.full~.tabbar,body.lock .tabbar{display:none}
 .pghead{font-family:var(--display);font-weight:700;font-size:1.5rem;margin:4px 0 2px}
@@ -303,6 +308,18 @@ body[data-tab="info"] #pgSet, body[data-tab="set"] #pgInfo, body[data-tab="set"]
   .stage{--ib:64px}
   .panel{position:fixed;inset:0;z-index:40;overflow:auto;background:var(--bg);padding:calc(14px + env(safe-area-inset-top,0px)) max(16px, env(safe-area-inset-right,0px)) calc(110px + env(safe-area-inset-bottom,0px)) max(16px, env(safe-area-inset-left,0px));overscroll-behavior:contain}
 }
+.tabbar .anim .t-car{animation:tcar .6s cubic-bezier(.3,.7,.3,1)}
+.tabbar .anim .t-whl{animation:twhl .6s ease-out}
+.tabbar .anim .t-dot{animation:tdot .55s cubic-bezier(.3,1.6,.5,1)}
+.tabbar .anim .t-bar{animation:tbar .5s ease-out}
+.tabbar .anim .t-k1{animation:tk1 .6s cubic-bezier(.4,1.4,.5,1)}
+.tabbar .anim .t-k2{animation:tk2 .6s cubic-bezier(.4,1.4,.5,1)}
+@keyframes tcar{0%{transform:translateX(0)}35%{transform:translateX(3px)}70%{transform:translateX(-1px)}100%{transform:none}}
+@keyframes twhl{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+@keyframes tdot{0%{transform:translateY(-6px);opacity:0}60%{opacity:1}100%{transform:none}}
+@keyframes tbar{0%{transform:scaleY(.2)}100%{transform:none}}
+@keyframes tk1{0%{transform:none}45%{transform:translateX(-6px)}100%{transform:none}}
+@keyframes tk2{0%{transform:none}45%{transform:translateX(6px)}100%{transform:none}}
 @media (min-width:900px){ body[data-tab="scene"] .app{grid-template-columns:minmax(0,1fr)} body{padding-bottom:96px} }
 @media (prefers-reduced-motion: reduce){*{transition:none!important}.spin{animation-duration:3s}}
 </style>
@@ -493,9 +510,9 @@ body[data-tab="info"] #pgSet, body[data-tab="set"] #pgInfo, body[data-tab="set"]
   </div>
 </div>
 <nav class="tabbar" id="tabbar" role="tablist" aria-label="Разделы">
-  <button role="tab" data-tab="scene" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15.5l2.2-5.2A2 2 0 0 1 7 9h10a2 2 0 0 1 1.8 1.3l2.2 5.2"/><path d="M3 15.5V18h2.5M21 15.5V18h-2.5M3 15.5h18"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/><path d="M7.5 6.5h9l1-2h-11z"/></svg><span>Сцена</span></button>
-  <button role="tab" data-tab="info" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M12 10.5v6M12 7.3v.2"/></svg><span>Инфо</span></button>
-  <button role="tab" data-tab="set" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg><span>Настройки</span></button>
+  <button role="tab" data-tab="scene" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="t-car"><path d="M3 15.5l2.2-5.2A2 2 0 0 1 7 9h10a2 2 0 0 1 1.8 1.3l2.2 5.2"/><path d="M3 15.5V18h2.5M21 15.5V18h-2.5M3 15.5h18"/><path d="M7.5 6.5h9l1-2h-11z"/><circle class="t-whl" cx="7" cy="18" r="1.6" stroke-dasharray="2 1.2"/><circle class="t-whl" cx="17" cy="18" r="1.6" stroke-dasharray="2 1.2"/></g></svg><span>Сцена</span></button>
+  <button role="tab" data-tab="info" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path class="t-bar" d="M12 10.5v6"/><path class="t-dot" d="M12 7.3v.2"/></svg><span>Инфо</span></button>
+  <button role="tab" data-tab="set" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16" opacity=".55"/><circle class="t-k1" cx="15" cy="7" r="2.2" fill="var(--tabbar-knob)"/><circle class="t-k2" cx="9" cy="17" r="2.2" fill="var(--tabbar-knob)"/></svg><span>Настройки</span></button>
 </nav>
 
 <script src="vendor/three.min.js"></script>
@@ -1911,7 +1928,7 @@ function placeViewBtn(){ const tl=document.querySelector('.ov.tl'), pk=$('picks'
 new ResizeObserver(placeViewBtn).observe($('picks')); addEventListener('resize',placeViewBtn); setTimeout(placeViewBtn,300);
 function setTab(t){ document.body.dataset.tab=t; document.querySelectorAll('#tabbar [data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===t)));
   if(t!=='scene'){ $('panel').scrollTop=0; closePops&&closePops(); } else { ORB.last=performance.now()-ORB.IDLE+4000; kick(); } }
-document.querySelectorAll('#tabbar [data-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
+document.querySelectorAll('#tabbar [data-tab]').forEach(b=>b.addEventListener('click',()=>{ b.classList.remove('anim'); void b.offsetWidth; b.classList.add('anim'); setTimeout(()=>b.classList.remove('anim'),700); setTab(b.dataset.tab); }));
 function toast(html,kind='bad'){ const t=$('toast'); $('toastTx').innerHTML=html; $('toastIc').innerHTML=TOAST_IC[kind]||TOAST_IC.bad;
   t.classList.remove('good','bad','info','drag'); t.classList.add(kind,'show'); t.style.transform=''; t.style.opacity='';
   clearTimeout(toastTimer); toastTimer=setTimeout(hideToast,5500); }
