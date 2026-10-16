@@ -10,7 +10,7 @@
   --accent:#2B59E0; --accent-soft:#E3EAFD; --stage:#E2E7ED; --grid:#C3CCD6; --soil:#C9A86E; --grass:#BC9A62; --rock:#857B6E; --asphalt:#3C3F44; --lane:#F2F2EE; --glass:rgba(250,251,253,.66); --glass-line:rgba(22,32,43,.12); --glass-shadow:rgba(22,32,43,.10);
   --good:#1D8A57; --warn:#A86C12; --bad:#C2362B;
   --a:#2B59E0; --b:#C96A12;
-  --good-bg:#E2F3EA; --warn-bg:#FBF0DC; --bad-bg:#FBE4E1;
+  --good-bg:#E2F3EA; --warn-bg:#FBF0DC; --bad-bg:#FBE4E1; --tabbar-bg:rgba(250,250,252,.9); --tab-on:rgba(20,24,30,.09);
   --display:'Unbounded', 'Onest', system-ui, sans-serif;
   --body:'Onest', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono:'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
@@ -19,12 +19,12 @@
   --bg:#0F1318; --panel:#171C23; --ink:#E6EBF1; --muted:#95A2B0; --line:#29313B;
   --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#5C4E36; --grass:#544732; --rock:#5A554D; --asphalt:#222428; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
   --good:#4CC38A; --warn:#E3A642; --bad:#F27367;
-  --a:#86A2FF; --b:#F0A04B; --good-bg:#13291F; --warn-bg:#2E2412; --bad-bg:#331816; color-scheme:dark } }
+  --a:#86A2FF; --b:#F0A04B; --good-bg:#13291F; --warn-bg:#2E2412; --bad-bg:#331816; --tabbar-bg:rgba(30,33,38,.9); --tab-on:rgba(255,255,255,.12); color-scheme:dark } }
 :root[data-theme="dark"]{
   --bg:#0F1318; --panel:#171C23; --ink:#E6EBF1; --muted:#95A2B0; --line:#29313B;
   --accent:#86A2FF; --accent-soft:#1E2944; --stage:#131920; --grid:#2B3440; --soil:#5C4E36; --grass:#544732; --rock:#5A554D; --asphalt:#222428; --lane:#C9CCD1; --glass:rgba(23,28,35,.62); --glass-line:rgba(230,235,241,.14); --glass-shadow:rgba(0,0,0,.35);
   --good:#4CC38A; --warn:#E3A642; --bad:#F27367;
-  --a:#86A2FF; --b:#F0A04B; --good-bg:#13291F; --warn-bg:#2E2412; --bad-bg:#331816; color-scheme:dark }
+  --a:#86A2FF; --b:#F0A04B; --good-bg:#13291F; --warn-bg:#2E2412; --bad-bg:#331816; --tabbar-bg:rgba(30,33,38,.9); --tab-on:rgba(255,255,255,.12); color-scheme:dark }
 
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;
@@ -94,8 +94,8 @@ body.lock{overflow:hidden}
 .lidside[hidden]{display:none}
 .lidside svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linejoin:round}
 .lidside[aria-pressed="true"]{background:var(--accent);color:#fff;opacity:.9}
-.tl{left:calc(10px + var(--il));top:calc(10px + var(--it));align-items:center}
-.wx{left:calc(10px + var(--il));top:calc(58px + var(--it));flex-direction:column;align-items:flex-start}
+.tl{left:calc(10px + var(--il));bottom:calc(122px + var(--ib));align-items:center}  /* view picker: low on the left, within thumb reach */
+.wx{left:calc(10px + var(--il));top:calc(10px + var(--it));flex-direction:column;align-items:flex-start}
 .wxpill{display:inline-flex;align-items:center;gap:6px;border-radius:12px;padding:6px 10px;font:500 .78rem var(--body);cursor:pointer;color:var(--ink)}
 .wxpill svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .wxpill .t{font-family:var(--mono);font-variant-numeric:tabular-nums}
@@ -161,7 +161,7 @@ body.lock{overflow:hidden}
 .swr.col{flex-direction:column;align-items:stretch;gap:2px;padding:4px}
 .swr .opt2{font:500 .78rem var(--body);border:0;background:transparent;color:var(--ink);border-radius:9px;padding:8px 10px;cursor:pointer;white-space:nowrap;text-align:left}
 .swr .opt2[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
-.toast{position:absolute;z-index:6;left:50%;bottom:calc(196px + var(--ib));touch-action:none;transform:translate(-50%,8px);width:min(380px,calc(100% - 32px));border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;font-size:.84rem;line-height:1.35;opacity:0;visibility:hidden;transition:opacity .2s,transform .25s,visibility 0s linear .25s;border-color:var(--bad)}
+.toast{position:absolute;z-index:6;left:50%;bottom:calc(178px + var(--ib));touch-action:none;transform:translate(-50%,8px);width:min(380px,calc(100% - 32px));border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;font-size:.84rem;line-height:1.35;opacity:0;visibility:hidden;transition:opacity .2s,transform .25s,visibility 0s linear .25s;border-color:var(--bad)}
 .toast.show{opacity:1;visibility:visible;transform:translate(-50%,0);transition:opacity .2s,transform .25s}
 .toast svg{width:20px;height:20px;flex:none;stroke:var(--tc,var(--bad));fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-top:1px}
 .toast b{display:block;color:var(--tc,var(--bad));font-weight:600}
@@ -284,6 +284,24 @@ h2 .badge{margin-left:4px}
 .snapc details{font-size:.8rem}
 .keyin{font:400 .82rem var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;width:100%;min-width:0}
 .keyrow{display:grid;gap:4px}
+/* bottom tab bar: the 3D scene, info about the fit, settings */
+.tabbar{position:fixed;z-index:45;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));width:min(400px,calc(100% - 32px));
+  display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:6px;border-radius:28px;background:var(--tabbar-bg);border:1px solid var(--glass-line);
+  -webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 4px 18px var(--glass-shadow)}
+.tabbar button{display:grid;justify-items:center;gap:2px;padding:7px 4px 6px;border:0;border-radius:22px;background:transparent;color:var(--ink);font:500 .76rem var(--body);cursor:pointer}
+.tabbar svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tabbar button[aria-selected="true"]{background:var(--tab-on);font-weight:700}
+.stage.full~.tabbar,body.lock .tabbar{display:none}
+.pghead{font-family:var(--display);font-weight:700;font-size:1.5rem;margin:4px 0 2px}
+.tabpage{display:flex;flex-direction:column;gap:14px}
+body[data-tab="scene"] .panel{display:none}
+body[data-tab="info"] #pgSet, body[data-tab="set"] #pgInfo, body[data-tab="set"] #pgInfo2{display:none}
+.more{display:none!important}
+@media (max-width:899px){
+  .stage{--ib:76px}
+  .panel{position:fixed;inset:0;z-index:40;overflow:auto;background:var(--bg);padding:calc(14px + env(safe-area-inset-top,0px)) max(16px, env(safe-area-inset-right,0px)) calc(110px + env(safe-area-inset-bottom,0px)) max(16px, env(safe-area-inset-left,0px));overscroll-behavior:contain}
+}
+@media (min-width:900px){ body[data-tab="scene"] .app{grid-template-columns:minmax(0,1fr)} body{padding-bottom:96px} }
 @media (prefers-reduced-motion: reduce){*{transition:none!important}.spin{animation-duration:3s}}
 </style>
 
@@ -295,7 +313,7 @@ h2 .badge{margin-left:4px}
     </header>
     <div class="stage" id="stage">
       <div class="ov tl">
-        <button class="ib glass" id="camBtn" aria-expanded="false" aria-controls="views" aria-label="Ракурс камеры" title="Ракурс камеры"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+        <button class="ib glass" id="camBtn" aria-expanded="false" aria-controls="views" aria-label="Ракурс" title="Ракурс"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5l4.5 2.4v5L12 14.3l-4.5-2.4v-5z"/><path d="M7.5 6.9L12 9.3l4.5-2.4M12 9.3v5"/><path d="M5 12.6c-1.3.7-2 1.5-2 2.4 0 2.5 4 4.5 9 4.5 1.6 0 3.1-.2 4.4-.6"/><path d="M19 12.6c1.3.7 2 1.5 2 2.4 0 1-.8 1.9-2.2 2.6"/><path d="M14.6 17.2l2 1.7-2 1.8"/></svg></button>
         <div class="views glass" id="views" role="group" aria-label="Ракурс">
           <button data-view="q" aria-pressed="true">3/4</button>
           <button data-view="side" aria-pressed="false">Сбоку</button>
@@ -365,7 +383,9 @@ h2 .badge{margin-left:4px}
     </div>
   </div>
 
-  <div class="panel">
+  <div class="panel" id="panel">
+   <div class="tabpage" id="pgInfo">
+    <h1 class="pghead">Инфо</h1>
     <section hidden>
       <div class="row"><label for="pos">Положение бокса A на дугах</label><button class="mini" id="autoBtn">Подобрать автоматически</button></div>
       <input type="range" id="pos" min="1200" max="2800" step="10" value="2000">
@@ -449,28 +469,39 @@ h2 .badge{margin-left:4px}
       <p class="fine">Каждый бокс поставлен в лучшее положение: максимально назад, но так, чтобы дверь багажника со спойлером открывалась с запасом 4 см. Знак ≈ означает, что производитель не публикует внутренние размеры и они оценены по толщине стенок.</p>
     </section>
 
+   </div>
+   <div class="tabpage" id="pgSet">
+    <h1 class="pghead">Настройки</h1>
     <section>
-      <details>
-        <summary>Настройки</summary>
-        <div class="settings">
+        <div class="settings" style="margin-top:0">
           <div class="row"><label for="garage">Ограничение по высоте (гараж, паркинг), мм</label><input type="number" id="garage" value="2200" step="10"></div>
           <div class="row"><label for="barTop">Верх поперечин от земли, мм</label><input type="number" id="barTop" value="1745" step="5"></div>
           <div class="row"><label for="barFront">Передняя поперечина от бампера, мм</label><input type="number" id="barFront" value="2456" step="10"></div>
           <div class="row"><label for="spacing">Расстояние между дугами, мм</label><input type="number" id="spacing" value="661" step="10"></div>
           <div class="row"><label>Цвет машины</label><div class="colors" id="colors"></div></div>
         </div>
-      </details>
+    </section>
+   </div>
+   <div class="tabpage" id="pgInfo2">
+    <section>
       <p class="fine">Наружные и внутренние размеры Thule Motion 3 взяты с thule.com, остальных боксов из карточек магазинов. Форма Thule Motion 3 L, XL, XL Low, XXL Low обведена по видам сбоку и сверху с thule.com, LUX Tavr 175 и 197 по фото сбоку с lux-systems.ru (вид сверху у LUX взят как у Motion 3 L). У остальных боксов форма обобщённая, габариты точные. «По форме» означает объём полезной полости модели: корпус минус 22 мм на стенки, замки и крепления; при таком запасе модель воспроизводит заявленные литры всех четырёх Thule с точностью до 4%. Расчёты зазоров идут по паспортным размерам кузова, линия крыши и петли двери багажника в них приблизительные. Вещи показаны прямоугольными габаритами.</p>
       <p class="fine" hidden>3D-модель кузова: <a href="https://sketchfab.com/3d-models/haval-f7-76f4d871898d4355b2b9d35d0ad430b9" target="_blank" rel="noopener">Haval F7</a> от MattDoesBlender (Sketchfab, CC BY 4.0), масштаб подогнан под колёсную базу 2725 мм. Это дорестайлинговый кузов, бамперы рестайлинга 2022 года на нём не показаны. Модель Thule Touring 100 взята из архива модели производителя.</p>
     </section>
+   </div>
   </div>
 </div>
+<nav class="tabbar" id="tabbar" role="tablist" aria-label="Разделы">
+  <button role="tab" data-tab="scene" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15.5l2.2-5.2A2 2 0 0 1 7 9h10a2 2 0 0 1 1.8 1.3l2.2 5.2"/><path d="M3 15.5V18h2.5M21 15.5V18h-2.5M3 15.5h18"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/><path d="M7.5 6.5h9l1-2h-11z"/></svg><span>Сцена</span></button>
+  <button role="tab" data-tab="info" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M12 10.5v6M12 7.3v.2"/></svg><span>Инфо</span></button>
+  <button role="tab" data-tab="set" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg><span>Настройки</span></button>
+</nav>
 
 <script src="vendor/three.min.js"></script>
 <script src="vendor/OrbitControls.js"></script>
 <script src="vendor/GLTFLoader.js"></script>
 <script>
 (function(){
+document.body.dataset.tab='scene';
 // cars the app can show; the choice is kept on the device and applied on reload
 const CARS={
   haval:{name:'Haval F7', sub:'2022', model:'haval_f7.json', kind:'haval', rimR:0.2286,
@@ -1206,6 +1237,10 @@ function stepPerson(dt){
   const reach=S.lid?1:0.85;                          // with the lid closed the bag only reaches the edge
   pArms.forEach(({sh,el})=>{ sh.rotation.x=0.55+2.15*k*reach; el.rotation.x=1.1-0.9*k; });
   pTorso.rotation.x=-0.08*k; person.position.y=0.035*k; pLegs.forEach(l=>l.rotation.x=0.04*k);
+  // the figure fades out as the camera comes close, so it never blocks the view of the box
+  const d=camera.position.distanceTo(person.localToWorld(new THREE.Vector3(0,1.2,0))), u=Math.max(0,Math.min(1,(d-2.4)/(5.5-2.4))), al=u*u*(3-2*u);
+  [pBody,pCloth,pBag].forEach(m=>{ const tr=al<0.99; if(m.transparent!==tr){ m.transparent=tr; m.needsUpdate=true; } m.opacity=al; m.depthWrite=!tr; });
+  person.visible=al>0.03; person.traverse(o=>{ if(o.isMesh) o.castShadow=al>0.5; });
   return !still;
 }
 
@@ -1378,12 +1413,30 @@ function loop(now){
     camera.position.lerpVectors(camAnim.from,camAnim.to,e); controls.target.lerpVectors(camAnim.tf,camAnim.tt,e);
     if(camAnim.t>=1) camAnim=null; busy=true;
   }
+  if(stepOrbit(dt)) busy=true;
   if(controls.update()) busy=true;
   render();
   if(busy) requestAnimationFrame(loop); else { running=false; lastT=0; }
 }
 controls.addEventListener('change',kick);
-controls.addEventListener('start',()=>{ drive.userCam=true; kick(); });
+controls.addEventListener('start',()=>{ drive.userCam=true; ORB.last=performance.now(); ORB.v=0; kick(); });
+const ORB={last:-1e9, v:0, prevMode:'idle', IDLE:25000, SPEED:0.09};   // rad/s, about 70 s per circle
+function orbitAllowed(){
+  return drive.mode==='idle'&&speed===0&&!camAnim&&!moveMode&&drop.hidden&&document.body.dataset.tab==='scene'&&!document.hidden
+    &&!matchMedia('(prefers-reduced-motion: reduce)').matches&&!document.querySelector('.snapm:not([hidden])')
+    &&performance.now()-ORB.last>ORB.IDLE;
+}
+function stepOrbit(dt){
+  // when a drive or the overpass check ends, glide back to the 3/4 view first, then start circling
+  if(drive.mode!==ORB.prevMode){ if(drive.mode==='idle'&&ORB.prevMode!=='intro'){ drive.userCam=false; ORB.last=-1e9; setView('q'); } ORB.prevMode=drive.mode; }
+  if(!orbitAllowed()){ ORB.v=0; return false; }
+  ORB.v=Math.min(ORB.SPEED, ORB.v+ORB.SPEED*dt/2.5);   // ease in over 2.5 s
+  const t=controls.target, a=ORB.v*dt, x=camera.position.x-t.x, z=camera.position.z-t.z, c=Math.cos(a), si=Math.sin(a);
+  camera.position.x=t.x+x*c-z*si; camera.position.z=t.z+x*si+z*c; camera.lookAt(t);
+  return true;
+}
+['pointerdown','wheel'].forEach(ev=>renderer.domElement.addEventListener(ev,()=>{ ORB.last=performance.now(); ORB.v=0; },{passive:true}));
+setInterval(()=>{ if(orbitAllowed()) kick(); },1000);
 
 /* ---------- UI ---------- */
 const $=id=>document.getElementById(id);
@@ -1809,7 +1862,7 @@ function update(){
   // A fit metrics
   $('metrics').innerHTML=`
     <div class="m"><div class="k">Высота машины с боксом ${chip(heightState(eA.total), eA.total>S.garage?'выше лимита':(eA.total>S.garage-50?'впритык':'проходит'))}</div><div class="v">${fmt(eA.total)} мм</div>
-      <div class="note">Лимит в настройках: ${fmt(S.garage)} мм. Полоса над машиной в 3D показывает этот потолок.</div></div>
+      <div class="note">Лимит в настройках: ${fmt(S.garage)} мм.</div></div>
     <div class="m"><div class="k">Дверь багажника ${chip(tgState(eA.tg), tgText(eA.tg))}</div><div class="v">${eA.tg<0?'—':fmt(eA.tg)+' мм'}</div>
       <div class="note">Минимальный зазор между открытой дверью со спойлером и боксом.</div></div>
     <div class="m"><div class="k">Свес над лобовым ${chip(overState(eA.over), eA.over>550?'большой':'нормально')}</div><div class="v">${overTxt(eA.over)}</div></div>
@@ -1849,6 +1902,9 @@ $('cAdd').addEventListener('click',()=>{
 let toastTimer=0, tgLimit=OPEN_ANG, tgBounce=0;
 const TOAST_IC={bad:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>', good:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/>', info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>'};
 function hideToast(){ const t=$('toast'); t.classList.remove('show','drag'); t.style.transform=''; t.style.opacity=''; }
+function setTab(t){ document.body.dataset.tab=t; document.querySelectorAll('#tabbar [data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===t)));
+  if(t!=='scene'){ $('panel').scrollTop=0; closePops&&closePops(); } else { ORB.last=performance.now()-ORB.IDLE+4000; kick(); } }
+document.querySelectorAll('#tabbar [data-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
 function toast(html,kind='bad'){ const t=$('toast'); $('toastTx').innerHTML=html; $('toastIc').innerHTML=TOAST_IC[kind]||TOAST_IC.bad;
   t.classList.remove('good','bad','info','drag'); t.classList.add(kind,'show'); t.style.transform=''; t.style.opacity='';
   clearTimeout(toastTimer); toastTimer=setTimeout(hideToast,5500); }
@@ -2635,8 +2691,16 @@ arrows.forEach(a=>{
 });
 const _p=new THREE.Vector3();
 function scr(v){ const p=v.clone().project(camera), r=stage.getBoundingClientRect(); return {x:(p.x+1)/2*r.width, y:(1-p.y)/2*r.height, ok:p.z<1&&Math.abs(p.x)<0.97&&Math.abs(p.y)<0.97}; }
+// 0 from mid distance out, up to semi-transparent close in; kept visible while a menu or the move mode is open
+function boxUIAlpha(){
+  const a=A(); if(!a) return 0; const c=boxGroup.localToWorld(new THREE.Vector3(M(a.L)/2,M(a.H)/2,0));
+  const d=camera.position.distanceTo(c), FAR=6.5, NEAR=3.0, k=Math.max(0,Math.min(1,(FAR-d)/(FAR-NEAR)));
+  return (moveMode||!drop.hidden)?0.85:0.8*k*k*(3-2*k);
+}
+function fadeEl(el,al){ el.style.opacity=al.toFixed(3); el.style.pointerEvents=al<0.06?'none':''; }
 function placeBoxUI(){
-  const a=A(), idle=drive.mode==='idle'&&speed<0.05&&!!a;
+  const a=A(), idle=drive.mode==='idle'&&speed<0.05&&!!a, al=boxUIAlpha();
+  [itemsBtn,moveBtn,resetBtn].forEach(b=>fadeEl(b,al)); arrows.forEach(x=>fadeEl(x.el,al)); sideBtns.forEach(b=>fadeEl(b,al));
   [itemsBtn,moveBtn].forEach(b=>b.hidden=!idle); resetBtn.hidden=!(idle&&moveMode);
   if(!idle){ drop.hidden=true; arrows.forEach(x=>x.el.hidden=true); return; }
   const top=boxGroup.localToWorld(new THREE.Vector3(M(a.L)*0.5,M(a.H)+0.22,0)), sp=scr(top);
