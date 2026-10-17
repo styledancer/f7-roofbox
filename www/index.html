@@ -689,8 +689,9 @@ GFX.probe=(()=>{ if(!GFX.probing||GFX.q==='min'){ if(GFX.probing) store.set('gfx
     store.set('gfxQ',down); if(down==='min') store.set('gfxProbe','done');
     try{ toast('<b>Графика упрощена под телефон</b>'+Math.round(1000/med)+' кадр/с — включаю «'+(down==='min'?'Минимум':'Экономия')+'»','info'); }catch(_){}
     setTimeout(()=>location.reload(),1800); }; })();   // 'high': HDR light, ambient occlusion, bloom; 'eco': plain render
-const DEV_DEF={exp:1, tm:'aces', sun:1, hemi:1, fill:1, env:1, sky:1, ao:0.85, aoR:0.45, bloom:0.16, bloomT:3.0, bloomR:0.35, vig:0.28, sat:1.06,
-  night:0.6, paintMet:0.6, paintRough:0.2, flake:0.06, coat:1, glassOp:0.78, sandN:0.55, sandB:1, shadow:1, fog:1, fov:0, scale:1};
+// defaults tuned by the user on the phone (17 Oct 2026); previous factory values are kept in tools/dev_presets.json
+const DEV_DEF={exp:1, tm:'aces', sun:1.47, hemi:1.87, fill:1.68, env:1, sky:1, ao:0.85, aoR:0.45, bloom:0.1, bloomT:4.1, bloomR:1, vig:0.37, sat:1.06,
+  night:0.6, paintMet:1, paintRough:0.63, flake:0.06, coat:1, glassOp:0.78, sandN:2, sandB:1.4, shadow:3.5, fog:1, fov:11, scale:1.5};
 const DEV=Object.assign({},DEV_DEF,store.get('devGfx',{})); let devOn=store.get('devOn',false);
 const S = {
   sel: store.get('sel','m3-l'), cmp: store.get('cmp',''), align: store.get('align','own'), itemsIn:'A',
