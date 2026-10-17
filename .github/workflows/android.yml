@@ -52,6 +52,20 @@ jobs:
           if 'ACCESS_COARSE_LOCATION' not in s: s=s.replace('<application', add+'    <application',1)
           open(p,'w').write(s); print('location permission added')
           PY
+      - name: Haptics plugin and vibration permission
+        run: |
+          python3 - <<'PY'
+          import json,os,re
+          pkg=json.load(open('capacitor.config.json'))['appId']; d='android/app/src/main/java/'+pkg.replace('.','/')
+          open(d+'/BuzzPlugin.java','w').write(open('native/BuzzPlugin.java').read().replace('__PKG__',pkg))
+          ma=d+'/MainActivity.java'; s=open(ma).read()
+          if 'BuzzPlugin' not in s:
+              s2=re.sub(r'extends BridgeActivity\s*\{\s*\}','extends BridgeActivity {\n  @Override public void onCreate(android.os.Bundle b) { registerPlugin(BuzzPlugin.class); super.onCreate(b); }\n}',s)
+              assert s2!=s, s; open(ma,'w').write(s2)
+          p='android/app/src/main/AndroidManifest.xml'; m=open(p).read()
+          if 'android.permission.VIBRATE' not in m: m=m.replace('<application','<uses-permission android:name="android.permission.VIBRATE" />\n    <application',1)
+          open(p,'w').write(m); print('haptics plugin added for', pkg)
+          PY
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
