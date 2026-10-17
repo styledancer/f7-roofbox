@@ -66,6 +66,8 @@ html,body{overscroll-behavior:none}
 .ov[hidden]{display:none}
 .boxui{position:absolute;z-index:3;width:38px;height:38px;border-radius:50%;transform:translate(-50%,-50%);display:grid;place-items:center;padding:0;cursor:pointer;opacity:.82;border-color:rgba(255,255,255,.5);color:var(--ink)}
 .boxui[hidden]{display:none}
+.boxui.pin{width:44px;height:44px;opacity:.95}
+.boxui.pin svg{width:21px;height:21px}
 .boxui svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .boxui[aria-pressed="true"],.boxui[aria-expanded="true"]{background:var(--accent);color:#fff;opacity:.92}
 .boxui .cnt{position:absolute;right:-4px;top:-4px;min-width:16px;height:16px;border-radius:8px;background:var(--ink);color:var(--panel);font:600 .62rem/16px var(--body);padding:0 4px}
@@ -2839,7 +2841,10 @@ $('boBtn').addEventListener('click',()=>setBoxOnly(!boxOnly));
   const R=30, DEAD=3, rate=(d,lo,hi)=>{ const a=Math.abs(d); if(a<DEAD) return 0; const t=Math.min(1,(a-DEAD)/(R-DEAD)); return Math.sign(d)*(lo+(hi-lo)*t*t); };
   let raf=0, last=0;
   const tick=now=>{ if(!st){ raf=0; return; } const dt=Math.min(0.05,(now-(last||now))/1000); last=now;
-    if(st.zoom){ const z=rate(st.ky,0.12,0.8); if(z){ apply(0,0,Math.exp(z*dt)); zFill(); } }
+    if(st.zoom){ const a=Math.abs(st.ky), z=a<DEAD?0:Math.sign(st.ky)*(0.22+0.63*Math.pow(Math.min(1,(a-DEAD)/(R-DEAD)),1.4));
+      if(z){ apply(0,0,Math.exp(z*dt)); zFill();
+        const r1=camera.position.distanceTo(controls.target), lim=(z<0&&r1<=controls.minDistance+1e-3)||(z>0&&r1>=controls.maxDistance-1e-3);
+        if(lim&&!st.atLim){ st.atLim=true; hap('heavy'); } else if(!lim) st.atLim=false; } }
     else { const yaw=rate(st.kx,0.1,1.0), pit=rate(st.ky,0.06,0.55); if(yaw||pit) apply(yaw*dt,pit*dt,1); }
     raf=requestAnimationFrame(tick); };
   pad.addEventListener('pointermove',e=>{ if(!st) return;
@@ -3067,8 +3072,11 @@ function placeBoxUI(){
   [itemsBtn,moveBtn].forEach(b=>b.hidden=!idle); resetBtn.hidden=!(idle&&moveMode);
   if(!idle){ if(!drop.hidden) setTimeout(()=>setDrop(false)); arrows.forEach(x=>x.el.hidden=true); return; }
   const top=boxGroup.localToWorld(new THREE.Vector3(M(a.L)*0.5,M(a.H)+0.22,0)), sp=scr(top);
-  itemsBtn.hidden=!sp.ok; moveBtn.hidden=!sp.ok; resetBtn.hidden=!(sp.ok&&moveMode); resetBtn.style.left=(sp.x+72)+'px'; resetBtn.style.top=sp.y+'px';
-  itemsBtn.style.left=(sp.x-24)+'px'; itemsBtn.style.top=sp.y+'px'; moveBtn.style.left=(sp.x+24)+'px'; moveBtn.style.top=sp.y+'px';
+  itemsBtn.hidden=!sp.ok; itemsBtn.style.left=(sp.x-24)+'px'; itemsBtn.style.top=sp.y+'px';
+  // while moving the box, its on/off and reset buttons sit still in the top-left corner instead of riding on the box
+  const pin=moveMode&&!boxOnly; [moveBtn,resetBtn].forEach(b=>b.classList.toggle('pin',pin));
+  if(pin){ moveBtn.hidden=false; resetBtn.hidden=false; moveBtn.style.left='calc(var(--il) + 32px)'; resetBtn.style.left='calc(var(--il) + 86px)'; moveBtn.style.top=resetBtn.style.top='calc(var(--it) + 134px)'; }
+  else { moveBtn.hidden=!sp.ok; resetBtn.hidden=true; moveBtn.style.left=(sp.x+24)+'px'; moveBtn.style.top=sp.y+'px'; }
 
   arrows.forEach(x=>{
     if(!moveMode){ x.el.hidden=true; return; }
