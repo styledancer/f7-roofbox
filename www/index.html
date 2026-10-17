@@ -2828,9 +2828,9 @@ $('boBtn').addEventListener('click',()=>setBoxOnly(!boxOnly));
     sph.theta-=dTheta; sph.phi=Math.max(0.12,Math.min(controls.maxPolarAngle,sph.phi-dPhi));
     sph.radius=Math.max(controls.minDistance,Math.min(controls.maxDistance,sph.radius*zoom));
     off.setFromSpherical(sph); camera.position.copy(controls.target).add(off); camera.lookAt(controls.target); camAnim=null; drive.userCam=true; ORB.last=performance.now(); ORB.v=0; kick(); };
-  pad.addEventListener('pointerdown',e=>{ e.preventDefault(); try{ pad.setPointerCapture(e.pointerId); }catch(_){} st={x:e.clientX,y:e.clientY,kx:0,ky:0,zoom:false,moved:false};
+  pad.addEventListener('pointerdown',e=>{ e.preventDefault(); try{ pad.setPointerCapture(e.pointerId); }catch(_){} st={x:e.clientX,y:e.clientY,cy:e.clientY,kx:0,ky:0,zoom:false,moved:false};
     pad.classList.add('on'); hap('click');
-    st.hold=setTimeout(()=>{ if(st&&!st.moved){ st.zoom=true; st.r0=camera.position.distanceTo(controls.target); st.lit=[0,0]; pad.classList.add('zoom'); wrap.classList.add('zooming'); stage.classList.add('zooming'); zFill(); hap('tension'); } },380); });
+    st.hold=setTimeout(()=>{ if(st&&!st.moved){ st.zoom=true; st.r0=camera.position.distanceTo(controls.target); st.zy=st.cy; if(!raf){ last=0; raf=requestAnimationFrame(tick); } st.lit=[0,0]; pad.classList.add('zoom'); wrap.classList.add('zooming'); stage.classList.add('zooming'); zFill(); hap('tension'); } },380); });
   // zoom scales: the upper one lights up towards the closest view, the lower one towards the farthest
   const wrap=pad.parentElement, ZN=7, scU=wrap.querySelector('.zsc.up'), scD=wrap.querySelector('.zsc.dn');
   [scU,scD].forEach((sc,j)=>{ sc.innerHTML=Array.from({length:ZN},(_,i)=>`<i style="width:${8+i*0.7}px"></i>`).join('')+(j?'<b>−</b>':'<b>+</b>'); });
@@ -2838,18 +2838,19 @@ $('boBtn').addEventListener('click',()=>setBoxOnly(!boxOnly));
     const fu=r<r0?(r0-lo<0.01?1:Math.log(r0/r)/Math.log(r0/lo)):0, fd=r>r0?(hi-r0<0.01?1:Math.log(r/r0)/Math.log(hi/r0)):0;
     [[scU,fu],[scD,fd]].forEach(([sc,f],j)=>{ const n=f<0.004?0:Math.min(ZN,1+Math.floor(f*(ZN-1)+1e-6)); if(n!==st.lit[j]){ if(n>st.lit[j]) hap('tick'); st.lit[j]=n; sc.querySelectorAll('i').forEach((t,i)=>t.classList.toggle('lit',i<n)); } }); };
   // joystick: the knob's offset sets a speed, and the camera keeps turning (or zooming) for as long as the finger is held off-centre
-  const R=30, DEAD=3, rate=(d,lo,hi)=>{ const a=Math.abs(d); if(a<DEAD) return 0; const t=Math.min(1,(a-DEAD)/(R-DEAD)); return Math.sign(d)*(lo+(hi-lo)*t*t); };
+  const R=30, DEAD=3, ZT=120, rate=(d,lo,hi)=>{ const a=Math.abs(d); if(a<DEAD) return 0; const t=Math.min(1,(a-DEAD)/(R-DEAD)); return Math.sign(d)*(lo+(hi-lo)*t*t); };
   let raf=0, last=0;
   const tick=now=>{ if(!st){ raf=0; return; } const dt=Math.min(0.05,(now-(last||now))/1000); last=now;
-    if(st.zoom){ const a=Math.abs(st.ky), z=a<DEAD?0:Math.sign(st.ky)*(0.22+0.63*Math.pow(Math.min(1,(a-DEAD)/(R-DEAD)),1.4));
-      if(z){ apply(0,0,Math.exp(z*dt)); zFill();
-        const r1=camera.position.distanceTo(controls.target), lim=(z<0&&r1<=controls.minDistance+1e-3)||(z>0&&r1>=controls.maxDistance-1e-3);
-        if(lim&&!st.atLim){ st.atLim=true; hap('heavy'); } else if(!lim) st.atLim=false; } }
+    if(st.zoom){ // zoom follows the finger's position: the full scale is the full way to the closest (up) or farthest (down) view; a still finger holds the camera
+      const f=Math.max(-1,Math.min(1,(st.zy-st.cy)/ZT)), lo=controls.minDistance, hi=controls.maxDistance, r0=st.r0;
+      const rt=f>=0?r0*Math.pow(Math.min(1,lo/r0),f):r0*Math.pow(Math.max(1,hi/r0),-f), r=camera.position.distanceTo(controls.target);
+      const rn=r+(rt-r)*(1-Math.exp(-dt*16)); if(Math.abs(rn-r)>1e-4) apply(0,0,rn/r); zFill();
+      const lim=Math.abs(f)>=0.999; if(lim&&!st.atLim){ st.atLim=true; hap('heavy'); } else if(!lim) st.atLim=false; }
     else { const yaw=rate(st.kx,0.1,1.0), pit=rate(st.ky,0.06,0.55); if(yaw||pit) apply(yaw*dt,pit*dt,1); }
     raf=requestAnimationFrame(tick); };
   pad.addEventListener('pointermove',e=>{ if(!st) return;
     if(Math.hypot(e.clientX-st.x,e.clientY-st.y)>6) st.moved=true;
-    st.kx=Math.max(-R,Math.min(R,e.clientX-st.x)); st.ky=Math.max(-R,Math.min(R,e.clientY-st.y)); knob.style.transform=`translate(${st.kx}px,${st.ky}px)`;
+    st.cy=e.clientY; if(st.zoom) st.kx=0; else st.kx=Math.max(-R,Math.min(R,e.clientX-st.x)); st.ky=Math.max(-R,Math.min(R,st.zoom?R*(e.clientY-st.zy)/ZT:e.clientY-st.y)); knob.style.transform=`translate(${st.kx}px,${st.ky}px)`;
     if(!raf){ last=0; raf=requestAnimationFrame(tick); } });
   const end=()=>{ if(!st) return; clearTimeout(st.hold); st=null; pad.classList.remove('on','zoom'); wrap.classList.remove('zooming'); stage.classList.remove('zooming'); knob.style.transform=''; setTimeout(()=>{ if(!st) wrap.querySelectorAll('.zsc i.lit').forEach(t=>t.classList.remove('lit')); },200); };
   pad.addEventListener('pointerup',end); pad.addEventListener('pointercancel',end); })();
