@@ -129,12 +129,12 @@ html,body{overscroll-behavior:none}
 .orbpad .knob{position:absolute;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:var(--accent);opacity:0;transition:opacity .15s;pointer-events:none}
 .orbpad.on .knob{opacity:.85} .orbpad.on svg{opacity:0}
 .orbpad.zoom .knob{background:#4FC3F7;box-shadow:0 0 10px rgba(79,195,247,.8)}
-.zsc{position:absolute;left:38px;transform:translateX(-50%) scaleY(.4);display:flex;align-items:center;gap:5px;padding:9px 7px;border-radius:999px;pointer-events:none;opacity:0;transition:opacity .18s,transform .26s cubic-bezier(.2,1.2,.4,1)}
-.zsc.up{bottom:calc(100% + 18px);flex-direction:column-reverse;transform-origin:50% 100%}
-.zsc.dn{top:calc(100% + 18px);flex-direction:column;transform-origin:50% 0}
-.zsc i{display:block;height:3px;border-radius:2px;background:rgba(120,132,148,.45);transition:background .12s,box-shadow .12s}
-.zsc i.lit{background:#4FC3F7;box-shadow:0 0 7px rgba(79,195,247,.95)}
-.zsc b{font:600 .8rem/1 var(--body);color:var(--ink);opacity:.7;margin:1px 0}
+.zsc{position:absolute;left:38px;transform:translateX(-50%) scaleY(.4);display:flex;align-items:center;gap:4px;padding:7px 5px;border-radius:999px;pointer-events:none;opacity:0;transition:opacity .18s,transform .26s cubic-bezier(.2,1.2,.4,1)}
+.zsc.up{bottom:calc(100% + 14px);flex-direction:column-reverse;transform-origin:50% 100%}
+.zsc.dn{top:calc(100% + 14px);flex-direction:column;transform-origin:50% 0}
+.zsc i{display:block;height:2px;border-radius:1px;background:rgba(120,132,148,.5);transition:background .12s,box-shadow .12s}
+.zsc i.lit{background:#4FC3F7;box-shadow:0 0 5px rgba(79,195,247,.9)}
+.zsc b{font:600 .62rem/1 var(--body);color:var(--ink);opacity:.55;margin:0}
 .ov.orbp.zooming .zsc{opacity:1;transform:translateX(-50%)}
 .stage.zooming .ov.tl,.stage.zooming .ov.bo{opacity:0;visibility:hidden;transition:opacity .15s,visibility 0s linear .15s}
 .stage.dropOpen .ov.orbp,.stage.dropOpen .ov.bo{visibility:hidden}
@@ -2830,17 +2830,17 @@ $('boBtn').addEventListener('click',()=>setBoxOnly(!boxOnly));
     pad.classList.add('on'); hap('click');
     st.hold=setTimeout(()=>{ if(st&&!st.moved){ st.zoom=true; st.r0=camera.position.distanceTo(controls.target); st.lit=[0,0]; pad.classList.add('zoom'); wrap.classList.add('zooming'); stage.classList.add('zooming'); zFill(); hap('tension'); } },380); });
   // zoom scales: the upper one lights up towards the closest view, the lower one towards the farthest
-  const wrap=pad.parentElement, ZN=9, scU=wrap.querySelector('.zsc.up'), scD=wrap.querySelector('.zsc.dn');
-  [scU,scD].forEach((sc,j)=>{ sc.innerHTML=Array.from({length:ZN},(_,i)=>`<i style="width:${10+i*1.6}px"></i>`).join('')+(j?'<b>−</b>':'<b>+</b>'); });
+  const wrap=pad.parentElement, ZN=7, scU=wrap.querySelector('.zsc.up'), scD=wrap.querySelector('.zsc.dn');
+  [scU,scD].forEach((sc,j)=>{ sc.innerHTML=Array.from({length:ZN},(_,i)=>`<i style="width:${8+i*0.7}px"></i>`).join('')+(j?'<b>−</b>':'<b>+</b>'); });
   const zFill=()=>{ if(!st||!st.zoom) return; const r=camera.position.distanceTo(controls.target), r0=st.r0, lo=controls.minDistance, hi=controls.maxDistance;
     const fu=r<r0?(r0-lo<0.01?1:Math.log(r0/r)/Math.log(r0/lo)):0, fd=r>r0?(hi-r0<0.01?1:Math.log(r/r0)/Math.log(hi/r0)):0;
-    [[scU,fu],[scD,fd]].forEach(([sc,f],j)=>{ const n=Math.max(0,Math.min(ZN,Math.round(f*ZN+0.001))); if(n!==st.lit[j]){ if(n>st.lit[j]) hap('tick'); st.lit[j]=n; sc.querySelectorAll('i').forEach((t,i)=>t.classList.toggle('lit',i<n)); } }); };
+    [[scU,fu],[scD,fd]].forEach(([sc,f],j)=>{ const n=f<0.004?0:Math.min(ZN,1+Math.floor(f*(ZN-1)+1e-6)); if(n!==st.lit[j]){ if(n>st.lit[j]) hap('tick'); st.lit[j]=n; sc.querySelectorAll('i').forEach((t,i)=>t.classList.toggle('lit',i<n)); } }); };
   // joystick: the knob's offset sets a speed, and the camera keeps turning (or zooming) for as long as the finger is held off-centre
   const R=30, DEAD=3, rate=(d,lo,hi)=>{ const a=Math.abs(d); if(a<DEAD) return 0; const t=Math.min(1,(a-DEAD)/(R-DEAD)); return Math.sign(d)*(lo+(hi-lo)*t*t); };
   let raf=0, last=0;
   const tick=now=>{ if(!st){ raf=0; return; } const dt=Math.min(0.05,(now-(last||now))/1000); last=now;
-    if(st.zoom){ const z=rate(st.ky,0.15,1.4); if(z){ apply(0,0,Math.exp(z*dt)); zFill(); } }
-    else { const yaw=rate(st.kx,0.12,1.7), pit=rate(st.ky,0.08,0.9); if(yaw||pit) apply(yaw*dt,pit*dt,1); }
+    if(st.zoom){ const z=rate(st.ky,0.12,0.8); if(z){ apply(0,0,Math.exp(z*dt)); zFill(); } }
+    else { const yaw=rate(st.kx,0.1,1.0), pit=rate(st.ky,0.06,0.55); if(yaw||pit) apply(yaw*dt,pit*dt,1); }
     raf=requestAnimationFrame(tick); };
   pad.addEventListener('pointermove',e=>{ if(!st) return;
     if(Math.hypot(e.clientX-st.x,e.clientY-st.y)>6) st.moved=true;
