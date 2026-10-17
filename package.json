@@ -1,0 +1,17 @@
+{
+  "name": "lead-desk",
+  "productName": "Лиды конфигуратора",
+  "version": "1.0.0",
+  "description": "Клиенты для 3D-конфигуратора: статусы, заметки, коммерческие предложения",
+  "main": "main.js",
+  "author": "Artem",
+  "scripts": { "start": "electron .", "dist": "electron-builder --win portable --publish never" },
+  "devDependencies": { "electron": "31.7.7", "electron-builder": "24.13.3" },
+  "build": {
+    "appId": "ru.leaddesk.app",
+    "productName": "LeadDesk",
+    "files": ["main.js", "preload.js", "index.html", "seed.js"],
+    "win": { "target": "portable" },
+    "portable": { "artifactName": "LeadDesk-${version}.exe" }
+  }
+}
