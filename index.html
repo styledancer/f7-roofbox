@@ -100,6 +100,12 @@ label.f textarea{min-height:92px;resize:vertical;line-height:1.5}
 .kpbar select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
 .kp{width:100%;min-height:560px;padding:18px 20px;border:1px solid var(--line);border-radius:12px;background:var(--panel);font:400 14.5px/1.6 var(--f);resize:vertical}
 .flag{font-size:12px;color:var(--warn)}
+.aist{font-size:13px;color:var(--muted);min-height:0}
+.aist.err{color:var(--bad)} .aist.busy::before{content:'';display:inline-block;width:10px;height:10px;border:2px solid var(--accent);border-right-color:transparent;border-radius:50%;margin-right:8px;animation:spin .8s linear infinite;vertical-align:-1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sitebox summary{cursor:pointer;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.sitet{width:100%;min-height:160px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font:400 13px/1.5 var(--f);resize:vertical}
+.btn:disabled{opacity:.5;cursor:default}
 
 /* strategy */
 .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
@@ -193,7 +199,8 @@ const PITCH={
 const DESK=window.desk||{ // browser fallback for previews
   load:async()=>{ try{ return JSON.parse(localStorage.getItem('leaddesk')); }catch(e){ return null; } },
   save:async d=>{ try{ localStorage.setItem('leaddesk',JSON.stringify(d)); }catch(e){} return true; },
-  openExternal:async u=>window.open(u,'_blank'), openDataFolder:async()=>{}, exportJson:async()=>null, importJson:async()=>null, exportKp:async()=>null };
+  openExternal:async u=>window.open(u,'_blank'), openDataFolder:async()=>{}, exportJson:async()=>null, importJson:async()=>null, exportKp:async()=>null,
+  fetchSite:async()=>({error:'Работает только в приложении'}), aiGenerate:async()=>({error:'Работает только в приложении'}) };
 let DB=null, sel=null, tab='card', view='leads', saveT=0;
 const uid=()=>Math.random().toString(36).slice(2,10);
 const now=()=>new Date().toISOString();
@@ -285,9 +292,13 @@ function renderTab(){ const l=L(sel), B=document.getElementById('tabBody'); if(!
   } else {
     if(!l.kp.text) { l.kp.text=makeKp(l,l.kp.kind||'full'); l.kp.edited=false; l.kp.t=now(); touch(l); }
     B.innerHTML=`<div class="kpbar"><select id="kpKind" aria-label="Формат"><option value="full"${l.kp.kind==='full'?' selected':''}>Полное КП</option><option value="short"${l.kp.kind==='short'?' selected':''}>Первое сообщение</option><option value="follow"${l.kp.kind==='follow'?' selected':''}>Напоминание</option></select>
-      <button class="btn" id="kpGen">Собрать заново</button><button class="btn" id="kpCopy">Копировать</button><button class="btn" id="kpPdf">PDF</button><button class="btn" id="kpDoc">Word</button><button class="btn pri" id="kpSent">Отметить: КП отправлено</button>
-      <span class="flag" id="kpFlag">${l.kp.edited?'Текст правился вручную: «Собрать заново» заменит правки':''}</span></div>
+      <button class="btn pri" id="kpAi">Написать с ИИ</button><button class="btn" id="kpGen">Собрать по шаблону</button><button class="btn" id="kpCopy">Копировать</button><button class="btn" id="kpPdf">PDF</button><button class="btn" id="kpDoc">Word</button><button class="btn pri" id="kpSent">Отметить: КП отправлено</button>
+      <span class="flag" id="kpFlag">${l.kp.edited?'Текст правился вручную: новая генерация заменит правки':''}${l.kp.ai?' · написано ИИ, проверьте факты':''}</span></div>
+      <div class="aist" id="aiSt" role="status"></div>
       <textarea class="kp" id="kpText" aria-label="Текст КП">${esc(l.kp.text)}</textarea>
+      <details class="box sitebox"${l.siteText?'':' open'}><summary><b>Текст с сайта</b> <span class="hint">${l.siteText?'загружен '+fmtT(l.siteT)+', '+l.siteText.length+' символов':'ещё не загружен: ИИ напишет только по вашим заметкам'}</span></summary>
+        <div class="kpbar" style="margin:10px 0"><button class="btn" id="siteLoad"${l.site?'':' disabled'}>${l.siteText?'Обновить с сайта':'Загрузить с сайта'}</button><span class="hint">Можно вставить или поправить текст вручную, например страницу каталога</span></div>
+        <textarea id="siteText" class="sitet" placeholder="Сюда попадёт текст главной страницы сайта">${esc(l.siteText||'')}</textarea></details>
       <div class="hint">Текст собирается из карточки: «Что я о них знаю», «Зацепки», «Что им показать», контакт и ваши данные в разделе «Я». Правьте прямо здесь, правки сохраняются.</div>`;
   }
 }
@@ -320,6 +331,31 @@ function makeKp(l,kind){
   L1.push('',`Когда вам удобно встретиться или созвониться на этой неделе?`,'',s.myName||'[ваше имя]',myContacts()||'[контакты]');
   return L1.join('\n').replace(/\n{3,}/g,'\n\n');
 }
+const AI_RULES=`Ты помогаешь разработчику 3D-конфигураторов писать коммерческие предложения российским производителям. Пиши по-русски, от первого лица, простым деловым языком, как живой человек.
+Правила:
+- Используй только факты из данных ниже. Не выдумывай модели, цифры, клиентов, награды и цены. Если чего-то нет в данных, не упоминай.
+- В первых двух-трёх предложениях покажи, что автор реально посмотрел их продукт: назови 1–2 конкретные вещи из их ассортимента или сайта и свяжи их с тем, что умеет конфигуратор.
+- Никаких штампов: «уникальное решение», «выведет на новый уровень», «инновационный», «в современном мире», «не просто…, а…», восклицательные знаки, эмодзи.
+- Цену не называй: стоимость обсуждается после встречи.
+- Заканчивай конкретным предложением встретиться или созвониться на 20–30 минут.
+- Без markdown: никаких звёздочек и решёток. Списки — строками, начинающимися с «• ». Заголовки разделов — отдельной строкой без точки.`;
+const AI_KIND={
+  full:`Формат: полное коммерческое предложение на одну-полторы страницы. Первая строка: «Коммерческое предложение для <название>». Вторая строка: подзаголовок про 3D-конфигуратор их продукции. Затем приветствие, кто я, разделы с такими заголовками строками: «Почему пишу именно вам», «Что получит ваш покупатель», «Что это даёт вам», «Как это выглядит», «Как предлагаю начать». В конце подпись с контактами.`,
+  short:`Формат: первое сообщение в почту или мессенджер, 5–8 коротких предложений, без заголовков. Приветствие, кто я в одной фразе, почему пишу именно им (конкретика), что увидит их покупатель, ссылка на прототип, вопрос про 20 минут на показ, подпись.`,
+  follow:`Формат: короткое напоминание после письма без ответа, 3–5 предложений. Без давления, одна новая конкретная мысль про их продукт, ссылка на прототип, предложение коротко созвониться или честно ответить «не актуально».`
+};
+function aiPrompt(l,kind){
+  const s=DB.settings, p=PITCH[l.seg]||PITCH.other;
+  const notes=l.notes.filter(n=>!n.sys).slice(-8).map(n=>'- '+n.text).join('\n');
+  return [AI_KIND[kind],'',
+    'ОБО МНЕ',`Имя: ${s.myName||'[ваше имя]'}`,`Кто я: ${s.myRole}`,`О себе: ${s.about}`,`Что уже сделано: ${s.proof}`,`Ссылка на прототип: ${s.demo}`,`Контакты: ${myContacts()||'[контакты]'}`,'',
+    'КОМПАНИЯ',`Название: ${l.name}`,`Ниша: ${SEG[l.seg]}`,l.city?`Город: ${l.city}`:'',l.what?`Что производят: ${l.what}`:'',l.site?`Сайт: ${l.site}`:'',
+    l.person?`Кому пишу: ${l.person}${l.role?', '+l.role:''}`:'Кому пишу: имя неизвестно, обращайся без имени',
+    l.about?`Что я о них знаю: ${l.about}`:'',l.hooks?`Зацепки и боли: ${l.hooks}`:'',notes?`Мои заметки:\n${notes}`:'','',
+    'ЧТО ПОКАЗАТЬ ИХ ПОКУПАТЕЛЮ',(l.show.trim()?l.show:p.buyer.join('\n')),'','ЧТО ЭТО ДАЁТ ПРОИЗВОДИТЕЛЮ',p.seller.join('\n'),'',
+    l.siteText?'ТЕКСТ С ИХ САЙТА (может содержать мусор из меню, бери только факты о продукции)\n'+l.siteText.slice(0,6000):'Текста сайта нет.'
+  ].filter(x=>x!=='').join('\n');
+}
 function kpHtml(l){
   const lines=l.kp.text.split('\n'); let html='', inList=false, inOl=false;
   const heads=new Set(['Почему пишу именно вам','Что получит ваш покупатель','Что это даёт вам','Как это выглядит','Где будет работать','Как предлагаю начать']);
@@ -341,6 +377,10 @@ function kpHtml(l){
   </style></head><body>${html}</body></html>`;
 }
 
+async function loadSite(l,quiet){ const r=await DESK.fetchSite(l.site); const L2=L(l.id);
+  if(r.text){ L2.siteText=r.text; L2.siteT=now(); touch(L2); if(!quiet) toast('Текст сайта загружен'); }
+  else if(!quiet) toast(r.error||'Не получилось');
+  if(sel===l.id&&tab==='kp'&&!quiet) renderTab(); return r; }
 /* ---------- strategy ---------- */
 function renderStrategy(){
   const A=DB.leads, act=A.filter(l=>ACTIVE.has(l.status)), t=today();
@@ -386,6 +426,12 @@ function renderSettings(){ const s=DB.settings;
     <div class="box grid2">
       <label class="f">О себе <span class="hint">первый абзац КП</span><textarea id="s-about">${esc(s.about)}</textarea></label>
       <label class="f">Что уже сделано <span class="hint">блок «Как это выглядит»</span><textarea id="s-proof">${esc(s.proof)}</textarea></label></div>
+    <div class="box"><h2>Нейросеть для КП</h2>
+      <div class="grid3"><label class="f">Сервис<select id="s-aiProvider"><option value="">Не подключена</option><option value="yandex"${s.aiProvider==='yandex'?' selected':''}>YandexGPT</option><option value="giga"${s.aiProvider==='giga'?' selected':''}>GigaChat</option></select></label></div>
+      ${s.aiProvider==='yandex'?`<div class="grid3" style="margin-top:12px"><label class="f">API-ключ<input id="s-ycKey" type="password" value="${esc(s.ycKey||'')}" autocomplete="off"></label><label class="f">ID каталога<input id="s-ycFolder" value="${esc(s.ycFolder||'')}" placeholder="b1g…"></label><label class="f">Модель<select id="s-ycModel"><option value="yandexgpt/latest"${(s.ycModel||'yandexgpt/latest')==='yandexgpt/latest'?' selected':''}>YandexGPT Pro</option><option value="yandexgpt-lite/latest"${s.ycModel==='yandexgpt-lite/latest'?' selected':''}>YandexGPT Lite (дешевле)</option></select></label></div>`:''}
+      ${s.aiProvider==='giga'?`<div class="grid3" style="margin-top:12px"><label class="f">Ключ авторизации<input id="s-gigaKey" type="password" value="${esc(s.gigaKey||'')}" autocomplete="off"></label><label class="f">Тип доступа<select id="s-gigaScope"><option value="GIGACHAT_API_PERS"${(s.gigaScope||'GIGACHAT_API_PERS')==='GIGACHAT_API_PERS'?' selected':''}>Физлицо</option><option value="GIGACHAT_API_B2B"${s.gigaScope==='GIGACHAT_API_B2B'?' selected':''}>ИП / юрлицо, пакеты</option><option value="GIGACHAT_API_CORP"${s.gigaScope==='GIGACHAT_API_CORP'?' selected':''}>ИП / юрлицо, по факту</option></select></label><label class="f">Модель<select id="s-gigaModel">${['GigaChat-2-Max','GigaChat-2-Pro','GigaChat-2','GigaChat'].map(m=>`<option${(s.gigaModel||'GigaChat-2-Max')===m?' selected':''}>${m}</option>`).join('')}</select></label></div>`:''}
+      ${s.aiProvider?`<div class="kpbar" style="margin-top:12px"><button class="btn" id="aiTest">Проверить подключение</button><span class="aist" id="aiTestSt"></span></div>`:''}
+      <p class="hint">Ключ хранится только на этом компьютере, в файле данных приложения.</p></div>
     <div class="box"><h2>Данные</h2><div class="kpbar"><button class="btn" id="exp">Сохранить копию…</button><button class="btn" id="imp">Загрузить из файла…</button><button class="btn ghost" id="fold">Открыть папку с данными</button></div>
       <p class="hint">Всё хранится на этом компьютере, копия делается автоматически раз в день (последние 30).</p></div></div>`;
 }
@@ -406,7 +452,18 @@ document.addEventListener('click',async e=>{
   if(t.id==='delYes'){ DB.leads=DB.leads.filter(x=>x.id!==sel); sel=(DB.leads[0]||{}).id; touch(); go('leads'); toast('Компания удалена'); return; }
   if(t.id==='nAdd'){ const v=document.getElementById('nText').value.trim(); if(!v) return; l.notes.push({id:uid(),t:now(),text:v,sys:false}); touch(l); renderLead(); return; }
   if(t.dataset.ndel){ l.notes=l.notes.filter(n=>n.id!==t.dataset.ndel); touch(l); renderLead(); return; }
-  if(t.id==='kpGen'){ l.kp.text=makeKp(l,l.kp.kind); l.kp.edited=false; l.kp.t=now(); touch(l); renderTab(); toast('КП собрано заново'); return; }
+  if(t.id==='kpGen'){ l.kp.text=makeKp(l,l.kp.kind); l.kp.edited=false; l.kp.ai=false; l.kp.t=now(); touch(l); renderTab(); toast('КП собрано по шаблону'); return; }
+  if(t.id==='siteLoad'){ await loadSite(l); return; }
+  if(t.id==='kpAi'){ const st=document.getElementById('aiSt'), id=l.id;
+    if(!DB.settings.aiProvider){ st.className='aist err'; st.textContent='Сначала подключите нейросеть в разделе «Я».'; return; }
+    t.disabled=true;
+    if(!l.siteText&&l.site){ st.className='aist busy'; st.textContent='Читаю сайт…'; await loadSite(l,true); }
+    st.className='aist busy'; st.textContent='Пишу текст, обычно 10–30 секунд…';
+    const r=await DESK.aiGenerate({cfg:DB.settings, system:AI_RULES, user:aiPrompt(l,l.kp.kind)});
+    const L2=L(id); if(r.text){ L2.kp.text=r.text.replace(/\*\*|##+\s?/g,''); L2.kp.edited=false; L2.kp.ai=true; L2.kp.t=now(); L2.notes.push({id:uid(),t:now(),text:'ИИ написал вариант: '+({full:'полное КП',short:'первое сообщение',follow:'напоминание'})[L2.kp.kind],sys:true}); touch(L2); if(sel===id&&tab==='kp') renderTab(); toast('Готово, проверьте текст'); }
+    else if(sel===id&&tab==='kp'){ const st2=document.getElementById('aiSt'); st2.className='aist err'; st2.textContent=r.error; document.getElementById('kpAi').disabled=false; }
+    return; }
+  if(t.id==='aiTest'){ const o=document.getElementById('aiTestSt'); o.className='aist busy'; o.textContent='Проверяю…'; const r=await DESK.aiGenerate({cfg:DB.settings,system:'Отвечай одним словом.',user:'Скажи «работает».'}); o.className='aist'+(r.text?'':' err'); o.textContent=r.text?'Подключено, ответ: '+r.text.slice(0,40):r.error; return; }
   if(t.id==='kpCopy'){ try{ await navigator.clipboard.writeText(l.kp.text); toast('Скопировано'); }catch(_){ document.getElementById('kpText').select(); } return; }
   if(t.id==='kpPdf'||t.id==='kpDoc'){ const name=(l.kp.kind==='full'?'КП ':'Письмо ')+l.name.replace(/[\\/:*?"<>|«»]/g,''); const p=await DESK.exportKp({html:kpHtml(l),name,kind:t.id==='kpPdf'?'pdf':'doc'}); if(p){ l.notes.push({id:uid(),t:now(),text:`Сохранено: ${p}`,sys:true}); touch(l); toast('Сохранено'); } return; }
   if(t.id==='kpSent'){ if(l.status!=='proposal'){ const from=l.status; l.status='proposal'; l.history.push({t:now(),status:'proposal'}); l.notes.push({id:uid(),t:now(),text:`Статус: ${STN[from]} → КП отправлено`,sys:true}); }
@@ -419,13 +476,15 @@ document.addEventListener('click',async e=>{
 document.addEventListener('input',e=>{ const el=e.target, id=el.id||'';
   if(['q'].includes(id)) return renderList();
   if(id.startsWith('f-')){ const l=L(sel); l[id.slice(2)]=el.value; touch(l); if(['f-name','f-city','f-seg','f-prio','f-nextDate'].includes(id)) renderList(); if(id==='f-seg'){ const sh=document.getElementById('f-show'); if(sh) sh.placeholder=PITCH[el.value].buyer.join('\n'); } return; }
-  if(id==='kpText'){ const l=L(sel); l.kp.text=el.value; l.kp.edited=true; touch(l); document.getElementById('kpFlag').textContent='Текст правился вручную: «Собрать заново» заменит правки'; return; }
+  if(id==='siteText'){ const l=L(sel); l.siteText=el.value; l.siteT=l.siteT||now(); touch(l); return; }
+  if(id==='kpText'){ const l=L(sel); l.kp.text=el.value; l.kp.edited=true; touch(l); document.getElementById('kpFlag').textContent='Текст правился вручную: новая генерация заменит правки'; return; }
   if(id.startsWith('s-')){ DB.settings[id.slice(2)]=el.value; touch(); return; }
   if(id==='stratNotes'){ DB.settings.strategy=el.value; touch(); }
 });
 document.addEventListener('change',e=>{ const id=e.target.id;
   if(id==='fSeg'||id==='fSt'||id==='fSort') renderList();
-  if(id==='kpKind'){ const l=L(sel); l.kp.kind=e.target.value; l.kp.text=makeKp(l,l.kp.kind); l.kp.edited=false; touch(l); renderTab(); }
+  if(id==='kpKind'){ const l=L(sel); l.kp.kind=e.target.value; l.kp.text=makeKp(l,l.kp.kind); l.kp.edited=false; l.kp.ai=false; touch(l); renderTab(); }
+  if(id==='s-aiProvider'){ renderSettings(); }
   if(id==='f-seg'||id==='f-prio') renderLead();
 });
 document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)&&e.target.id==='nText'){ document.getElementById('nAdd').click(); } });
