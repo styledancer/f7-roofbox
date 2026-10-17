@@ -114,6 +114,12 @@ html,body{overscroll-behavior:none}
 .hs button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
 @media (max-width:899px){ .hs{top:auto;bottom:calc(var(--ib) + 6px + var(--hsb,170px))} }
 .stage.dropOpen .ov.hs,.stage.zen .ov.hs{visibility:hidden}
+.stage.boxonly .itemsDrop{max-height:min(27vh,220px);padding:4px;gap:0 2px}
+.stage.boxonly .itemsDrop button{padding:3px 6px;gap:6px;grid-template-columns:18px minmax(0,1fr) auto}
+.stage.boxonly .itemsDrop button svg{width:16px;height:16px}
+.stage.boxonly .itemsDrop button .nm{font-size:.7rem;-webkit-line-clamp:1}
+.stage.boxonly .itemsDrop .ih{padding:3px 6px 2px}
+.stage.gateOn .ov.hs,.stage.gateOn .ov.orbp,.stage.gateOn .ov.bo,.stage.gateOn .ov.tl{visibility:hidden}
 .bo{left:calc(10px + var(--il));bottom:calc(178px + var(--ib))}
 .orbp{left:calc(10px + var(--il));bottom:calc(240px + var(--ib))}
 .orbpad{position:relative;width:76px;height:76px;border-radius:50%;display:grid;place-items:center;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
@@ -354,11 +360,15 @@ body[data-tab="info"] #pgSet, body[data-tab="set"] #pgInfo, body[data-tab="set"]
 .devp{position:absolute;z-index:7;left:calc(10px + var(--il));right:calc(96px + var(--ir));bottom:calc(6px + var(--ib));max-height:30%;overflow:auto;border-radius:var(--rl);padding:0 10px 8px;
   --lg-base:rgba(16,20,26,.66);--lg-hi:rgba(255,255,255,.08);color:#eef2f7;font:500 .72rem var(--body);overscroll-behavior:contain;touch-action:pan-y}
 .devp[hidden]{display:none}
-.devp .hd{display:flex;gap:6px;align-items:center;justify-content:space-between;flex-wrap:wrap;position:sticky;top:0;z-index:1;margin:0 -10px;padding:8px 10px 6px;background:rgba(16,20,26,.94);border-radius:var(--rl) var(--rl) 0 0}
+.devp .hd{display:flex;gap:6px;align-items:center;justify-content:space-between;flex-wrap:wrap;position:sticky;top:0;z-index:2;margin:0 -10px;padding:8px 10px 6px;background:#12161c;border-radius:var(--rl) var(--rl) 0 0;box-shadow:0 4px 8px rgba(0,0,0,.35)}
 .devp .hd b{font:700 .72rem var(--mono);letter-spacing:.06em}
 .devp .hd button{font:600 .68rem var(--body);border:1px solid rgba(255,255,255,.25);background:transparent;color:inherit;border-radius:8px;padding:4px 7px}
 .devp .g{font:700 .62rem var(--mono);color:#9fb3ff;text-transform:uppercase;letter-spacing:.08em;margin:8px 0 2px}
-.devp .r{display:grid;grid-template-columns:104px 1fr 40px;align-items:center;gap:6px;min-height:24px;line-height:1.15}
+.devp .r{display:grid;grid-template-columns:86px 26px 1fr 26px 38px 26px;align-items:center;gap:4px;min-height:30px;line-height:1.15}
+.devp .r .pm,.devp .r .rs{width:26px;height:26px;padding:0;border-radius:7px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);color:inherit;font:700 .9rem var(--mono);display:grid;place-items:center}
+.devp .r .rs{font-size:.8rem;opacity:.35} .devp .r.mod .rs{opacity:1;color:#ffcf7a;border-color:#ffcf7a}
+.devp .r.mod > span{color:#ffcf7a}
+.devp .r select{grid-column:2 / 6}
 .devp .r input[type=range]{width:100%;accent-color:#86a2ff}
 .devp .r output{font:500 .68rem var(--mono);text-align:right}
 .devp select{font:inherit;background:rgba(255,255,255,.1);color:inherit;border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:2px 4px}
@@ -1150,7 +1160,7 @@ const matB=new THREE.MeshPhysicalMaterial({color:0x141619, metalness:0.1, roughn
 const edgeA=new THREE.LineBasicMaterial({color:0x2B59E0}), edgeB=new THREE.LineBasicMaterial({color:0xD9822B});
 const boxGroup=new THREE.Group(), cmpGroup=new THREE.Group(), itemsGroup=new THREE.Group();
 car.add(boxGroup); car.add(cmpGroup);
-let ghost=false, itemsOpen=false;   // the items menu forces the see-through box so you watch things go in
+let ghost=false, itemsOpen=false, keepGhost=false;   // the items menu forces the see-through box so you watch things go in
 // boxes are drawn in their factory finish; the wireframe ("каркас") view is optional and turns on by itself when two boxes are compared
 function boxFinish(box){ const id=S.boxColor[box.id]; return box.colors.find(c=>c.id===id)||box.colors[0]; }
 function applyBoxMat(mat, box, wire, accent){
@@ -1163,6 +1173,15 @@ const FLAKE=(()=>{ const N=256, c=document.createElement('canvas'); c.width=c.he
   for(let i=0;i<N*N;i++){ const k=i*4, s=r()<0.35; im.data[k]=s?Math.round(128+(r()-0.5)*120):128; im.data[k+1]=s?Math.round(128+(r()-0.5)*120):128; im.data[k+2]=255; im.data[k+3]=255; }
   g.putImageData(im,0,0); const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(40,40); return t; })();
 function paintFinish(m){ if(GFX.q==='high'&&m.uv!==false){ m.normalMap=FLAKE; m.normalScale=new THREE.Vector2(0.06,0.06); } m.color.set(S.color); satBoost(m.color,1.4,0.8); m.metalness=DEV.paintMet; m.roughness=DEV.paintRough; if('clearcoat' in m) m.clearcoat=DEV.coat; if(m.normalScale) m.normalScale.set(DEV.flake,DEV.flake); m.envMapIntensity=(m.userData.envBase=1.35)*1; if('clearcoat' in m){ m.clearcoat=1; m.clearcoatRoughness=0.05; } m.needsUpdate=true; }
+function fadeGhostOut(){
+  const plain=S.wire===null?!!B():S.wire; if(plain){ keepGhost=false; return; }
+  const items=[[matA,A()],[matB,B()]].filter(([m,b])=>b).map(([m,b])=>{ const c=new THREE.Color(boxFinish(b).hex); satBoost(c); return {m,c0:m.color.clone(),c}; });
+  const t0=performance.now();
+  const step=()=>{ const k=Math.min(1,(performance.now()-t0)/700), e=k*k*(3-2*k);
+    items.forEach(({m,c0,c})=>{ m.opacity=0.2+0.8*e; m.color.copy(c0).lerp(c,e); });
+    [boxGroup,cmpGroup].forEach(g=>g.traverse(o=>{ if(o.isLineSegments&&o.material) { o.material.transparent=true; o.material.opacity=1-e; } }));
+    kick(); if(k<1) requestAnimationFrame(step); else { keepGhost=false; setGhost(false); [boxGroup,cmpGroup].forEach(g=>g.traverse(o=>{ if(o.isLineSegments&&o.material) o.material.opacity=1; })); } };
+  step(); }
 function setGhost(on){
   ghost=on;
   const a=byId(S.sel), b=S.cmp?byId(S.cmp):null;
@@ -1445,7 +1464,7 @@ try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{a
 new MutationObserver(()=>{applyTheme();kick();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 
 /* ---------- camera views ---------- */
-const VIEWS={ gate:[[-3.2,2.4,10.5],[-4.3,1.4,0]], q:[[-5.8,3.4,5.6],[0,1.1,0]], side:[[0,1.3,8.2],[0,1.1,0]], rear:[[7.4,2.6,2.2],[0.6,1.4,0]], top:[[0.01,9.5,0.4],[0,1,0]] };
+const VIEWS={ gate:[[-6.6,2.6,9.4],[0,1.0,0]], q:[[-5.8,3.4,5.6],[0,1.1,0]], side:[[0,1.3,8.2],[0,1.1,0]], rear:[[7.4,2.6,2.2],[0.6,1.4,0]], top:[[0.01,9.5,0.4],[0,1,0]] };
 let camAnim=null;
 function setView(k){
   document.querySelectorAll('.views button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.view===k)));
@@ -1950,7 +1969,7 @@ function update(){
   const bf=b?bFront():0, eB=b?evaluate(b,bf):null;
   if(b) cmpGroup.position.set(X(bf), M(S.barTop)+0.002, M(S.boxZ));
   cmpGroup.visible=!!b;
-  setGhost(itemsOpen||(S.wire===null?!!b:S.wire));
+  setGhost(itemsOpen||keepGhost||(S.wire===null?!!b:S.wire));
 
   $('alignWrap').hidden=!b; $('cmpSec').hidden=!b; $('showIn').hidden=!b;
   document.querySelectorAll('#alignWrap button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.align===S.align)));
@@ -2042,22 +2061,28 @@ new ResizeObserver(placeViewBtn).observe($("picks")); new ResizeObserver(placeVi
 $('gfxQ').value=GFX.q; $('gfxQ').addEventListener('change',e=>{ store.set('gfxQ',e.target.value); location.reload(); });
 // developer panel: every slider applies live and is saved; "Скопировать" puts all values on the clipboard as JSON to send to Claude
 const DEV_UI=[['Тон и свет',[['exp','Экспозиция',0.3,2,0.01],['tm','Тонмаппинг',['aces','agx','reinhard','cineon']],['sun','Солнце',0,3,0.01],['hemi','Небо (заливка)',0,3,0.01],['fill','Контровой',0,3,0.01],['env','Отражения HDR',0,3,0.01],['sky','Яркость неба',0,3,0.01],['night','Ночь как в кино',0,1.5,0.01],['shadow','Мягкость теней',0,4,0.05],['fog','Дальность тумана',0.3,3,0.01]]],
-  ['Постобработка',[['ao','Затенение AO',0,2,0.01],['aoR','Радиус AO',0.05,2,0.01],['bloom','Свечение',0,1.5,0.01],['bloomT','Порог свечения',0,6,0.05],['bloomR','Радиус свечения',0,1,0.01],['vig','Виньетка',0,0.8,0.01],['sat','Насыщенность',0,2,0.01]]],
+  ['Постобработка',[['ao','Затенение AO',0,2,0.01],['aoR','Радиус AO',0.05,0.7,0.01],['bloom','Свечение',0,1.5,0.01],['bloomT','Порог свечения',0,6,0.05],['bloomR','Радиус свечения',0,1,0.01],['vig','Виньетка',0,0.8,0.01],['sat','Насыщенность',0,2,0.01]]],
   ['Кузов',[['paintMet','Металлик',0,1,0.01],['paintRough','Шероховатость',0,1,0.01],['coat','Лак',0,1,0.01],['flake','Искра',0,0.3,0.005],['glassOp','Стёкла: плотность',0.2,1,0.01]]],
   ['Земля и камера',[['sandN','Рельеф песка',0,2,0.01],['sandB','Яркость песка',0.5,1.5,0.01],['fov','Угол обзора ±',-15,20,1],['scale','Чёткость рендера',0.5,1.5,0.05]]]];
 const devP=document.createElement('div'); devP.className='devp glass'; devP.hidden=true; stage.appendChild(devP);
 function devApply(){
   store.set('devGfx',DEV);
-  if(POST){ POST.ao.blendIntensity=DEV.ao; POST.ao.updateGtaoMaterial({radius:DEV.aoR}); POST.bloom.strength=DEV.bloom; POST.bloom.threshold=DEV.bloomT; POST.bloom.radius=DEV.bloomR; POST.vig.uniforms.k.value=DEV.vig; POST.vig.uniforms.sat.value=DEV.sat; }
+  DEV.aoR=Math.min(DEV.aoR,0.7); if(POST){ POST.ao.blendIntensity=DEV.ao; POST.ao.updateGtaoMaterial({radius:DEV.aoR, distanceFallOff:1.0, thickness:1.0}); POST.bloom.strength=DEV.bloom; POST.bloom.threshold=DEV.bloomT; POST.bloom.radius=DEV.bloomR; POST.vig.uniforms.k.value=DEV.vig; POST.vig.uniforms.sat.value=DEV.sat; }
   CM.glass.opacity=DEV.glassOp; CM.glass.needsUpdate=true;
   if(terMat.normalScale) terMat.normalScale.set(DEV.sandN,DEV.sandN); terMat.color.setScalar(DEV.sandB);
   paintMats.forEach(paintFinish); applyWeatherScene(); resize(); kick(); }
 function devRender(){
   devP.innerHTML='<div class="hd"><b>DEV</b><span><button data-a="copy">Скопировать</button> <button data-a="share">Отправить</button> <button data-a="reset">Сброс</button> <button data-a="hide">✕</button></span></div>'+
-    DEV_UI.map(([g,rows])=>'<div class="g">'+g+'</div>'+rows.map(([k,l,a,b,st])=>Array.isArray(a)?`<div class="r"><span>${l}</span><select data-k="${k}">${a.map(o=>`<option ${DEV[k]===o?'selected':''}>${o}</option>`).join('')}</select><output></output></div>`
-      :`<div class="r"><span>${l}</span><input type="range" data-k="${k}" min="${a}" max="${b}" step="${st}" value="${DEV[k]}"><output>${(+DEV[k]).toFixed(st<0.01?3:2)}</output></div>`).join('')).join(''); }
+    DEV_UI.map(([g,rows])=>'<div class="g">'+g+'</div>'+rows.map(([k,l,a,b,st])=>Array.isArray(a)?`<div class="r${DEV[k]!==DEV_DEF[k]?' mod':''}" data-row="${k}"><span>${l}</span><select data-k="${k}">${a.map(o=>`<option ${DEV[k]===o?'selected':''}>${o}</option>`).join('')}</select><button class="rs" data-k="${k}" data-rst="1" aria-label="Сбросить" title="По умолчанию: ${DEV_DEF[k]}">↺</button></div>`
+      :`<div class="r${DEV[k]!==DEV_DEF[k]?' mod':''}" data-row="${k}"><span>${l}</span><button class="pm" data-k="${k}" data-d="-1" aria-label="Меньше">−</button><input type="range" data-k="${k}" min="${a}" max="${b}" step="${st}" value="${DEV[k]}"><button class="pm" data-k="${k}" data-d="1" aria-label="Больше">+</button><output>${(+DEV[k]).toFixed(st<0.01?3:2)}</output><button class="rs" data-k="${k}" data-rst="1" aria-label="Сбросить" title="По умолчанию: ${DEV_DEF[k]}">↺</button></div>`).join('')).join(''); }
 devP.addEventListener('input',e=>{ const k=e.target.dataset.k; if(!k) return; DEV[k]=e.target.tagName==='SELECT'?e.target.value:+e.target.value;
-  const o=e.target.parentNode.querySelector('output'); if(o&&e.target.tagName!=='SELECT') o.textContent=(+DEV[k]).toFixed(+e.target.step<0.01?3:2); devApply(); });
+  devSync(k); devApply(); });
+function devSync(k){ const row=devP.querySelector(`[data-row="${k}"]`); if(!row) return; const r=row.querySelector('input[type=range]'), o=row.querySelector('output'), sel=row.querySelector('select');
+  if(r){ r.value=DEV[k]; if(o) o.textContent=(+DEV[k]).toFixed(+r.step<0.01?3:2); } if(sel) sel.value=DEV[k]; row.classList.toggle('mod',DEV[k]!==DEV_DEF[k]); }
+devP.addEventListener('click',e=>{ const b=e.target.closest('button[data-k]'); if(!b) return; const k=b.dataset.k;
+  if(b.dataset.rst){ DEV[k]=DEV_DEF[k]; }
+  else { const r=devP.querySelector(`input[data-k="${k}"]`); if(!r) return; const st=+r.step, v=Math.min(+r.max,Math.max(+r.min,+DEV[k]+(+b.dataset.d)*st)); DEV[k]=+v.toFixed(4); }
+  devSync(k); devApply(); });
 devP.addEventListener('pointerdown',e=>e.stopPropagation());
 devP.addEventListener('click',async e=>{ const a=e.target.dataset&&e.target.dataset.a; if(!a) return; const json=JSON.stringify({app:'f7box-gfx',dev:DEV},null,0);
   if(a==='copy'){ try{ await navigator.clipboard.writeText(json); toast('<b>Скопировано</b>Вставьте в чат с Claude, чтобы перенести настройки в сборку.','good'); }catch(_){ prompt('Скопируйте:',json); } }
@@ -2729,14 +2754,14 @@ function setBoxOnly(on){
     if($('hwBtn').getAttribute('aria-pressed')==='true') $('hwBtn').click();
     if($('offBtn').getAttribute('aria-pressed')==='true') $('offBtn').click();
     if(drive.mode==='intro') drive.mode='idle';
-    boxSaved={p:camera.position.clone(), t:controls.target.clone(), min:controls.minDistance};
+    boxSaved={p:camera.position.clone(), t:controls.target.clone(), min:controls.minDistance}; stage.classList.add('boxonly');
     boxOnly=true; car.updateMatrixWorld(true);
     const bb=new THREE.Box3(); [boxGroup,cmpGroup].forEach(g=>{ if(g.children.length) bb.expandByObject(g); });
     const c=bb.getCenter(new THREE.Vector3()), sz=bb.getSize(new THREE.Vector3()), dir=camera.position.clone().sub(controls.target).normalize();
     controls.minDistance=0.6; drive.userCam=true;
     camAnim={from:camera.position.clone(), to:c.clone().addScaledVector(dir,(()=>{ const hf=2*Math.atan(Math.tan(camera.fov*Math.PI/360)*camera.aspect); const w=Math.max(sz.x,sz.z)*0.9+0.3; return Math.max(1.6,(w/2)/Math.tan(Math.min(hf,camera.fov*Math.PI/180)/2)); })()), tf:controls.target.clone(), tt:c, t:0};
   } else {
-    boxOnly=false; controls.minDistance=boxSaved?boxSaved.min:2.5;
+    boxOnly=false; stage.classList.remove('boxonly'); if(keepGhost) fadeGhostOut(); controls.minDistance=boxSaved?boxSaved.min:2.5;
     if(boxSaved) camAnim={from:camera.position.clone(), to:boxSaved.p, tf:controls.target.clone(), tt:boxSaved.t, t:0};
   }
   wxApply(); renderLayers(); kick();
@@ -2860,10 +2885,10 @@ function startGate(again){
     setView('gate');
   }
   drive.mode='gate'; GATE.d0=dist; GATE.state=''; gate.position.x=GATE.x0; gate.visible=true; setGateH(S.garage);
-  $('gateUI').hidden=false; $('picks').hidden=true; limitPlane.visible=limitEdge.visible=false; gateRender(); renderLayers(); kick();
+  $('gateUI').hidden=false; stage.classList.add('gateOn'); $('picks').hidden=true; limitPlane.visible=limitEdge.visible=false; gateRender(); renderLayers(); kick();
 }
 function stopGate(){
-  drive.mode='idle'; gate.visible=false; $('gateUI').hidden=true; $('picks').hidden=false; limitPlane.visible=limitEdge.visible=false; setView('q'); renderLayers(); kick();
+  drive.mode='idle'; gate.visible=false; $('gateUI').hidden=true; stage.classList.remove('gateOn'); $('picks').hidden=false; limitPlane.visible=limitEdge.visible=false; setView('q'); renderLayers(); kick();
 }
 $('gateH').addEventListener('input',e=>setGarage(+e.target.value));
 $('gateMinus').addEventListener('click',()=>setGarage(S.garage-50));
@@ -2933,7 +2958,7 @@ function autoFill(){
 drop.addEventListener('click',e=>{ ORB.last=performance.now(); ORB.v=0; if(e.target.closest('[data-clear]')){ S.items=[]; store.set('items',S.items); Object.keys(FAILS).forEach(k=>delete FAILS[k]); renderItemChips(); update(); renderDrop(); renderItemsBtn(); kick(); return; } if(e.target.closest('[data-auto]')){ autoFill(); return; } const b=e.target.closest('button[data-id]'); if(!b) return; const id=b.dataset.id;
   S.items=S.items.includes(id)?S.items.filter(i=>i!==id):S.items.concat(id); store.set('items',S.items); renderItemChips(); update(); renderDrop(); renderItemsBtn(); kick(); });
 function setDrop(open){ if(drop.hidden===!open&&itemsOpen===open) return; if(open&&moveMode){ moveMode=false; moveBtn.setAttribute('aria-pressed','false'); } drop.hidden=!open; itemsBtn.setAttribute('aria-expanded',String(open)); itemsOpen=open;
-  if(open) renderDrop(); setGhost(open||(S.wire===null?!!B():S.wire)); placeBoxUI(); kick(); }
+  if(open) renderDrop(); if(!open&&boxOnly&&ghost) keepGhost=true; setGhost(open||keepGhost||(S.wire===null?!!B():S.wire)); placeBoxUI(); kick(); }
 itemsBtn.addEventListener('click',()=>{ ORB.last=performance.now(); ORB.v=0; setDrop(drop.hidden); });
 document.addEventListener('pointerdown',e=>{ if(!drop.hidden&&!e.target.closest('.itemsDrop')&&e.target!==itemsBtn&&!itemsBtn.contains(e.target)&&e.target!==renderer.domElement){ setDrop(false); } });
 renderItemsBtn();
