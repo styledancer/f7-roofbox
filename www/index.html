@@ -997,9 +997,7 @@ let carModelReady=false;
 function loadModel(url, onLoad){
   if(!THREE.GLTFLoader) return;
   fetch(url).then(r=>{ if(!r.ok) throw new Error(url+' '+r.status); return r.json(); }).then(d=>{
-    const bin=atob(d.glb), buf=new Uint8Array(bin.length);
-    for(let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
-    new THREE.GLTFLoader().parse(buf.buffer, '', onLoad, err=>console.warn('model parse failed', url, err));
+    return fetch('data:application/octet-stream;base64,'+d.glb).then(r=>r.arrayBuffer()).then(ab=>new THREE.GLTFLoader().parse(ab, '', onLoad, err=>console.warn('model parse failed', url, err)));
   }).catch(err=>console.warn('model did not load', url, err));
 }
 function loadCarModel(){
@@ -1043,7 +1041,7 @@ function loadCarModel(){
     spinWheels.forEach(w=>{ const par=w.obj.parent, Mx=new THREE.Matrix4().copy(par.matrixWorld).invert().multiply(car.matrixWorld);
       const a=new THREE.Vector3(0,0,0).applyMatrix4(Mx), b=new THREE.Vector3(0,1,0).applyMatrix4(Mx); w.up=b.sub(a); w.pos=w.obj.position.clone(); });
     procParts.forEach(p=>p.visible=false);
-    collectStockRims(); applyRims(); mergeCarStatic(root);
+    collectStockRims(); applyRims(); mergeCarStatic(root); loadShadowProxy(root, CARDEF.model.replace('.json','_shadow.json'));
     carModelReady=true; if(wxReady) applyWeatherScene(); kick();
   });
 }
@@ -1067,7 +1065,7 @@ function loadNormModel(){
     spinWheels.forEach(w=>{ const par=w.obj.parent, Mx=new THREE.Matrix4().copy(par.matrixWorld).invert().multiply(car.matrixWorld);
       const a=new THREE.Vector3(0,0,0).applyMatrix4(Mx), b=new THREE.Vector3(0,1,0).applyMatrix4(Mx); w.up=b.sub(a); w.pos=w.obj.position.clone(); });
     procParts.forEach(p=>p.visible=false);
-    collectStockRims(); applyRims(); mergeCarStatic(root);
+    collectStockRims(); applyRims(); mergeCarStatic(root); loadShadowProxy(root, CARDEF.model.replace('.json','_shadow.json'));
     carModelReady=true; if(wxReady) applyWeatherScene(); kick();
   });
 }
@@ -1556,6 +1554,15 @@ function shadowCheck(){ if(!renderer.shadowMap.enabled) return; const moving=dri
 /* --- merge static meshes of the car per material: same picture, far fewer draw calls --- */
 function flipWinding(g){ if(g.index){ const a=g.index.array; for(let i=0;i<a.length;i+=3){ const t=a[i+1]; a[i+1]=a[i+2]; a[i+2]=t; } g.index.needsUpdate=true; }
   else Object.values(g.attributes).forEach(at=>{ const n=at.itemSize, a=at.array; for(let i=0;i<at.count;i+=3) for(let k=0;k<n;k++){ const t=a[(i+1)*n+k]; a[(i+1)*n+k]=a[(i+2)*n+k]; a[(i+2)*n+k]=t; } at.needsUpdate=true; }); }
+function loadShadowProxy(root, file){
+  if(GFX.q==='min') return;   // no shadow maps there
+  loadModel(file, g=>{ let src=null; g.scene.traverse(o=>{ if(o.isMesh&&!src) src=o; }); if(!src) return;
+    const pm=new THREE.Mesh(src.geometry, new THREE.MeshBasicMaterial({colorWrite:false, depthWrite:false, transparent:true, opacity:0}));
+    pm.name='shadow_proxy'; pm.castShadow=true; pm.receiveShadow=false; pm.frustumCulled=false; root.add(pm);
+    const keep=new Set(); [glbPivot,...spinWheels.map(w=>w.obj)].forEach(n=>n.traverse(o=>keep.add(o)));
+    root.traverse(o=>{ if(o.isMesh&&o!==pm&&!keep.has(o)) o.castShadow=false; });
+    renderer.shadowMap.needsUpdate=true; kick(); });
+}
 function mergeCarStatic(root){
   if(!THREE.BGU) return; root.updateMatrixWorld(true);
   const rigid=new Set([root,glbPivot,...spinWheels.map(w=>w.obj)]), skip=new Set([...stockRims,...rimMeshes]), groups=new Map(); let before=0;
