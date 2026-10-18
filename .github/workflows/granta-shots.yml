@@ -1,0 +1,32 @@
+name: Granta screenshots (temporary)
+on:
+  push:
+    branches: [granta]
+permissions:
+  contents: write
+jobs:
+  shots:
+    if: "!contains(github.event.head_commit.message, '[shots]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install
+        run: |
+          npm install --no-audit --no-fund
+          npm install --no-save --no-audit --no-fund playwright-core@1.47.2
+          mkdir -p www/vendor
+          cp node_modules/three/build/three.min.js node_modules/three/examples/js/controls/OrbitControls.js node_modules/three/examples/js/loaders/GLTFLoader.js www/vendor/
+      - name: Screenshots
+        run: |
+          (cd www && python3 -m http.server 8080 >/dev/null 2>&1 &)
+          sleep 2; rm -rf shots; mkdir -p shots
+          node tools/shot_granta.mjs http://127.0.0.1:8080/index.html shots || true
+          ls -la shots
+      - name: Commit shots back
+        run: |
+          git config user.name "shots-bot"; git config user.email "shots-bot@users.noreply.github.com"
+          git add -f shots; git commit -m "[shots] granta screenshots" || exit 0
+          git push
