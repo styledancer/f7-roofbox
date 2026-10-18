@@ -1,0 +1,19 @@
+name: Optimise models
+on:
+  push:
+    branches: [modelopt]
+  workflow_dispatch:
+jobs:
+  opt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-save --no-audit --no-fund @gltf-transform/core@4.1.1 @gltf-transform/functions@4.1.1 @gltf-transform/extensions@4.1.1 meshoptimizer@0.22.0
+      - run: node tools/opt.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: optimized-models
+          path: out/
