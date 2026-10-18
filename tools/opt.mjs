@@ -40,9 +40,7 @@ for(const [name,c] of Object.entries(CFG)){
     for(let i=0;i<P.length/3;i++){ const k=Math.round(P[3*i]*q)+','+Math.round(P[3*i+1]*q)+','+Math.round(P[3*i+2]*q); let j=key.get(k); if(j===undefined){ j=up.length/3; key.set(k,j); up.push(P[3*i],P[3*i+1],P[3*i+2]); } remap[i]=j; }
     const UP=new Float32Array(up); for(let i=0;i<I.length;i++) I[i]=remap[I[i]];
     const target=Math.floor(I.length*0.04/3)*3;
-    const [S]=MeshoptSimplifier.simplify(I, UP, 3, target, 0.02, ['LockBorder']);
-    const [S2]=S.length>target*3?MeshoptSimplifier.simplifySloppy(I, UP, 3, target, 0.02):[S];
-    const fin=S2;
+    let fin=I; for(const e of [0.01,0.02,0.04,0.08]){ const [r]=MeshoptSimplifier.simplify(I, UP, 3, target, e, []); fin=r; if(r.length<=target*1.5) break; }
     // write a tiny glb with one node "shadow_proxy"
     const {Document}=await import('@gltf-transform/core'); const od=new Document(); const b=od.createBuffer();
     const pa=od.createAccessor().setType('VEC3').setArray(UP).setBuffer(b), ia=od.createAccessor().setType('SCALAR').setArray(new Uint32Array(fin)).setBuffer(b);
