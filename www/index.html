@@ -2147,9 +2147,9 @@ function sunWordsEn(){
 }
 function carWordsEn(){
   const cn=(COLORS.find(c=>c[1]===S.color)||['',''])[0].toLowerCase();
-  const col=/бел/.test(cn)?'white':/черн|чёрн/.test(cn)?'black':/красн/.test(cn)?'dark red':/син/.test(cn)?'dark blue':/серебр/.test(cn)?'silver':/сер/.test(cn)?'grey':'';
+  const col=/бел/.test(cn)?'white':/черн|чёрн/.test(cn)?'black':/красн|бордов/.test(cn)?'dark red':/син/.test(cn)?'dark blue':/серебр/.test(cn)?'silver':/сер/.test(cn)?'grey':'';
   const b=A(), fin=(boxFinish(b).name||'').toLowerCase(), bc=/бел/.test(fin)?'white':/сер|титан/.test(fin)?'grey':'black';
-  return (col?col+' ':'')+CARDEF.name+' SUV with a '+bc+' roof cargo box on roof bars';
+  return (col?col+' ':'')+CARDEF.name+(CARDEF.sedan?' sedan':' SUV')+' with a '+bc+' roof cargo box on roof bars';
 }
 function snapPromptEn(){
   return 'Photorealistic landscape photograph: '+SNAP_EN[S.snapScn]+'. '+SNAP_EN_L[S.snapLight]+', '+sunWordsEn().text+'. Shot from about 1.4 m height with the camera almost level, the horizon line is at about 40% from the top of the frame, and a wide, flat, empty ground surface fills the whole lower 60% of the image right up to the bottom edge, ready for a car to be parked on it.'+' 35mm lens, professional automotive magazine photo, natural colors, sharp. No cars, no vehicles, no people, no text.';
