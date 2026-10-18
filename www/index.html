@@ -561,6 +561,13 @@ const CARS={
     dims:{L:4670, W:1810, WB:2666, FO:973, track:1535, wheelR:359, roofFront:2060, hinge:[4045,1658], railFrom:2016, railTo:4054}, H:1710, hFix:0, railTop:1695,
     bars:{top:1775, front:2330, spacing:800},
     colors:[['Белый перламутр','#EEEEEA'],['Красный','#8E1B1E'],['Синий','#1F3355'],['Серебристый','#A9ADB2'],['Серый титан','#55585D'],['Чёрный','#111214']]},
+  // Lada Granta sedan: AI-generated mesh (Higgsfield / Tripo) fitted to the passport size in Blender; one textured shell,
+  // so there are no rim swaps and the boot lid does not swing. A smooth roof without rails: door-clamp crossbars.
+  granta:{name:'Lada Granta', sub:'седан, 2018–', model:'granta.json', kind:'norm', rimR:0.1905, noRims:true, sedan:true,
+    dims:{L:4268, W:1700, WB:2450, FO:846, track:1422, wheelR:292, roofFront:2050, hinge:[3780,1135], railFrom:2150, railTo:3150}, H:1500, hFix:0, railTop:1504,
+    tgPoly:[[3780,1135],[3900,1118],[4100,1104],[4230,1080],[4250,950],[4180,930],[3800,1110]],
+    bars:{top:1585, front:2250, spacing:700},
+    colors:[['Белый «Ледниковый»','#EEF0EE'],['Бордовый «Фламенко»','#6E1520'],['Синий «Капитан»','#1F3152'],['Серебристый «Платина»','#A6A9AC'],['Чёрный «Пантера»','#121314']]},
 };
 const CAR_ID=(()=>{ try{ const v=JSON.parse(localStorage.getItem('f7box.car')); return CARS[v]?v:'haval'; }catch(e){ return 'haval'; } })();
 const CARDEF=CARS[CAR_ID];
@@ -634,7 +641,7 @@ if(!byId(S.sel)) S.sel='m3-l';
 if(S.cmp && !byId(S.cmp)) S.cmp='';
 
 /* ---------- geometry checks (all in mm, side view: x from front bumper, y from ground) ---------- */
-const TG_POLY = [[3975,1665],[4150,1662],[4160,1625],[4545,1095],[4691,1050],[4691,500],[4545,500],[4545,1040],[3990,1570]];
+const TG_POLY = CARDEF.tgPoly || [[3975,1665],[4150,1662],[4160,1625],[4545,1095],[4691,1050],[4691,500],[4545,500],[4545,1040],[3990,1570]];
 function sampledTailgate(){
   const pts=[];
   for(let i=0;i<TG_POLY.length;i++){
@@ -753,6 +760,7 @@ const CM={
 function carPartMat(mat,obj){
   const n=mat.name||''; let g=''; for(let q=obj.parent;q;q=q.parent){ if(/_\d+$/.test(q.name)&&!/^Object_/.test(q.name)){ g=q.name; break; } }
   if(/PRIMARY/i.test(n)) return null;
+  if(/^keep_/i.test(n)) return null;
   if(CARDEF.kind==='norm'&&CM[n]) return CM[n];
   if(/tyrewall/i.test(n)) return CM.tyre;
   if(/shachepan/i.test(n)) return CM.disc;
@@ -984,7 +992,7 @@ const RIMS={stock:{name:'Родные'}, steel:{name:'Штамп', model:'rim_st
 let stockRims=[], rimGeo={}, rimMeshes=[];
 function collectStockRims(){ stockRims=[]; spinWheels.forEach(w=>w.obj.traverse(o=>{ if(o.isMesh&&(o.material===CM.rim||o.material===CM.rimDark)) stockRims.push(o); })); }
 function applyRims(){
-  const r=RIMS[S.rim]||RIMS.stock;
+  const r=CARDEF.noRims?RIMS.stock:(RIMS[S.rim]||RIMS.stock);
   rimMeshes.forEach(m=>m.parent&&m.parent.remove(m)); rimMeshes=[];
   stockRims.forEach(o=>o.visible=!r.model);
   if(!r.model){ kick(); return; }
@@ -2026,8 +2034,8 @@ function renderCarColors(){
   const cur=(COLORS.find(x=>x[1]===S.color)||['Свой'])[0];
   $('colors').innerHTML=btns;
   $('carSw').innerHTML=`<div class="crow"><span class="lbl">${cur}</span>${btns}</div>`
-    +`<div class="crow"><span class="lbl">Диски</span>${Object.entries(RIMS).map(([k,v])=>`<button class="opt2" data-rim="${k}" aria-pressed="${k===S.rim}">${v.name}</button>`).join('')}</div>`
-    +`<div class="crow"><span class="lbl">Машина</span>${Object.entries(CARS).map(([k,v])=>`<button class="opt2" data-car="${k}" aria-pressed="${k===CAR_ID}">${v.name.replace('Mitsubishi ','')}</button>`).join('')}</div>`;
+    +(CARDEF.noRims?'':`<div class="crow"><span class="lbl">Диски</span>${Object.entries(RIMS).map(([k,v])=>`<button class="opt2" data-rim="${k}" aria-pressed="${k===S.rim}">${v.name}</button>`).join('')}</div>`)
+    +`<div class="crow"><span class="lbl">Машина</span>${Object.entries(CARS).map(([k,v])=>`<button class="opt2" data-car="${k}" aria-pressed="${k===CAR_ID}">${v.name.replace(/^(Mitsubishi|Lada) /,'')}</button>`).join('')}</div>`;
   $('carSw').querySelectorAll('[data-rim]').forEach(b=>b.addEventListener('click',()=>{ S.rim=b.dataset.rim; store.set('rim',S.rim); applyRims(); renderCarColors(); }));
   $('carSw').querySelectorAll('[data-car]').forEach(b=>b.addEventListener('click',()=>{ if(b.dataset.car===CAR_ID) return; store.set('car',b.dataset.car); location.reload(); }));
   document.querySelectorAll('#colors .sw, #carSw .sw').forEach(b=>b.addEventListener('click',()=>setCarColor(b.dataset.c)));
@@ -2754,7 +2762,7 @@ tgSide.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17v-4l
 tgSide.addEventListener('click',()=>$('tgBtn').click()); stage.appendChild(tgSide);
 const _t=new THREE.Vector3(), _r=new THREE.Vector3();
 function placeTgBtn(){
-  if(drive.mode!=='idle'||speed>0.05||boxOnly){ tgSide.hidden=true; return; }
+  if(CARDEF.sedan||drive.mode!=='idle'||speed>0.05||boxOnly){ tgSide.hidden=true; return; }
   _t.set(M(CAR.L)/2+0.06, M(CAR.hinge[1])-0.42, 0); car.localToWorld(_t);
   _r.set(M(CAR.L)/2-1.6,_t.y,0); car.localToWorld(_r);
   const facing=camera.position.x>_r.x;

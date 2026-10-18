@@ -5,3 +5,5 @@
 APK собирается автоматически при каждом пуше в `main` (GitHub Actions → Build APK) и появляется в разделе Releases.
 
 3D-модель кузова: Haval F7 by MattDoesBlender (Sketchfab), CC BY 4.0.
+
+Lada Granta седан: 3D-модель сгенерирована (Higgsfield, Tripo H3.1) по официальному рендеру LADA и подогнана под паспортные размеры в Blender.
