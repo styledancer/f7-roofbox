@@ -404,6 +404,73 @@ body[data-tab="info"] #pgSet, body[data-tab="set"] #pgInfo, body[data-tab="set"]
 .devp select{font:inherit;background:rgba(255,255,255,.1);color:inherit;border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:2px 4px}
 .stage.devOpen #picks,.stage.devOpen .ov.tl,.stage.devOpen .ov.bo,.stage.devOpen .ov.orbp,.stage.devOpen .ov.hs,.stage.devOpen .toast{visibility:hidden}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}.spin{animation-duration:3s}}
+/* ===== gfx-83: box title, product sheet, cart, cinematic vignette, lighter UI on weak phones ===== */
+html.q-min .glass,html.q-min .tabbar{-webkit-backdrop-filter:none;backdrop-filter:none;--lg-base:rgba(24,28,34,.86)}
+@media (prefers-color-scheme: light){ html.q-min:not([data-theme="dark"]) .glass,html.q-min:not([data-theme="dark"]) .tabbar{--lg-base:rgba(250,250,252,.9)} }
+.cineVg{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .6s;background:radial-gradient(ellipse 85% 70% at 50% 56%,transparent 42%,rgba(0,0,0,.34) 78%,rgba(0,0,0,.62) 100%)}
+.ov.btl{left:max(14px,var(--il));top:calc(var(--it) + 112px);z-index:4}
+.btl button{pointer-events:auto;display:grid;gap:3px;justify-items:start;text-align:left;border:0;background:transparent;color:var(--ink);padding:4px 6px 6px 2px;cursor:pointer;max-width:62vw;text-shadow:0 1px 14px var(--glass-shadow),0 0 2px var(--glass-shadow)}
+.btl .bb{font:600 .68rem var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.btl b{font:700 1.5rem/1.08 var(--display);letter-spacing:-.01em;margin-bottom:5px;overflow-wrap:anywhere}
+.btl .bs{display:inline-flex;align-items:center;gap:7px;font:500 .84rem var(--body);opacity:.92}
+.btl svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.stage.dropOpen .ov.btl,.stage.gateOn .ov.btl,.stage.zooming .ov.btl,.stage.shopOpen .ov.btl{visibility:hidden}
+.stage.shopOpen #picks,.stage.shopOpen .ov.hs,.stage.shopOpen .ov.orbp,.stage.shopOpen .ov.bo{visibility:hidden}
+.shop[hidden]{display:none}
+.shop>*{min-width:0}
+.shop{grid-template-columns:minmax(0,1fr);position:absolute;z-index:30;left:max(8px,var(--il));right:max(8px,var(--ir));bottom:calc(74px + var(--ib));border-radius:22px;padding:6px 12px 12px;display:grid;gap:10px;max-height:min(72vh,600px);overflow:auto;overscroll-behavior:contain;pointer-events:auto;--lg-base:rgba(18,21,26,.96)}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]) .shop{--lg-base:rgba(250,250,252,.97)} }
+.shop .shh{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;min-height:26px}
+.shop .grab{grid-column:2;width:38px;height:4px;border-radius:2px;background:var(--muted);opacity:.5}
+.shop .shx{justify-self:end;border:0;background:transparent;color:var(--muted);font:400 1.5rem/1 var(--body);padding:0 6px;cursor:pointer}
+.shop .lbl{font:600 .68rem var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.shc{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 2px 6px;margin:0 -4px;scrollbar-width:none}
+.shc::-webkit-scrollbar{display:none}
+.pc{flex:none;width:128px;scroll-snap-align:start;display:grid;gap:2px;text-align:left;border:1px solid var(--glass-line);background:var(--press-soft);color:var(--ink);border-radius:14px;padding:6px 9px 8px;cursor:pointer;font:inherit}
+.pc img{width:100%;aspect-ratio:8/5;object-fit:contain;display:block}
+.pc b{font:700 .8rem var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc span{font:400 .7rem var(--body);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc .pr{color:var(--ink);font-weight:600;font-family:var(--mono)}
+.pc[aria-pressed="true"]{border-color:#F26B1D;background:linear-gradient(180deg,rgba(242,107,29,.26),rgba(242,107,29,.08))}
+.shd{display:grid;gap:10px}
+.shd .dh{display:grid;grid-template-columns:118px minmax(0,1fr);gap:12px;align-items:center}
+.shd .dimg{width:118px;aspect-ratio:1;object-fit:contain;border-radius:14px;border:1px solid var(--glass-line);background:var(--press-soft)}
+.shd .br{font:600 .66rem var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.shd h3{margin:1px 0 6px;font:700 1.12rem/1.15 var(--display)}
+.shd .spec{list-style:none;margin:0;padding:0;display:grid;gap:3px;font:400 .78rem var(--body);color:var(--muted)}
+.shd .spec b{color:var(--ink);font:500 .8rem var(--mono);margin-left:4px}
+.shd .sws{padding:2px 0 0}
+.shd .sw{width:34px;height:34px}
+.shd .sw[aria-pressed="true"]{outline:2px solid #F26B1D;outline-offset:2px}
+.buyrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:8px;align-items:stretch}
+.buyrow .price{display:grid;align-content:center;gap:1px}
+.buyrow .price b{font:700 1.15rem var(--mono)}
+.buyrow .price small{font:400 .66rem var(--body);color:var(--muted)}
+.addc{display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:16px;padding:12px 10px;background:linear-gradient(180deg,#FF8A3D,#F26B1D);color:#fff;font:700 .9rem var(--body);cursor:pointer;box-shadow:0 6px 18px rgba(242,107,29,.35)}
+.addc.in{background:var(--press-glass);color:var(--ink);box-shadow:none;border:1px solid var(--glass-line)}
+.addc svg,.site svg,.ctab svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.site{display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--glass-line);border-radius:14px;padding:9px;color:var(--ink);text-decoration:none;font:600 .8rem var(--body)}
+.site .sh{color:var(--muted);font-weight:400}
+.tabbar{grid-template-columns:repeat(4,auto)}
+.tabbar button{min-width:66px;padding:5px 8px 4px;position:relative}
+.tabbar .cnt{position:absolute;top:1px;left:calc(50% + 6px);min-width:16px;height:16px;border-radius:8px;background:#F26B1D;color:#fff;font:700 .62rem/16px var(--body);text-align:center;padding:0 4px}
+.tabbar .cnt[hidden]{display:none}
+body[data-tab="cart"] #pgInfo,body[data-tab="cart"] #pgSet,body[data-tab="cart"] #pgInfo2{display:none}
+body:not([data-tab="cart"]) #pgCart{display:none}
+body[data-tab="info"] #pgCart,body[data-tab="set"] #pgCart{display:none}
+.crow{display:grid;grid-template-columns:84px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.crow:last-of-type{border-bottom:0}
+.crow img{width:84px;aspect-ratio:8/5;object-fit:contain;border-radius:10px;background:var(--bg)}
+.crow b{display:block;font:700 .92rem var(--body)}
+.crow span{display:block;font:400 .76rem var(--body);color:var(--muted)}
+.crow .cp{font:600 .86rem var(--mono);color:var(--ink);margin-top:2px}
+.crow .cx{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:10px;width:34px;height:34px;font-size:1.1rem;cursor:pointer}
+.crow a{font:600 .76rem var(--body);color:var(--accent);text-decoration:none;display:inline-block;margin-top:3px}
+.ctot{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding-top:12px;font:600 .9rem var(--body)}
+.ctot b{font:700 1.2rem var(--mono)}
+.cempty{color:var(--muted);font:400 .9rem var(--body);padding:8px 0}
+.pc img,.shd .dimg,.crow img{background:linear-gradient(180deg,#eef1f5,#cdd3db);border-radius:10px}
+.buyrow .price b.np{font:700 .92rem var(--body)}
 </style>
 
 <div class="app">
@@ -428,6 +495,7 @@ body[data-tab="info"] #pgSet, body[data-tab="set"] #pgInfo, body[data-tab="set"]
           <button data-view="top" aria-pressed="false">Сверху</button>
         </div>
       </div>
+      <div class="ov btl"><button id="boxTitle"></button></div>
       <div class="ov wx">
         <button class="wxpill glass" id="wxPill" aria-expanded="false" aria-controls="wxMenu" title="Погода"></button>
         <div class="wxmenu glass" id="wxMenu" role="group" aria-label="Погода" hidden></div>
@@ -473,6 +541,7 @@ body[data-tab="info"] #pgSet, body[data-tab="set"] #pgInfo, body[data-tab="set"]
           </div>
         </div>
       </div>
+      <div class="shop glass" id="shop" role="dialog" aria-label="Карточка бокса" hidden><div class="shh"><i class="grab"></i><button class="shx" id="shopX" aria-label="Закрыть">×</button></div><div><span class="lbl">Модели</span><div class="shc" id="shopCar"></div></div><div class="shd" id="shopDet"></div></div>
       <div class="readout" id="readout" hidden></div>
       <div class="snapm" id="snapM" role="dialog" aria-modal="true" aria-label="AI-снимок" hidden>
         <div class="snapc">
@@ -491,6 +560,7 @@ body[data-tab="info"] #pgSet, body[data-tab="set"] #pgInfo, body[data-tab="set"]
   </div>
 
   <div class="panel" id="panel">
+   <div class="tabpage" id="pgCart"><h1 class="pghead">Корзина</h1><section id="cartBody"></section></div>
    <div class="tabpage" id="pgInfo">
     <h1 class="pghead">Инфо</h1>
     <section hidden>
@@ -603,6 +673,7 @@ body[data-tab="info"] #pgSet, body[data-tab="set"] #pgInfo, body[data-tab="set"]
   <button role="tab" data-tab="scene" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="t-car"><path d="M3 15.5l2.2-5.2A2 2 0 0 1 7 9h10a2 2 0 0 1 1.8 1.3l2.2 5.2"/><path d="M3 15.5V18h2.5M21 15.5V18h-2.5M3 15.5h18"/><path d="M7.5 6.5h9l1-2h-11z"/><circle class="t-whl" cx="7" cy="18" r="1.6" stroke-dasharray="2 1.2"/><circle class="t-whl" cx="17" cy="18" r="1.6" stroke-dasharray="2 1.2"/></g></svg><span>Сцена</span></button>
   <button role="tab" data-tab="info" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path class="t-bar" d="M12 10.5v6"/><path class="t-dot" d="M12 7.3v.2"/></svg><span>Инфо</span></button>
   <button role="tab" data-tab="set" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16" opacity=".55"/><circle class="t-k1" cx="15" cy="7" r="2.2" fill="var(--tabbar-knob)"/><circle class="t-k2" cx="9" cy="17" r="2.2" fill="var(--tabbar-knob)"/></svg><span>Настройки</span></button>
+  <button role="tab" data-tab="cart" aria-selected="false" class="ctab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 7H6.2"/><circle cx="9.5" cy="19" r="1.4"/><circle cx="16.5" cy="19" r="1.4"/></svg><span>Корзина</span><i class="cnt" id="cartCnt" hidden></i></button>
 </nav>
 
 <script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/jsm/"}}</script>
@@ -680,6 +751,7 @@ const store = {get(k,d){try{const v=localStorage.getItem('f7box.'+k);return v===
                set(k,v){try{localStorage.setItem('f7box.'+k,JSON.stringify(v))}catch(e){}}};
 // rack v2: the crossbars moved to the user's own placement, so older saved bar positions are dropped once
 if(store.get('rackv',0)<2){ try{ ['barTop','barFront','spacing'].forEach(k=>localStorage.removeItem('f7box.'+k)); }catch(e){} store.set('rackv',2); }
+if(!store.get('g83',0)){ store.set('g83',1); store.set('wxMode','cine'); }
 const GFX=(()=>{ const saved=store.get('gfxQ',null);
   if(saved&&saved!=='auto') return {q:saved, probing:store.get('gfxProbe','')==='run'};
   let q='high', gpu='';
@@ -1398,7 +1470,7 @@ function stepPerson(dt){
   const side=lidSide||1;
   person.position.set(X(curFront+a.L*0.55), 0, side*(M(CAR.W)/2+0.45)); person.rotation.y=side>0?0:Math.PI;
   const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(!still) pT=(pT+dt/4.2)%1;
+  const live=!still&&(AWK(14000)||pT>=0.02); if(live) pT=(pT+dt/4.2)%1;
   const ph=still?0.45:pT;                            // lift, push into the box, lower back
   const k=ph<0.38?easeIO(ph/0.38):(ph<0.62?1:1-easeIO((ph-0.62)/0.38));
   const reach=S.lid?1:0.85;                          // with the lid closed the bag only reaches the edge
@@ -1408,7 +1480,7 @@ function stepPerson(dt){
   const d=camera.position.distanceTo(person.localToWorld(new THREE.Vector3(0,1.2,0))), u=Math.max(0,Math.min(1,(d-2.4)/(5.5-2.4))), al=u*u*(3-2*u);
   [pBody,pCloth,pBag].forEach(m=>{ const tr=al<0.99; if(m.transparent!==tr){ m.transparent=tr; m.needsUpdate=true; } m.opacity=al; m.depthWrite=!tr; });
   person.visible=GFX.q==='high'?al>0.5:al>0.03; if(GFX.q==='high') [pBody,pCloth,pBag].forEach(m=>{ if(m.transparent){ m.transparent=false; m.needsUpdate=true; } m.opacity=1; m.depthWrite=true; }); person.traverse(o=>{ if(o.isMesh) o.castShadow=al>0.5; });
-  return !still;
+  return live;
 }
 
 /* ---------- highway mode: road, airflow over the roof, fuel estimate ---------- */
@@ -1550,7 +1622,8 @@ function shadowHash(){ let h=0, i=0;
   scene.traverseVisible(o=>{ if(o.castShadow&&(o.isMesh||o.isInstancedMesh)){ const e=o.matrixWorld.elements; i++; h+=((e[12]*1.31+e[13]*2.17+e[14]*3.07+e[0]*.71+e[2]*1.93+e[5]*.37+e[8]*2.29+e[10]*.53)*(1+(i%89)*.013))+i*1e-3; } });
   return h+sun.position.x*5.1+sun.position.y*7.3+sun.position.z*3.3+(sun.castShadow?17:0)+sun.shadow.radius*.7; }
 function shadowCheck(){ if(!renderer.shadowMap.enabled) return; const moving=drive.mode!=='idle'||speed>0||amp>0, h=moving?NaN:shadowHash();
-  if(moving||h!==PERF.shH){ PERF.shH=h; renderer.shadowMap.needsUpdate=true; PERF.shN++; } }
+  if(!moving&&FG.amb&&h!==PERF.shH&&performance.now()-(PERF.shT||0)<90) return;
+  if(moving||h!==PERF.shH){ PERF.shH=h; PERF.shT=performance.now(); renderer.shadowMap.needsUpdate=true; PERF.shN++; } }
 /* --- merge static meshes of the car per material: same picture, far fewer draw calls --- */
 function flipWinding(g){ if(g.index){ const a=g.index.array; for(let i=0;i<a.length;i+=3){ const t=a[i+1]; a[i+1]=a[i+2]; a[i+2]=t; } g.index.needsUpdate=true; }
   else Object.values(g.attributes).forEach(at=>{ const n=at.itemSize, a=at.array; for(let i=0;i<at.count;i+=3) for(let k=0;k<n;k++){ const t=a[(i+1)*n+k]; a[(i+1)*n+k]=a[(i+2)*n+k]; a[(i+2)*n+k]=t; } at.needsUpdate=true; }); }
@@ -1593,7 +1666,14 @@ function perfTick(){ PERF.frames++; const n=performance.now(); if(n-PERF.t0<500)
   perfEl.hidden=!devOn; if(!devOn) return; const i=renderer.info.render;
   perfEl.textContent=`${PERF.fps} к/с · ${i.calls} выз · ${Math.round(i.triangles/1000)}k тр · тени ${PERF.shN} · ×${DR.k.toFixed(2)}${PERF.merged?' · части '+PERF.merged:''}`; }
 let running=false;
-function kick(){ if(!running){running=true; GFX.fresh=1; requestAnimationFrame(loop);} }
+/* power saving: ambient motion (the figure, the idle orbit, rain) runs at 30 fps and stops by itself a while after the last touch; touch-driven motion is capped at 60 */
+const ACT={t:performance.now()}, AWK=ms=>performance.now()-ACT.t<ms;
+const FG={first:true, last:0, cap:16.6, amb:false, hot:false, run:0,
+  tick(tn){ const gap=tn-FG.last; if(gap>3000) FG.run=0; else FG.run+=Math.min(gap,100); if(gap>8000) FG.hot=false; if(FG.run>50000) FG.hot=true; FG.first=false; FG.last=tn; }};
+['pointerdown','keydown','wheel','touchstart'].forEach(ev=>document.addEventListener(ev,()=>{ ACT.t=performance.now(); kick(); },{passive:true,capture:true}));
+document.addEventListener('pointermove',e=>{ if(e.buttons){ ACT.t=performance.now(); } },{passive:true,capture:true});
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ ACT.t=performance.now(); kick(); } });
+function kick(){ if(!running){running=true; GFX.fresh=1; FG.first=true; requestAnimationFrame(loop);} }
 let boxOnly=false;
 const POST=(()=>{ try{
   const rt=new THREE.WebGLRenderTarget(4,4,{type:THREE.HalfFloatType, samples:4});
@@ -1610,12 +1690,12 @@ const POST=(()=>{ try{
 }catch(e){ console.warn('post-processing off',e); return null; } })();
 function drawScene(){ if(GFX.q==='high'&&POST) POST.comp.render(); else renderer.render(scene,camera); }
 function render(){
-  STARS.p.position.copy(camera.position);
+  STARS.p.position.copy(camera.position); if(window.CINE) window.CINE.tick();
   scene.updateMatrixWorld(); camera.updateMatrixWorld();   // project overlays with this frame's camera, not the previous one
   perfTick(); renderer.info.reset(); shadowCheck();
   if(typeof placeSideBtns==='function') try{ placeSideBtns(); placeTgBtn(); placeBoxUI(); placeGateHud(); }catch(e){}
   if(typeof SKY!=='undefined') SKY.mesh.position.copy(camera.position);
-  if(!boxOnly){ drawScene(); return; }
+  if(!boxOnly){ if(window.BP&&window.BP.check()) window.BP.draw(); else drawScene(); return; }
   // show the roof box(es) alone on a plain studio background
   const hid=[], hide=o=>{ if(o.visible){ o.visible=false; hid.push(o); } };
   scene.children.forEach(o=>{ if(o!==car&&!o.isLight) hide(o); });
@@ -1626,6 +1706,7 @@ function render(){
 }
 let lastT=0;
 function loop(now){
+  { const tn=now||performance.now(); if(!FG.first&&!GFX.probe&&tn-FG.last<FG.cap-2.5){ requestAnimationFrame(loop); return; } FG.tick(tn); }
   if(keepGhost&&!ghostFading&&(drive.mode==='free'||drive.mode==='hw'||drive.mode==='gate')) fadeGhostOut();
   if(GFX.probe) GFX.probe(now||performance.now());
   let busy=false;
@@ -1641,18 +1722,19 @@ function loop(now){
   if(Math.abs(lidAng-lidT)>0.002){ lidAng+=(lidT-lidAng)*0.12; busy=true; } else lidAng=lidT;
   [boxGroup,cmpGroup].forEach(g=>{ const p=g.userData.pivot; if(!p) return; const sd=lidSide||1;
     p.position.set(0,p.userData.hy,-sd*p.userData.hz); p.userData.inner.position.set(0,-p.userData.hy,sd*p.userData.hz); p.rotation.x=-sd*lidAng; });
-  if(stepPerson(dt)) busy=true;
+  let amb=false; if(stepPerson(dt)) amb=true;
   if(stepFails()) busy=true;
-  if(stepWeather(dt)) busy=true;
+  if(stepWeather(dt)) amb=true;
   if(camAnim){
     camAnim.t=Math.min(1,camAnim.t+(camAnim.sp?camAnim.sp*Math.min(3,dt*60):0.06)); const e=1-Math.pow(1-camAnim.t,3);
     camera.position.lerpVectors(camAnim.from,camAnim.to,e); controls.target.lerpVectors(camAnim.tf,camAnim.tt,e);
     if(camAnim.t>=1) camAnim=null; busy=true;
   }
-  if(stepOrbit(dt)) busy=true;
-  if(stepPivot(dt)) busy=true;
-  if(controls.update()) busy=true;
-  if(!(GFX.q==='min'&&busy&&(now||0)-(window.__lastDraw||0)<31)){ window.__lastDraw=now||0; render(); }
+  const orb=stepOrbit(dt); if(orb) amb=true;
+  if(stepPivot(dt)){ if(orb) amb=true; else busy=true; }
+  if(controls.update()){ if(orb) amb=true; else busy=true; }
+  FG.amb=amb&&!busy; FG.cap=(GFX.q==='min'||FG.amb||FG.hot)?33.3:16.6; busy=busy||amb;
+  render();
   if(busy) requestAnimationFrame(loop); else { running=false; lastT=0; }
 }
 controls.addEventListener('change',kick);
@@ -1661,7 +1743,7 @@ const ORB={last:-1e9, v:0, prevMode:'idle', IDLE:25000, SPEED:0.09};   // rad/s,
 function orbitAllowed(){
   return drive.mode==='idle'&&speed===0&&!camAnim&&!moveMode&&document.body.dataset.tab==='scene'&&!document.hidden
     &&!matchMedia('(prefers-reduced-motion: reduce)').matches&&!document.querySelector('.snapm:not([hidden])')
-    &&!HS.active&&performance.now()-ORB.last>(drop.hidden?ORB.IDLE:2500);
+    &&!HS.active&&performance.now()-ORB.last>(drop.hidden?ORB.IDLE:2500)&&AWK(ORB.IDLE+40000);
 }
 // the orbit centre glides from the middle of the car (far away) to the middle of the box (close in), so zooming in turns around the box
 const _pc=new THREE.Vector3(), _pb=new THREE.Vector3(), _pd=new THREE.Vector3();
@@ -2033,7 +2115,7 @@ function renderCmpSelect(){
   if(b){ $('popBList').insertAdjacentHTML('afterbegin',finishRow(b,'B')); bindFinish($('popBList')); }
   $('popBList').querySelectorAll('.opt').forEach(el=>el.addEventListener('click',()=>{ S.cmp=el.dataset.id; S.wire=null; store.set('cmp',S.cmp); rebuild('B'); renderBoxButtons(); renderCmpSelect(); update(); if(!S.cmp) closePops(); }));
 }
-['A','B'].forEach(k=>$('chip'+k).addEventListener('click',()=>{ const p=$('pop'+k), open=p.hidden; closePops(); p.hidden=!open; $('chip'+k).setAttribute('aria-expanded',String(open)); if(open){ const sl=p.querySelector('[aria-selected="true"]'); if(sl) sl.scrollIntoView({block:'nearest'}); } }));
+['A','B'].forEach(k=>$('chip'+k).addEventListener('click',()=>{ if(k==='A'&&window.SHOP){ closePops(); window.SHOP.isOpen?window.SHOP.close():window.SHOP.open(); return; } const p=$('pop'+k), open=p.hidden; closePops(); p.hidden=!open; $('chip'+k).setAttribute('aria-expanded',String(open)); if(open){ const sl=p.querySelector('[aria-selected="true"]'); if(sl) sl.scrollIntoView({block:'nearest'}); } }));
 const camBtn=$('camBtn'), viewsEl=$('views');
 function setViews(open){ viewsEl.classList.toggle('open',open); camBtn.setAttribute('aria-expanded',String(open)); }
 camBtn.addEventListener('click',()=>setViews(!viewsEl.classList.contains('open')));
@@ -2703,7 +2785,7 @@ function locate(){
     if(moved) fetchWeather(); else wxRender();
   },()=>{},{enableHighAccuracy:false,timeout:15000,maximumAge:30*60*1000});
 }
-const WX_PRESETS={live:'Реальная погода: '+WX_CITY.name, off:'Без погоды', clear:'Ясно', dawn:'Рассвет', dusk:'Закат', cloudy:'Пасмурно', rain:'Дождь', snow:'Снег', fog:'Туман', night:'Ночь'};
+const WX_PRESETS={live:'Реальная погода: '+WX_CITY.name, cine:'Кино · сумерки', off:'Без погоды', clear:'Ясно', dawn:'Рассвет', dusk:'Закат', cloudy:'Пасмурно', rain:'Дождь', snow:'Снег', fog:'Туман', night:'Ночь'};
 // sun elevation and azimuth (degrees) for a place and moment, NOAA-style approximation
 function sunPos(date,lat,lon){
   const rad=Math.PI/180, d=(date-Date.UTC(2000,0,1,12))/864e5, g=(357.529+0.98560028*d)*rad, q=280.459+0.98564736*d;
@@ -2718,7 +2800,7 @@ const sst=(a,b,x)=>{ const t=Math.max(0,Math.min(1,(x-a)/(b-a))); return t*t*(3-
 function todNow(){ const p=sunPos(Date.now(),WX_CITY.lat,WX_CITY.lon);
   return {night:1-sst(-7,-1,p.el), golden:sst(-6,1,p.el)*(1-sst(5,16,p.el)), el:p.el, az:p.az}; }
 const WX={mode:store.get('wxMode','live'), data:store.get('wxData',null), err:false,
-  k:{cloud:0, rain:0, snow:0, fog:0, night:0, wind:0, windDir:0}, cur:{cloud:0, rain:0, snow:0, fog:0, night:0, golden:0, stars:0, sx:-4, sy:8, sz:5}};
+  k:{cloud:0, rain:0, snow:0, fog:0, night:0, wind:0, windDir:0}, cur:{cloud:0, rain:0, snow:0, fog:0, night:0, golden:0, stars:0, sx:-4, sy:8, sz:5, cine:0}};
 function wmo(c){ // WMO weather code -> what to draw
   if(c===0||c===1) return {cloud:c*0.2};
   if(c===2) return {cloud:0.5}; if(c===3) return {cloud:0.9};
@@ -2731,7 +2813,7 @@ function wmo(c){ // WMO weather code -> what to draw
 }
 const WMO_RU=c=>c===0?'ясно':c<=2?'малооблачно':c===3?'пасмурно':(c===45||c===48)?'туман':c<=57?'морось':c<=67?'дождь':c<=77?'снег':c<=82?'ливень':c<=86?'снегопад':'гроза';
 function wxTargets(){
-  const m=WX.mode, z={cloud:0, rain:0, snow:0, fog:0, night:0, golden:0, stars:0, sx:-4, sy:8, sz:5, wind:0, windDir:0};
+  const m=WX.mode, z={cloud:0, rain:0, snow:0, fog:0, night:0, golden:0, stars:0, sx:-4, sy:8, sz:5, wind:0, windDir:0, cine:0};
   // low sun from the front-left of the 3/4 view at dawn, from the rear-right at dusk
   const lowSun=(dusk,el)=>{ const h=Math.max(1.4,Math.min(8,1.4+el*0.35)); return dusk?{sx:9,sy:h,sz:-5}:{sx:-9,sy:h,sz:6}; };
   if(m==='off'||boxOnly) return z;
@@ -2739,7 +2821,7 @@ function wxTargets(){
     const base=d?Object.assign(z, wmo(d.weather_code), {wind:d.wind_speed_10m||0, windDir:d.wind_direction_10m||0}):z;
     return Object.assign(base, {night:t.night, stars:sst(-3,-16,t.el), golden:t.golden*(1-0.7*(base.cloud||0))}, t.golden>0.02?lowSun(dusk,t.el):{}); }
   return Object.assign(z,{clear:{}, dawn:Object.assign({golden:1, night:0.12, cloud:0.15},lowSun(false,2)), dusk:Object.assign({golden:1, night:0.18, stars:0.12, cloud:0.2},lowSun(true,1)),
-    cloudy:{cloud:0.95}, rain:{cloud:0.95, rain:0.8, wind:4}, snow:{cloud:0.9, snow:0.8, wind:2}, fog:{cloud:0.8, fog:1}, night:{night:1, stars:1, cloud:0.1}}[m]);
+    cloudy:{cloud:0.95}, rain:{cloud:0.95, rain:0.8, wind:4}, snow:{cloud:0.9, snow:0.8, wind:2}, fog:{cloud:0.8, fog:1}, night:{night:1, stars:1, cloud:0.1}, cine:{cine:1, stars:0.3}}[m]);
 }
 async function fetchWeather(first){
   if(WX.mode!=='live') return;
@@ -2762,7 +2844,7 @@ const snowPts=new THREE.Points(snowGeo,snowMat); snowPts.frustumCulled=false; sn
 let wxT=0;
 function stepWeather(dt){
   const t=wxTargets(), c=WX.cur, k=Math.min(1,dt*3); let moving=false;
-  ['cloud','rain','snow','fog','night','golden','stars','sx','sy','sz'].forEach(n=>{ const d=t[n]-c[n]; if(Math.abs(d)>0.002){ c[n]+=d*k; moving=true; } else c[n]=t[n]; });
+  ['cloud','rain','snow','fog','night','golden','stars','sx','sy','sz','cine'].forEach(n=>{ const d=t[n]-c[n]; if(Math.abs(d)>0.002){ c[n]+=d*k; moving=true; } else c[n]=t[n]; });
   WX.k=Object.assign({},c,{wind:t.wind, windDir:t.windDir});
   if(moving) applyWeatherScene();
   wxT+=dt; const wx=-(t.wind||0)*0.35+speed; // wind and our own driving push the drops backwards
@@ -2780,7 +2862,7 @@ function stepWeather(dt){
       const sway=0.3*Math.sin(wxT*1.3+i);
       sPos[o]=((pSeed[i*3]+wxT*wx*0.5+sway)%24+36)%24-12; sPos[o+1]=y; sPos[o+2]=pSeed[i*3+2]+0.3*Math.cos(wxT*0.9+i*1.7); }
     snowGeo.attributes.position.needsUpdate=true; }
-  return moving||rainLines.visible||snowPts.visible;
+  return moving||((rainLines.visible||snowPts.visible)&&AWK(90000));
 }
 // headlights: two spot lights that light the ground ahead, plus a soft visible beam that shows up in the dark and in fog
 const HL={y:0.74, x:X(170), z:M(CAR.W)/2-0.3, len:9, rad:2.1};
@@ -2833,7 +2915,7 @@ function applyWeatherScene(){
   renderer.toneMappingExposure=BASE.exp*(1-0.3*c.night)*(1-0.06*gd)*(GFX.q==='high'?0.78:1)*DEV.exp*(1+0.7*DEV.night*(GFX.q==='high'?1:0.35)*c.night); renderer.toneMapping={aces:THREE.ACESFilmicToneMapping,agx:THREE.AgXToneMapping,reinhard:THREE.ReinhardToneMapping,cineon:THREE.CineonToneMapping}[DEV.tm]||THREE.ACESFilmicToneMapping;
   const st=(c.stars||0)*(1-c.cloud*0.9)*(1-c.fog)*(1-Math.max(c.rain,c.snow)*0.9); STARS.m.opacity=st; STARS.p.visible=st>0.01;
   // the studio reflections would keep everything lit at night: dim them with the light
-  const envK=(1-0.88*c.night*(1-0.55*DEV.night*(GFX.q==='high'?1:0.35)))*(1-0.35*c.cloud)*DEV.env;
+  const envK=(1-0.88*c.night*(1-0.55*DEV.night*(GFX.q==='high'?1:0.35)))*(1-0.35*c.cloud)*DEV.env*(1-0.5*(c.cine||0));
   scene.traverse(o=>{ if(!o.isMesh) return; (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{ if(m&&'envMapIntensity' in m){ if(m.userData.envBase===undefined) m.userData.envBase=m.envMapIntensity; m.envMapIntensity=m.userData.envBase*envK; } }); });
   rainMat.color.setHex(0x6f7d8c).lerp(new THREE.Color(0xc4d0dc),c.night);
   // wet ground is darker and shinier, snow whitens it
@@ -2842,11 +2924,12 @@ function applyWeatherScene(){
   sandFar.material.color.copy(cSoil).multiplyScalar(0.92); roadMat.color.copy(lin('--asphalt')).multiplyScalar(1-0.35*wet); roadMat.roughness=0.9-0.6*wet;
   terMat.roughness=1-0.45*wet; terDirty=true;
   // headlights on at night and in fog
-  const hk=Math.max(c.night,c.fog*0.9);
-  headlights.forEach(h=>{ h.L.intensity=9*hk; h.L.visible=GFX.q!=='min'; h.b.visible=hk>0.02; }); beamMat.uniforms.op.value=0.5*c.night+0.6*c.fog;
+  const hk=Math.max(c.night,c.fog*0.9,(c.cine||0)*0.9);
+  headlights.forEach(h=>{ h.L.intensity=9*hk; h.L.visible=GFX.q!=='min'; h.b.visible=hk>0.02; }); beamMat.uniforms.op.value=0.5*c.night+0.6*c.fog+0.3*(c.cine||0);
   // lights glow at night
   CM.reflector.emissive.setRGB(1,0.97,0.9).multiplyScalar(2.2*hk); CM.lens.emissive&&CM.lens.emissive.setRGB(1,0.96,0.88).multiplyScalar(0.55*hk);
-  hlGlow.forEach(g=>{ g.visible=hk>0.02; g.material.opacity=Math.min(0.85,hk); }); CM.red.emissive.setHex(0x3a0204).lerp(new THREE.Color(0xd01010),0.7*c.night); CM.amber.emissive.setHex(0x2a1200);
+  hlGlow.forEach(g=>{ g.visible=hk>0.02; g.material.opacity=Math.min(0.85,hk); }); CM.red.emissive.setHex(0x3a0204).lerp(new THREE.Color(0xd01010),0.7*Math.max(c.night,c.cine||0)); CM.amber.emissive.setHex(0x2a1200);
+  if(window.CINE) window.CINE.apply(c.cine||0, sky);
   kick();
 }
 function wxRender(){
@@ -2859,7 +2942,7 @@ function wxRender(){
   $('wxPill').innerHTML=ic+txt;
   $('wxMenu').innerHTML=Object.entries(WX_PRESETS).map(([k,v])=>`<button data-m="${k}" aria-pressed="${k===m}">${v}</button>`).join('');
 }
-function wxApply(snap){ wxRender(); if(typeof renderLayers==='function') try{ renderLayers(); }catch(e){} if(snap){ const t=wxTargets(); ['cloud','rain','snow','fog','night'].forEach(n=>WX.cur[n]=t[n]); applyWeatherScene(); } kick(); }
+function wxApply(snap){ if(WX.mode==='cine') document.documentElement.dataset.theme='dark'; else if(document.documentElement.dataset.theme==='dark') delete document.documentElement.dataset.theme; wxRender(); if(typeof renderLayers==='function') try{ renderLayers(); }catch(e){} if(snap){ const t=wxTargets(); ['cloud','rain','snow','fog','night','cine'].forEach(n=>WX.cur[n]=t[n]); applyWeatherScene(); } kick(); }
 // pills open on tap and fold back after a couple of seconds or as soon as something else is touched
 function pillOpen(el){ el.classList.add('open'); clearTimeout(el._t); el._t=setTimeout(()=>pillFold(el),2500); }
 function pillFold(el){ if(el.id==='wxPill'&&!$('wxMenu').hidden){ el._t=setTimeout(()=>pillFold(el),800); return; } el.classList.remove('open'); }
@@ -3217,6 +3300,166 @@ function checkBikeClash(say){
   RACK.clash=clash;
   if(RACK.bike) RACK.bike.traverse(m=>{ if(m.isMesh){ if(!m.userData.m0) m.userData.m0=m.material; m.material=clash?failMat:m.userData.m0; } });
 }
+
+/* ================= gfx-83 ================= */
+/* --- cinematic dusk: dark sky with a glowing horizon, mountain silhouettes, a warm lantern by the car --- */
+window.CINE=(()=>{
+  const lin=h=>new THREE.Color(h).convertSRGBToLinear();
+  const q=fitView('q'), sd=new THREE.Vector3().subVectors(q[1],q[0]); sd.y=0; sd.normalize();   // the glow sits behind the car in the 3/4 view
+  const u={k:{value:0}, flatc:{value:new THREE.Color(0.5,0.5,0.5)}, sun:{value:sd.clone()}, lowc:{value:lin(0x0b0d12)}};
+  const tail='\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}';
+  const dome=new THREE.Mesh(new THREE.SphereGeometry(95,24,16), new THREE.ShaderMaterial({uniforms:u, side:THREE.BackSide, depthTest:false, depthWrite:false, fog:false,
+    vertexShader:'varying vec3 vD; void main(){ vD=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+    fragmentShader:'uniform float k; uniform vec3 flatc; uniform vec3 sun; uniform vec3 lowc; varying vec3 vD; void main(){ vec3 d=normalize(vD); float e=d.y; vec2 h2=normalize(d.xz+vec2(1e-5)); float az=max(0.0,dot(h2,normalize(sun.xz))); float h=clamp(e,0.0,1.0);'
+      +'vec3 top=vec3(0.004,0.006,0.014); vec3 mid=vec3(0.020,0.026,0.055); vec3 c=mix(mid,top,smoothstep(0.05,0.6,h));'
+      +'vec3 glow=mix(vec3(0.20,0.04,0.03),vec3(1.5,0.55,0.07),pow(az,1.6)); float band=exp(-h*13.0)*(0.10+0.90*pow(az,1.6)); c=mix(c,glow,clamp(band,0.0,1.0));'
+      +'c+=vec3(1.0,0.50,0.12)*exp(-h*30.0)*pow(az,5.0)*0.9; c=mix(c,lowc,smoothstep(0.004,-0.03,e)); gl_FragColor=vec4(mix(flatc,c,k),1.0);'+tail}));
+  dome.renderOrder=-10; dome.frustumCulled=false;
+  // two rings of ridges, built once
+  const ridge=(R,lo,hi,seed,N)=>{ let a=seed; const r=()=>{ a=(a*16807)%2147483647; return a/2147483647; };
+    const ph=[r()*6.28,r()*6.28,r()*6.28,r()*6.28], pos=[], hh=[], idx=[];
+    for(let i=0;i<=N;i++){ const t=i/N*Math.PI*2, n=0.5+0.5*(0.5*Math.sin(3*t+ph[0])+0.28*Math.sin(7*t+ph[1])+0.14*Math.sin(17*t+ph[2])+0.08*Math.sin(41*t+ph[3]));
+      const y=lo+(hi-lo)*Math.pow(n,1.5)+(i%2?0.35:0)*(hi-lo)*0.06; pos.push(Math.cos(t)*R,y,Math.sin(t)*R, Math.cos(t)*R,-2,Math.sin(t)*R); hh.push(1,0);
+      if(i<N){ const o=i*2; idx.push(o,o+1,o+2, o+1,o+3,o+2); } }
+    const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setAttribute('hh',new THREE.Float32BufferAttribute(hh,1)); g.setIndex(idx); return g; };
+  const mMat=(base,rim)=>new THREE.ShaderMaterial({uniforms:{k:u.k, flatc:u.flatc, sun:u.sun, base:{value:lin(base)}, rim:{value:rim}}, side:THREE.DoubleSide, depthTest:false, depthWrite:false, fog:false,
+    vertexShader:'attribute float hh; varying float vH; varying vec3 vD; void main(){ vH=hh; vD=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+    fragmentShader:'uniform float k; uniform vec3 flatc; uniform vec3 sun; uniform vec3 base; uniform float rim; varying float vH; varying vec3 vD; void main(){ float az=max(0.0,dot(normalize(vD.xz),normalize(sun.xz)));'
+      +'vec3 c=base+vec3(0.55,0.15,0.03)*rim*pow(az,3.0)*smoothstep(0.55,1.0,vH); gl_FragColor=vec4(mix(flatc,c,k),1.0);'+tail});
+  const far=new THREE.Mesh(ridge(90,10,44,24691,220), mMat(0x171b27,0.4)), near=new THREE.Mesh(ridge(84,3,20,8642,180), mMat(0x090b10,0.12));
+  far.renderOrder=-9; near.renderOrder=-8; far.frustumCulled=near.frustumCulled=false;
+  const grp=new THREE.Group(); grp.add(dome,far,near); grp.visible=false; scene.add(grp);
+  // lantern: warm light pooling on the sand next to the car
+  const lamp=new THREE.PointLight(0xff8a2e,0,10,1.5); lamp.visible=false; car.add(lamp);
+  const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:hlGlowTex, color:0xffa040, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending, fog:false})); glow.scale.set(1.5,1.5,1); glow.visible=false; car.add(glow);
+  const key=new THREE.Vector3(-sd.x*5-sd.z*4, 6.5, -sd.z*5+sd.x*4);   // soft cool key from the camera side
+  const vg=document.createElement('div'); vg.className='cineVg'; stage.appendChild(vg);
+  const C={k:0, grp, lamp, key,
+    apply(k,sky){ C.k=k; u.k.value=k; u.flatc.value.copy(sky).convertSRGBToLinear(); grp.visible=k>0.01; vg.style.opacity=k.toFixed(2); if(k<0.005) { lamp.visible=glow.visible=false; return; }
+      const L=(a,b)=>a+(b-a)*k;
+      if(scene.fog){ scene.fog.color.lerp(u.lowc.value,k); scene.fog.near=L(scene.fog.near,15); scene.fog.far=L(scene.fog.far,62); }
+      sun.position.lerp(key,k); sun.intensity*=L(1,0.42); sun.color.lerp(new THREE.Color(0xdde4f6),k); WX_SUN=sun.intensity;
+      hemi.intensity*=L(1,0.3); hemi.color.lerp(new THREE.Color(0x56679a),k); fill.intensity*=L(1,0.45);
+      renderer.toneMappingExposure*=L(1,0.95);
+      cSoil.multiplyScalar(L(1,0.26)); cGrass.multiplyScalar(L(1,0.26)); sandFar.material.color.copy(cSoil).multiplyScalar(0.9); terDirty=true;
+      C.tick(); },
+    tick(){ if(C.k<0.005) return; grp.position.set(camera.position.x,0,camera.position.z);
+      const on=drive.mode==='idle'&&speed===0&&!boxOnly, sdn=lidSide||1;
+      if(lamp.visible!==on){ lamp.visible=on; glow.visible=on; }
+      if(on){ lamp.intensity=7*C.k; lamp.position.set(X(CAR.L*0.86),0.42,sdn*(M(CAR.W)/2+1.55)); glow.position.copy(lamp.position); glow.position.y=0.2; glow.material.opacity=0.8*C.k; } } };
+  return C; })();
+
+/* --- blueprint view inside the items constructor: line drawing on a dark sheet --- */
+window.BP=(()=>{
+  const bg=new THREE.Color(0x0b1422);
+  const fillM=new THREE.MeshBasicMaterial({color:new THREE.Color(0x0c1524).convertSRGBToLinear(), side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:1.5, polygonOffsetUnits:1.5, toneMapped:false, fog:false});
+  const glassM=new THREE.MeshBasicMaterial({color:new THREE.Color(0x14233a).convertSRGBToLinear(), side:THREE.DoubleSide, transparent:true, opacity:0.28, depthWrite:false, toneMapped:false, fog:false});
+  const lineM=new THREE.LineBasicMaterial({color:new THREE.Color(0xcfe1ff).convertSRGBToLinear(), transparent:true, opacity:0.8, toneMapped:false, fog:false});
+  const grid=new THREE.GridHelper(48,48,0x123a66,0x0a2038); grid.material.transparent=true; grid.material.opacity=0.9; grid.material.toneMapped=false; grid.visible=false; grid.position.y=0.002; scene.add(grid);
+  const fog=new THREE.Fog(bg.clone().convertSRGBToLinear(),14,46);
+  const B={on:false, swapped:[], hidden:[], queue:[], busy:false,
+    check(){ const want=(itemsOpen||keepGhost)&&!boxOnly&&drive.mode==='idle'; if(want!==B.on) B.set(want); return B.on; },
+    set(on){ B.on=on; stage.classList.toggle('bpOn',on);
+      if(on){ B.swapped=[]; B.hidden=[]; const skip=new Set(); [boxGroup,cmpGroup].forEach(g=>g.traverse(o=>skip.add(o)));
+        car.traverse(o=>{ if(skip.has(o)||o.userData.bp) return;
+          const m=o.material; if(o.isSprite||(o.isMesh&&m&&!Array.isArray(m)&&(m.isShaderMaterial||m.colorWrite===false||o.name==='shadow_proxy'||o===aoBlob||m.blending===THREE.AdditiveBlending))){ B.hidden.push(o); return; }
+          if(!o.isMesh||Array.isArray(o.material)||o.isInstancedMesh) return;
+          B.swapped.push([o,o.material]); o.material=(o.material.transparent&&o.material.opacity<0.9)?glassM:fillM;
+          let ls=o.children.find(c=>c.userData.bp); if(ls) ls.visible=true; else B.queue.push(o); });
+        B.pump(); }
+      else { B.swapped.forEach(([o,m])=>{ o.material=m; const ls=o.children.find(c=>c.userData.bp); if(ls) ls.visible=false; }); B.swapped=[]; B.hidden=[]; B.queue=[]; }
+      renderer.shadowMap.needsUpdate=true; kick(); },
+    pump(){ if(B.busy) return; B.busy=true;
+      const step=()=>{ const t0=performance.now();
+        while(B.queue.length&&performance.now()-t0<14){ const o=B.queue.shift(); if(!B.on) break; const g=o.geometry; if(!g||!g.attributes.position) continue;
+          if(!g.userData.bpE){ try{ g.userData.bpE=new THREE.EdgesGeometry(g,24); }catch(e){ continue; } }
+          const ls=new THREE.LineSegments(g.userData.bpE,lineM); ls.userData.bp=1; ls.raycast=()=>{}; ls.frustumCulled=false; o.add(ls); }
+        kick(); if(B.queue.length&&B.on) setTimeout(step,0); else B.busy=false; };
+      setTimeout(step,30); },
+    draw(){ const hid=[], hide=o=>{ if(o.visible){ o.visible=false; hid.push(o); } };
+      scene.children.forEach(o=>{ if(o!==car&&!o.isLight&&o!==grid) hide(o); }); B.hidden.forEach(hide);
+      const b0=scene.background, f0=scene.fog, hi=hemi.intensity, si=sun.intensity, ex=renderer.toneMappingExposure, cs=sun.castShadow;
+      scene.background=bg; scene.fog=fog; grid.visible=true; hemi.intensity=1.25; sun.intensity=0.9; renderer.toneMappingExposure=1; sun.castShadow=false;
+      renderer.render(scene,camera);
+      hid.forEach(o=>o.visible=true); grid.visible=false; scene.background=b0; scene.fog=f0; hemi.intensity=hi; sun.intensity=si; renderer.toneMappingExposure=ex; sun.castShadow=cs; } };
+  return B; })();
+
+/* --- product thumbnails rendered from the real 3D shapes --- */
+const THUMB=(()=>{ let T=null; const cache={}, wait=[]; let busy=false;
+  const init=()=>{ const sc=new THREE.Scene(); sc.environment=STUDIO_ENV; sc.add(new THREE.HemisphereLight(0xffffff,0x8a8f98,0.3));
+    const d=new THREE.DirectionalLight(0xffffff,0.55); d.position.set(-3,5,4); sc.add(d); const d2=new THREE.DirectionalLight(0xdfe8ff,0.18); d2.position.set(4,2,-3); sc.add(d2);
+    return {sc, cam:new THREE.PerspectiveCamera(26,1.6,0.05,30), rt:new THREE.WebGLRenderTarget(400,250), cv:document.createElement('canvas')}; };
+  const make=(box,fin)=>{ if(!T) T=init(); const {sc,cam,rt,cv}=T;
+    const m=new THREE.MeshPhysicalMaterial({side:THREE.DoubleSide}); m.color.set(fin.hex); satBoost(m.color); m.metalness=fin.metal||0.05; m.roughness=fin.rough; m.clearcoat=fin.gloss?1:0; m.clearcoatRoughness=0.06; m.envMapIntensity=0.55;
+    const g=new THREE.Group(), own=box.mesh?boxMesh(box):null, tmp=[];
+    if(own){ g.add(new THREE.Mesh(own.geo,m)); if(own.lid) g.add(new THREE.Mesh(own.lid,m)); }
+    else ['base','lid'].forEach(p=>{ const ge=boxPart(box.L,box.W,box.H,box.prof,p); tmp.push(ge); g.add(new THREE.Mesh(ge,m)); });
+    sc.add(g); const L=M(box.L), H=M(box.H), W=M(box.W), c=new THREE.Vector3(L/2,H*0.45,0), dir=new THREE.Vector3(-0.62,0.36,0.7).normalize();
+    cam.position.copy(c).addScaledVector(dir,Math.max(L*1.62,W*2.6)+0.6); cam.lookAt(c); cam.updateProjectionMatrix();
+    const cc=new THREE.Color(); renderer.getClearColor(cc); const ca=renderer.getClearAlpha(), tm=renderer.toneMapping;
+    renderer.setRenderTarget(rt); renderer.setClearColor(0x000000,0); renderer.clear(); renderer.render(sc,cam);
+    const w=rt.width, h=rt.height, px=new Uint8Array(w*h*4); renderer.readRenderTargetPixels(rt,0,0,w,h,px);
+    renderer.setRenderTarget(null); renderer.setClearColor(cc,ca); renderer.toneMapping=tm;
+    sc.remove(g); tmp.forEach(x=>x.dispose()); m.dispose();
+    cv.width=w; cv.height=h; const ctx=cv.getContext('2d'), im=ctx.createImageData(w,h), o=im.data, lut=new Uint8Array(256); for(let i=0;i<256;i++) lut[i]=Math.round(255*Math.pow(Math.min(1,i/255),1/2.2));
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const s=((h-1-y)*w+x)*4, t=(y*w+x)*4, a=px[s+3]; if(!a) continue; const k=255/a; o[t]=lut[Math.min(255,Math.round(px[s]*k))]; o[t+1]=lut[Math.min(255,Math.round(px[s+1]*k))]; o[t+2]=lut[Math.min(255,Math.round(px[s+2]*k))]; o[t+3]=a; }
+    ctx.putImageData(im,0,0); return cv.toDataURL('image/png'); };
+  const pump=()=>{ if(busy) return; busy=true; const step=()=>{ const j=wait.shift(); if(!j){ busy=false; kick(); return; }
+      const key=j[0].id+'|'+j[1].id; if(!cache[key]){ try{ if(j[0].mesh&&!boxMesh(j[0])){ if((j[2]=(j[2]||0)+1)<40) wait.push(j); setTimeout(step,250); return; } cache[key]=make(j[0],j[1]); }catch(e){ console.warn('thumb',e); cache[key]=''; } }
+      document.querySelectorAll('img[data-th="'+key+'"]').forEach(i=>{ if(cache[key]) i.src=cache[key]; }); setTimeout(step,24); }; setTimeout(step,60); };
+  return {attr(box,fin){ fin=fin||boxFinish(box); const key=box.id+'|'+fin.id; if(cache[key]) return 'data-th="'+key+'" src="'+cache[key]+'"';
+      if(!wait.some(j=>j[0]===box&&j[1]===fin)) wait.push([box,fin]); pump(); return 'data-th="'+key+'" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="'; }}; })();
+
+/* --- prices: only where a shop page showed one; everything else says so --- */
+const PRICE={'ed-390':[26796,'ВсеИнструменты'],'ed-420':[27260,'ВсеИнструменты'],'ed-580':[38425,'ВсеИнструменты']}, PRICE_AT='ноябрь 2026';
+const rub=n=>fmt(n).replace(/ /g,' ')+' ₽';
+const priceShort=b=>PRICE[b.id]?rub(PRICE[b.id][0]):'цена на сайте';
+const IC_VOL='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>', IC_DIM='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21z"/><path d="M7.5 12.5l1.5 1.5M10.5 9.5l1.5 1.5M13.5 6.5l1.5 1.5"/></svg>';
+
+/* --- cart --- */
+const CARTS={items:store.get('cart',[]),
+  has(b){ const f=boxFinish(b).id; return CARTS.items.some(i=>i.id===b.id&&i.fin===f); },
+  toggle(b){ const f=boxFinish(b).id, k=CARTS.items.findIndex(i=>i.id===b.id&&i.fin===f); if(k>=0) CARTS.items.splice(k,1); else CARTS.items.push({id:b.id,fin:f}); CARTS.save(); return k<0; },
+  save(){ store.set('cart',CARTS.items); CARTS.render(); },
+  render(){ const n=CARTS.items.length, c=$('cartCnt'); if(c){ c.hidden=!n; c.textContent=n; }
+    const el=$('cartBody'); if(!el) return;
+    const rows=CARTS.items.map((i,k)=>{ const b=byId(i.id); if(!b) return ''; const f=b.colors.find(c=>c.id===i.fin)||b.colors[0], sh=SHOPS[b.brand];
+      return `<div class="crow"><img alt="" ${THUMB.attr(b,f)}><div><b>${b.brand} ${b.model}</b><span>${b.V} л · ${dimsTxt(b.L,b.W,b.H)} см · ${f.name}</span><span class="cp">${PRICE[b.id]?rub(PRICE[b.id][0]):'цена на сайте магазина'}</span>${sh?`<a href="${sh.url(b)}" target="_blank" rel="noopener" data-ext>Купить · ${sh.name}</a>`:''}</div><button class="cx" data-k="${k}" aria-label="Убрать ${b.brand} ${b.model} из корзины">×</button></div>`; }).join('');
+    const known=CARTS.items.filter(i=>PRICE[i.id]), sum=known.reduce((s,i)=>s+PRICE[i.id][0],0), rest=n-known.length;
+    el.innerHTML=n?rows+`<div class="ctot"><span>Итого${rest?' (без '+rest+' '+(rest===1?'товара':'товаров')+' с ценой на сайте)':''}</span><b>${known.length?rub(sum):'—'}</b></div><p class="fine">Цены — последние, что показывал магазин (${PRICE_AT}). Заказ оформляется на сайте магазина: приложение ничего не продаёт и не списывает.</p><button class="mini" id="cartShare">Поделиться списком</button>`
+      :'<p class="cempty">Корзина пуста. Откройте карточку бокса на сцене и нажмите «В корзину».</p>';
+    el.querySelectorAll('.cx').forEach(x=>x.addEventListener('click',()=>{ CARTS.items.splice(+x.dataset.k,1); CARTS.save(); if(SHOP) SHOP.sync(); }));
+    el.querySelectorAll('a[data-ext]').forEach(a=>a.addEventListener('click',e=>{ if(isNativeApp()){ e.preventDefault(); location.href=a.href; } }));
+    const sb=$('cartShare'); if(sb) sb.addEventListener('click',()=>{ const txt='Мой список автобоксов:\n'+CARTS.items.map(i=>{ const b=byId(i.id), f=b.colors.find(c=>c.id===i.fin)||b.colors[0], sh=SHOPS[b.brand]; return '• '+b.brand+' '+b.model+', '+b.V+' л, '+f.name+(PRICE[b.id]?', '+rub(PRICE[b.id][0]):'')+(sh?' — '+sh.url(b):''); }).join('\n');
+      if(navigator.share) navigator.share({text:txt}).catch(()=>{}); else if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>toast('<b>Список скопирован</b>','good')); }); } };
+
+/* --- box title in the corner + product sheet --- */
+const SHOP={el:$('shop'), isOpen:false,
+  open(){ SHOP.isOpen=true; SHOP.el.hidden=false; stage.classList.add('shopOpen'); SHOP.sync(); const s=SHOP.el.querySelector('.pc[aria-pressed="true"]'); if(s) s.scrollIntoView({inline:'center',block:'nearest'}); kick(); },
+  close(){ SHOP.isOpen=false; SHOP.el.hidden=true; stage.classList.remove('shopOpen'); kick(); },
+  sync(){ const a=A(); if(!a) return;
+    $('boxTitle').innerHTML=`<span class="bb">${a.brand}</span><b>${a.model}</b><span class="bs">${IC_VOL}${a.V} л</span><span class="bs">${IC_DIM}${dimsTxt(a.L,a.W,a.H)} см</span>`;
+    $('boxTitle').setAttribute('aria-label','Карточка бокса '+a.brand+' '+a.model);
+    if(!SHOP.isOpen) return;
+    const sx0=$('shopCar').scrollLeft; $('shopCar').innerHTML=BOXES.map(b=>`<button class="pc" data-id="${b.id}" aria-pressed="${b.id===S.sel}"><img alt="" ${THUMB.attr(b)}><b>${b.model}</b><span>${b.brand} · ${b.V} л</span><span class="pr">${priceShort(b)}</span></button>`).join(''); $('shopCar').scrollLeft=sx0;
+    $('shopCar').querySelectorAll('.pc').forEach(p=>p.addEventListener('click',()=>{ if(p.dataset.id===S.sel) return; selectBox(p.dataset.id); hap&&hap('tick'); }));
+    const f=boxFinish(a), sh=SHOPS[a.brand], pr=PRICE[a.id], inC=CARTS.has(a);
+    $('shopDet').innerHTML=`<div class="dh"><img class="dimg" alt="${a.brand} ${a.model}, ${f.name}" ${THUMB.attr(a,f)}><div><span class="br">${a.brand}</span><h3>${a.model}</h3>
+      <ul class="spec"><li>Объём<b>${a.V} л</b></li><li>Снаружи<b>${dimsTxt(a.L,a.W,a.H)} см</b></li><li>Внутри<b>${dimsTxt(a.Li,a.Wi,a.Hi,a.est)} см</b></li></ul></div></div>
+      <div><span class="lbl">Цвет · ${f.name}</span><div class="sws">${a.colors.map(c=>`<button class="sw" data-fin="${c.id}" title="${c.name}" aria-label="${c.name}" aria-pressed="${c.id===f.id}" style="background:${c.hex}"></button>`).join('')}</div></div>
+      <div class="buyrow"><div class="price"><b${pr?'':' class="np"'}>${pr?rub(pr[0]):'Цена на сайте'}</b><small>${pr?pr[1]+', '+PRICE_AT:'магазин не показывает цену'}</small></div><button class="addc${inC?' in':''}" id="shopAdd">${CART}${inC?'В корзине · убрать':'В корзину'}</button></div>
+      ${sh?`<a class="site" id="shopSite" href="${sh.url(a)}" target="_blank" rel="noopener">${CART}Открыть в магазине<span class="sh">· ${sh.name}</span></a>`:''}`;
+    $('shopDet').querySelectorAll('.sw').forEach(b=>b.addEventListener('click',()=>{ S.boxColor[a.id]=b.dataset.fin; store.set('boxColor',S.boxColor); setGhost(ghost); renderBoxButtons(); renderCmpSelect(); kick(); }));
+    $('shopAdd').addEventListener('click',()=>{ const added=CARTS.toggle(a); hap&&hap('click'); SHOP.sync(); if(added) toast('<b>В корзине</b>'+a.brand+' '+a.model,'good'); });
+    const st=$('shopSite'); if(st) st.addEventListener('click',e=>{ if(isNativeApp()){ e.preventDefault(); location.href=st.href; } }); } };
+window.SHOP=SHOP;
+$('boxTitle').addEventListener('click',()=>SHOP.isOpen?SHOP.close():SHOP.open());
+$('shopX').addEventListener('click',SHOP.close);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&SHOP.isOpen) SHOP.close(); });
+renderBoxButtons=(f=>function(){ f.apply(this,arguments); SHOP.sync(); })(renderBoxButtons);
+setTab=(f=>function(t){ if(t!=='scene'&&SHOP.isOpen) SHOP.close(); f.apply(this,arguments); if(t==='cart') CARTS.render(); })(setTab);
+CARTS.render();
+applyWeatherScene();
 
 renderItemChips();
 loadCarModel();
